@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartStore - Bảng Quản Trị Hệ Thống (Admin)</title>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Toàn bộ CSS tách biệt trong styles/style.css -->
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+
+<body class="admin-body">
+
+  <!-- ================= 1. MÀN HÌNH ĐĂNG NHẬP DÀNH RIÊNG CHO ADMIN ================= -->
+  <div id="admin-login-screen" class="admin-login-wrapper">
+    <div class="admin-login-card">
+      <div class="admin-login-header">
+        <i class="fas fa-shield-halved admin-login-icon"></i>
+        <h2>Đăng Nhập Quản Trị Viên</h2>
+        <p>Vui lòng đăng nhập bằng tài khoản Admin để truy cập hệ thống.</p>
+      </div>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label class="form-label" for="admin-email">Email Admin *</label>
+          <input type="email" id="admin-email" class="form-input" placeholder="admin@smartstore.vn" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-password">Mật khẩu *</label>
+          <input type="password" id="admin-password" class="form-input" placeholder="Mật khẩu (mặc định: admin)" required />
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
+          <i class="fas fa-arrow-right-to-bracket"></i> Đăng Nhập Quản Trị
+        </button>
+
+        <div style="margin-top: 18px; text-align: center;">
+          <a href="index.html" style="font-size: 13px; color: var(--primary); text-decoration: none;">
+            <i class="fas fa-arrow-left"></i> Quay lại trang Cửa hàng (User)
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= 2. GIAO DIỆN CHÍNH QUẢN TRỊ (ADMIN DASHBOARD) ================= -->
+  <div id="admin-dashboard-screen" style="display: none;">
+    <!-- Header Admin -->
+    <header class="site-header admin-navbar">
+      <div class="header-inner">
+        <div class="brand-logo">
+          <i class="fas fa-gauge-high"></i> SmartStore Admin
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span id="admin-logged-name" style="font-size: 14px; font-weight: 600; color: #ffffff;">Admin</span>
+          <a href="index.html" class="nav-item" style="color: #ffffff; background: rgba(255,255,255,0.15);" target="_blank">
+            <i class="fas fa-eye"></i> Xem Shop
+          </a>
+          <button class="nav-item" id="btn-admin-logout" style="color: #ffffff; background: var(--accent);">
+            <i class="fas fa-power-off"></i> Đăng xuất
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-container">
+      <div class="admin-header-bar">
+        <h2 class="admin-title"><i class="fas fa-chart-line"></i> Báo Cáo & Quản Trị Hệ Thống</h2>
+        <div>
+          <button class="btn-primary" id="btn-admin-add-product">
+            <i class="fas fa-plus"></i> Thêm sản phẩm mới
+          </button>
+          <button class="btn-secondary" id="btn-admin-add-category" style="margin-left: 8px;">
+            <i class="fas fa-folder-plus"></i> Thêm danh mục
+          </button>
+        </div>
+      </div>
+
+      <!-- Thống kê doanh thu, số sản phẩm đã bán, tồn kho, đơn hàng (Yêu cầu Y2) -->
+      <div class="stat-cards-grid">
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div>
+          <div class="stat-info">
+            <h4>Tổng Doanh Thu</h4>
+            <p id="stat-revenue">0 đ</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-bag-shopping"></i></div>
+          <div class="stat-info">
+            <h4>Sản Phẩm Đã Bán</h4>
+            <p id="stat-sold">0</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-boxes-stacked"></i></div>
+          <div class="stat-info">
+            <h4>Tổng Hàng Tồn Kho</h4>
+            <p id="stat-stock">0</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-receipt"></i></div>
+          <div class="stat-info">
+            <h4>Tổng Đơn Hàng</h4>
+            <p id="stat-orders">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh chọn bảng dữ liệu -->
+      <div class="admin-nav-tabs">
+        <button class="admin-tab-btn active" data-subtab="admin-tab-products">Quản lý Sản phẩm</button>
+        <button class="admin-tab-btn" data-subtab="admin-tab-categories">Quản lý Danh mục</button>
+        <button class="admin-tab-btn" data-subtab="admin-tab-orders">Quản lý Đơn hàng</button>
+        <button class="admin-tab-btn" data-subtab="admin-tab-users">Quản lý Khách hàng</button>
+      </div>
+
+      <!-- Bảng 1: Quản lý Sản phẩm -->
+      <div id="admin-tab-products" class="admin-subpanel" style="display: block;">
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">ID</th>
+                <th style="width: 70px;">Ảnh</th>
+                <th>Tên điện thoại</th>
+                <th>Hãng</th>
+                <th>Giá bán</th>
+                <th>Tồn kho</th>
+                <th style="width: 140px;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="admin-product-tbody">
+              <!-- Render từ JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bảng 2: Quản lý Danh mục -->
+      <div id="admin-tab-categories" class="admin-subpanel" style="display: none;">
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 60px;">ID</th>
+                <th>Tên thương hiệu</th>
+                <th>Mã cha (parent_id)</th>
+                <th style="width: 140px;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="admin-category-tbody">
+              <!-- Render từ JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bảng 3: Quản lý Đơn hàng -->
+      <div id="admin-tab-orders" class="admin-subpanel" style="display: none;">
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Mã ĐH</th>
+                <th>Khách hàng</th>
+                <th>Số điện thoại</th>
+                <th>Tổng tiền</th>
+                <th>Ngày đặt</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="admin-order-tbody">
+              <!-- Render từ JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bảng 4: Quản lý Khách hàng (Lab 7.2) -->
+      <div id="admin-tab-users" class="admin-subpanel" style="display: none;">
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">STT</th>
+                <th>Tên người dùng</th>
+                <th>Email</th>
+                <th>Số điện thoại</th>
+                <th>Vai trò</th>
+                <th>Địa chỉ</th>
+              </tr>
+            </thead>
+            <tbody id="admin-user-tbody">
+              <!-- Render từ JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODAL THÊM / SỬA SẢN PHẨM ================= -->
+  <div id="product-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="product-modal-title" class="modal-title">Thêm Sản Phẩm Mới</h3>
+        <button class="btn-close-modal" id="btn-close-product-modal">&times;</button>
+      </div>
+
+      <form id="product-form">
+        <input type="hidden" id="form-product-id" />
+
+        <div class="form-group">
+          <label class="form-label" for="form-product-name">Tên sản phẩm *</label>
+          <input type="text" id="form-product-name" class="form-input" placeholder="Ví dụ: iPhone 15 Pro Max" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-product-cate">Thương hiệu *</label>
+          <select id="form-product-cate" class="form-input" required>
+            <!-- Render từ categories -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-product-price">Giá bán (VNĐ) *</label>
+          <input type="number" id="form-product-price" class="form-input" min="1000" step="1000" placeholder="Ví dụ: 29990000" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-product-qty">Số lượng tồn kho *</label>
+          <input type="number" id="form-product-qty" class="form-input" min="0" value="10" required />
+        </div>
+
+        <!-- Chọn ảnh từ máy tính bằng Choose File (FileReader) -->
+        <div class="form-group">
+          <label class="form-label" for="form-product-file">Chọn hình ảnh sản phẩm:</label>
+          <input type="file" id="form-product-file" class="form-input" accept="image/*" />
+          <div id="product-img-preview" class="img-preview-box" style="display: none;">
+            <img id="preview-product-thumb" src="" alt="Xem trước ảnh" class="img-preview-thumb" />
+            <span style="font-size: 13px; color: var(--text-muted);">Ảnh đã chọn</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-product-detail">Mô tả chi tiết</label>
+          <textarea id="form-product-detail" class="form-input" rows="3" placeholder="Nhập thông tin nổi bật..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-product-modal">Hủy</button>
+          <button type="submit" class="btn-primary" id="btn-submit-product">Lưu sản phẩm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL THÊM / SỬA DANH MỤC ================= -->
+  <div id="category-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="category-modal-title" class="modal-title">Thêm Danh Mục Mới</h3>
+        <button class="btn-close-modal" id="btn-close-category-modal">&times;</button>
+      </div>
+
+      <form id="category-form">
+        <input type="hidden" id="form-category-id" />
+
+        <div class="form-group">
+          <label class="form-label" for="form-category-name">Tên danh mục *</label>
+          <input type="text" id="form-category-name" class="form-input" placeholder="Ví dụ: iPhone, Samsung..." required />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-category-modal">Hủy</button>
+          <button type="submit" class="btn-primary">Lưu danh mục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ADMIN ================= -->
+  <footer class="admin-footer">
+    <div class="footer-bottom-inner" style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 13px; flex-wrap: wrap; gap: 10px;">
+      <p>© 2026 SmartStore Admin Panel • Hệ thống quản trị cơ sở dữ liệu điện thoại thông minh.</p>
+      <p>Nhóm 3 người • Lập trình JavaScript Nâng Cao</p>
+    </div>
+  </footer>
+
+  <!-- Toast thông báo -->
+  <div id="toast" class="toast-notice"></div>
+
+  <!-- File JavaScript riêng cho Admin -->
+  <script src="js/admin.js"></script>
+</body>
+</html>

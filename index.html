@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartStore - Cửa Hàng Điện Thoại Thông Minh</title>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+
+<body>
+
+  <!-- ================= HEADER VÀ THANH ĐIỀU HƯỚNG CHÍNH ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-logo" id="logo-home">
+        <i class="fas fa-mobile-screen-button"></i> SmartStore
+      </div>
+
+      <nav class="main-nav">
+        <button class="nav-item active" data-view="view-shop">
+          <i class="fas fa-store"></i> Cửa hàng
+        </button>
+        <button class="nav-item" data-view="view-cart">
+          <i class="fas fa-cart-shopping"></i> Giỏ hàng 
+          <span class="cart-badge" id="cart-count">0</span>
+        </button>
+        <button class="nav-item" data-view="view-orders">
+          <i class="fas fa-clock-rotate-left"></i> Đơn hàng
+        </button>
+        <!-- Nút tài khoản: hiển thị tên khi đã đăng nhập -->
+        <button class="nav-item" id="nav-btn-account" data-view="view-account">
+          <i class="fas fa-user"></i> <span id="nav-account-text">Tài khoản</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= CONTAINER NỘI DUNG CHÍNH (USER VIEW) ================= -->
+  <main class="app-container">
+
+    <!-- ================= 1. TRANG CỬA HÀNG ================= -->
+    <section id="view-shop" class="view-panel active">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h1>Điện Thoại Chính Hãng • Ưu Đãi Đỉnh Cao</h1>
+          <p>Trải nghiệm công nghệ AI với iPhone 15 Series, Galaxy S24 Ultra, Xiaomi 14 Ultra, OPPO Find N3</p>
+        </div>
+      </div>
+
+      <!-- Thanh bộ lọc: Tìm kiếm, Thương hiệu, Khoảng giá -->
+      <div class="filter-bar">
+        <input type="text" id="shop-search" class="search-input" placeholder="Tìm theo tên điện thoại..." />
+        
+        <select id="shop-filter-category" class="select-box">
+          <option value="">Tất cả thương hiệu</option>
+          <!-- Tự động đổ từ API categories -->
+        </select>
+
+        <select id="shop-filter-price" class="select-box">
+          <option value="">Tất cả mức giá</option>
+          <option value="duoi-10tr">Dưới 10 triệu</option>
+          <option value="10tr-25tr">Từ 10 - 25 triệu</option>
+          <option value="tren-25tr">Trên 25 triệu</option>
+        </select>
+      </div>
+
+      <!-- Lưới sản phẩm (có nút 'Thêm vào giỏ' và 'Mua ngay') -->
+      <div id="product-grid" class="product-grid">
+        <!-- Render từ JavaScript -->
+      </div>
+    </section>
+
+    <!-- ================= 2. TRANG GIỎ HÀNG & THANH TOÁN ================= -->
+    <section id="view-cart" class="view-panel">
+      <h2 class="cart-heading">
+        <i class="fas fa-cart-shopping"></i> Giỏ Hàng Của Bạn
+      </h2>
+
+      <div class="cart-layout">
+        <!-- Bảng sản phẩm trong giỏ -->
+        <div class="cart-table-box">
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th>Đơn giá</th>
+                <th class="col-qty">Số lượng</th>
+                <th>Thành tiền</th>
+                <th class="col-action">Xóa</th>
+              </tr>
+            </thead>
+            <tbody id="cart-tbody">
+              <!-- Render từ JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bảng tóm tắt thanh toán -->
+        <div class="cart-summary">
+          <h3 class="summary-title">Thanh Toán Đơn Hàng</h3>
+          <div class="summary-row">
+            <span>Tạm tính:</span>
+            <span id="cart-subtotal">0 đ</span>
+          </div>
+          <div class="summary-row">
+            <span>Phí vận chuyển:</span>
+            <span class="free-shipping-text">Miễn phí</span>
+          </div>
+          <div class="summary-row cart-total-row">
+            <span>Tổng cộng:</span>
+            <span class="summary-total" id="cart-total">0 đ</span>
+          </div>
+
+          <!-- Thông báo nhắc đăng nhập nếu chưa đăng nhập -->
+          <div id="cart-login-warning" class="cart-alert-box hidden">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>Bạn cần đăng nhập tài khoản trước khi bấm Đặt Hàng!</span>
+          </div>
+
+          <form id="checkout-form" class="checkout-form">
+            <div class="form-group">
+              <label class="form-label" for="order-name">Họ và tên người nhận *</label>
+              <input type="text" id="order-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="order-phone">Số điện thoại nhận hàng *</label>
+              <input type="tel" id="order-phone" class="form-input" placeholder="Ví dụ: 0912345678" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="order-address">Địa chỉ nhận hàng chi tiết *</label>
+              <input type="text" id="order-address" class="form-input" placeholder="Ví dụ: Số 123 Cầu Giấy, Hà Nội" required />
+            </div>
+
+            <button type="submit" class="btn-checkout" id="btn-submit-order">
+              <i class="fas fa-check-circle"></i> Đặt Hàng Ngay
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. MÀN HÌNH CẢM ƠN & THÔNG TIN ĐƠN HÀNG VỪA ĐẶT ================= -->
+    <section id="view-thankyou" class="view-panel">
+      <div class="thankyou-box">
+        <div class="thankyou-icon-box">
+          <i class="fas fa-circle-check thankyou-icon"></i>
+        </div>
+        <h2 class="thankyou-title">Đặt Hàng Thành Công!</h2>
+        <p id="thankyou-desc" class="thankyou-desc">
+          Cảm ơn bạn đã tin tưởng mua sắm tại SmartStore. Đơn hàng của bạn đã được tiếp nhận.
+        </p>
+
+        <!-- Khung hiển thị chi tiết đơn hàng vừa đặt -->
+        <div id="thankyou-order-info" class="thankyou-order-card">
+          <div class="thankyou-order-header">
+            <span>Mã đơn hàng: <strong id="placed-order-id">#—</strong></span>
+            <span class="order-status-badge status-processing">Đang xử lý</span>
+          </div>
+
+          <div class="thankyou-grid">
+            <div class="thankyou-col">
+              <span class="info-label">Người nhận:</span>
+              <strong id="placed-order-name">—</strong>
+            </div>
+            <div class="thankyou-col">
+              <span class="info-label">Số điện thoại:</span>
+              <strong id="placed-order-phone">—</strong>
+            </div>
+            <div class="thankyou-col full-width">
+              <span class="info-label">Địa chỉ nhận hàng:</span>
+              <strong id="placed-order-address">—</strong>
+            </div>
+          </div>
+
+          <div class="placed-items-wrapper">
+            <h4 class="placed-items-title">Chi tiết sản phẩm đã mua:</h4>
+            <div id="placed-items-list" class="placed-items-list">
+              <!-- JS đổ danh sách sản phẩm -->
+            </div>
+          </div>
+
+          <div class="placed-total-row">
+            <span>Tổng thanh toán:</span>
+            <span id="placed-order-total" class="placed-total-price">0 đ</span>
+          </div>
+        </div>
+
+        <div class="thankyou-action-btns">
+          <button class="btn-primary" id="btn-view-order-history">
+            <i class="fas fa-clock-rotate-left"></i> Xem Lịch Sử Đơn Hàng
+          </button>
+          <button class="btn-secondary" id="btn-back-to-shop">
+            <i class="fas fa-store"></i> Tiếp tục mua sắm
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. TRANG LỊCH SỬ ĐƠN HÀNG (ORDER HISTORY) ================= -->
+    <section id="view-orders" class="view-panel">
+      <div class="orders-page-container">
+        <div class="orders-page-header">
+          <h2><i class="fas fa-clock-rotate-left"></i> Lịch Sử Đơn Hàng Của Bạn</h2>
+          <p>Xem lại tất cả các đơn hàng bạn đã mua và theo dõi trạng thái giao hàng.</p>
+        </div>
+
+        <!-- Khung nhắc đăng nhập nếu chưa đăng nhập -->
+        <div id="orders-not-logged" class="orders-alert-card hidden">
+          <i class="fas fa-user-lock"></i>
+          <h3>Vui lòng đăng nhập để xem đơn hàng</h3>
+          <p>Bạn cần đăng nhập tài khoản để theo dõi lịch sử mua hàng của mình.</p>
+          <button class="btn-primary" id="btn-orders-go-login">
+            <i class="fas fa-sign-in-alt"></i> Đăng nhập ngay
+          </button>
+        </div>
+
+        <!-- Danh sách đơn hàng đã mua -->
+        <div id="orders-history-list" class="orders-history-list">
+          <!-- JS đổ danh sách đơn hàng -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 5. TRANG TÀI KHOẢN (ĐĂNG NHẬP / ĐĂNG KÝ) ================= -->
+    <section id="view-account" class="view-panel">
+      <div class="auth-card">
+        <!-- Khung khi đã đăng nhập: Xem thông tin chi tiết & Đổi mật khẩu & Xem đơn hàng -->
+        <div id="account-logged-box" class="hidden">
+          <div class="user-avatar-circle">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <h3 id="account-user-name" class="account-name-heading"></h3>
+          <p id="account-user-email" class="account-email-heading"></p>
+
+          <!-- Bảng xem thông tin chi tiết tài khoản -->
+          <div class="profile-info-card">
+            <h4 class="profile-section-title"><i class="fas fa-id-card"></i> Thông Tin Cá Nhân</h4>
+            <div class="profile-row">
+              <span class="profile-label">Số điện thoại:</span>
+              <strong id="profile-phone" class="profile-value">—</strong>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Địa chỉ nhận hàng:</span>
+              <strong id="profile-address" class="profile-value">—</strong>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Vai trò tài khoản:</span>
+              <span id="profile-role" class="profile-badge">Khách hàng</span>
+            </div>
+          </div>
+
+          <!-- Nút truy cập nhanh lịch sử đơn hàng từ tài khoản -->
+          <div class="profile-orders-shortcut-card">
+            <h4 class="profile-section-title"><i class="fas fa-boxes-stacked"></i> Lịch Sử Mua Hàng</h4>
+            <p class="profile-shortcut-desc">Xem lại toàn bộ danh sách đơn hàng bạn đã đặt mua.</p>
+            <button type="button" class="btn-primary btn-full-width" id="btn-account-view-orders">
+              <i class="fas fa-clock-rotate-left"></i> Xem Danh Sách Đơn Hàng
+            </button>
+          </div>
+
+          <!-- Khu vực Đổi Mật Khẩu -->
+          <div class="change-password-card">
+            <h4 class="profile-section-title"><i class="fas fa-key"></i> Đổi Mật Khẩu</h4>
+            <form id="change-password-form">
+              <div class="form-group">
+                <label class="form-label" for="old-pass">Mật khẩu hiện tại *</label>
+                <input type="password" id="old-pass" class="form-input" placeholder="Nhập mật khẩu đang dùng..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-pass">Mật khẩu mới *</label>
+                <input type="password" id="new-pass" class="form-input" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirm-new-pass">Xác nhận mật khẩu mới *</label>
+                <input type="password" id="confirm-new-pass" class="form-input" placeholder="Nhập lại mật khẩu mới..." required />
+              </div>
+              <button type="submit" class="btn-primary btn-full-width">
+                <i class="fas fa-lock-open"></i> Cập Nhật Mật Khẩu
+              </button>
+            </form>
+          </div>
+
+          <button class="btn-secondary btn-full-width btn-logout-spacing" id="btn-logout">
+            <i class="fas fa-arrow-right-from-bracket"></i> Đăng xuất tài khoản
+          </button>
+        </div>
+
+        <!-- Khung Form Đăng nhập & Đăng ký (Có tab chuyển đổi) -->
+        <div id="auth-forms-wrapper">
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" id="tab-btn-login">Đăng Nhập</button>
+            <button class="auth-tab-btn" id="tab-btn-register">Đăng Ký</button>
+          </div>
+
+          <!-- Form Đăng Nhập -->
+          <form id="login-form" class="auth-form-box">
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email tài khoản *</label>
+              <input type="email" id="login-email" class="form-input" placeholder="Ví dụ: hung.nv@gmail.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-password">Mật khẩu *</label>
+              <input type="password" id="login-password" class="form-input" placeholder="Nhập mật khẩu..." required />
+            </div>
+            <button type="submit" class="btn-primary btn-full-width">
+              <i class="fas fa-sign-in-alt"></i> Đăng Nhập
+            </button>
+            <p class="auth-hint-text">
+              Chưa có tài khoản? Bấm nút <b>Đăng Ký</b> ở trên!
+            </p>
+          </form>
+
+          <!-- Form Đăng Ký -->
+          <form id="register-form" class="auth-form-box hidden">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Họ và tên *</label>
+              <input type="text" id="reg-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-email">Email tài khoản *</label>
+              <input type="email" id="reg-email" class="form-input" placeholder="Ví dụ: hung.nv@gmail.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-phone">Số điện thoại *</label>
+              <input type="tel" id="reg-phone" class="form-input" placeholder="Ví dụ: 0912345678" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-password">Mật khẩu *</label>
+              <input type="password" id="reg-password" class="form-input" placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)..." required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-address">Địa chỉ nhận hàng</label>
+              <input type="text" id="reg-address" class="form-input" placeholder="Địa chỉ giao hàng mặc định..." />
+            </div>
+            <button type="submit" class="btn-success btn-full-width">
+              <i class="fas fa-user-plus"></i> Đăng Ký Ngay
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 6. MODAL XEM CHI TIẾT SẢN PHẨM ================= -->
+    <div id="product-detail-modal" class="modal-overlay">
+      <div class="modal-box product-detail-box">
+        <button class="btn-close-modal" id="btn-close-detail-modal">&times;</button>
+        
+        <div class="detail-layout">
+          <!-- Cột trái: Ảnh sản phẩm lớn -->
+          <div class="detail-img-box">
+            <span class="product-badge" id="detail-brand-badge">Thương hiệu</span>
+            <img id="detail-img" src="" alt="Chi tiết sản phẩm" />
+          </div>
+
+          <!-- Cột phải: Thông tin chi tiết & nút mua -->
+          <div class="detail-info-box">
+            <h2 id="detail-name" class="detail-title">Tên sản phẩm</h2>
+            
+            <div class="detail-price-box">
+              <span id="detail-price" class="detail-price">0 đ</span>
+              <span id="detail-stock" class="detail-stock">Kho: 0</span>
+            </div>
+
+            <!-- Cam kết và ưu đãi -->
+            <div class="detail-highlights">
+              <div class="highlight-item"><i class="fas fa-shield-halved"></i> Bảo hành chính hãng 12 tháng</div>
+              <div class="highlight-item"><i class="fas fa-truck-fast"></i> Miễn phí giao hàng toàn quốc</div>
+              <div class="highlight-item"><i class="fas fa-rotate"></i> 1 đổi 1 trong 30 ngày nếu lỗi NSX</div>
+            </div>
+
+            <!-- Mô tả chi tiết -->
+            <div class="detail-desc-box">
+              <h4>Đặc điểm nổi bật:</h4>
+              <p id="detail-desc">Mô tả chi tiết sản phẩm...</p>
+            </div>
+
+            <!-- Nút hành động Mua ngay và Thêm giỏ hàng -->
+            <div class="detail-actions">
+              <button class="btn-add-cart" id="btn-detail-add-cart">
+                <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+              </button>
+              <button class="btn-buy-now" id="btn-detail-buy-now">
+                <i class="fas fa-bolt"></i> Mua ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 7. MODAL XÁC NHẬN THANH TOÁN ĐƠN HÀNG ================= -->
+    <div id="checkout-confirm-modal" class="modal-overlay">
+      <div class="modal-box checkout-confirm-box">
+        <div class="confirm-icon-circle">
+          <i class="fas fa-question"></i>
+        </div>
+        <h3 class="confirm-modal-title">Xác Nhận Đặt Hàng</h3>
+        <p class="confirm-modal-question">Bạn có muốn đặt hàng hay không?</p>
+        
+        <div class="confirm-order-summary">
+          <div class="confirm-summary-row">
+            <span>Người nhận:</span>
+            <strong id="confirm-buyer-name">—</strong>
+          </div>
+          <div class="confirm-summary-row">
+            <span>Số điện thoại:</span>
+            <strong id="confirm-buyer-phone">—</strong>
+          </div>
+          <div class="confirm-summary-row">
+            <span>Địa chỉ giao hàng:</span>
+            <strong id="confirm-buyer-address">—</strong>
+          </div>
+
+          <div class="confirm-items-section">
+            <span class="confirm-items-label">Sản phẩm đặt mua:</span>
+            <div id="confirm-items-list" class="confirm-items-list">
+              <!-- JS đổ danh sách sản phẩm -->
+            </div>
+          </div>
+
+          <div class="confirm-summary-row total-row">
+            <span>Tổng tiền thanh toán:</span>
+            <span id="confirm-order-total" class="confirm-price-total">0 đ</span>
+          </div>
+        </div>
+
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-checkout">
+            <i class="fas fa-times"></i> Hủy
+          </button>
+          <button type="button" class="btn-success" id="btn-accept-checkout">
+            <i class="fas fa-check"></i> Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER CHÂN TRANG ================= -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <!-- Cột 1: Thông tin thương hiệu -->
+      <div class="footer-col">
+        <div class="footer-logo">
+          <i class="fas fa-mobile-screen-button"></i> SmartStore
+        </div>
+        <p class="footer-desc">
+          Hệ thống bán lẻ điện thoại thông minh chính hãng hàng đầu Việt Nam. Cam kết chất lượng, bảo hành 12 tháng 1 đổi 1.
+        </p>
+        <div class="footer-socials">
+          <a href="#" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="social-icon" title="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="#" class="social-icon" title="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" class="social-icon" title="Zalo"><i class="fas fa-comment-dots"></i></a>
+        </div>
+      </div>
+
+      <!-- Cột 2: Danh mục thương hiệu -->
+      <div class="footer-col">
+        <h4 class="footer-heading">Thương Hiệu Nổi Bật</h4>
+        <ul class="footer-links">
+          <li><a href="#" onclick="locTheoThuongHieuFooter('1')">Apple iPhone 15 Series</a></li>
+          <li><a href="#" onclick="locTheoThuongHieuFooter('2')">Samsung Galaxy AI</a></li>
+          <li><a href="#" onclick="locTheoThuongHieuFooter('3')">Xiaomi Leica Camera</a></li>
+          <li><a href="#" onclick="locTheoThuongHieuFooter('4')">OPPO Chuyên Gia Chân Dung</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 3: Chính sách & Hỗ trợ -->
+      <div class="footer-col">
+        <h4 class="footer-heading">Chính Sách & Hỗ Trợ</h4>
+        <ul class="footer-links">
+          <li><a href="#">Chính sách bảo hành 1 đổi 1</a></li>
+          <li><a href="#">Chính sách giao hàng miễn phí</a></li>
+          <li><a href="#">Hướng dẫn mua hàng trả góp 0%</a></li>
+          <li><a href="#">Chính sách bảo mật thông tin</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 4: Thông tin liên hệ -->
+      <div class="footer-col">
+        <h4 class="footer-heading">Tổng Đài Hỗ Trợ</h4>
+        <div class="footer-contact-item">
+          <i class="fas fa-phone-volume"></i>
+          <div>
+            <span>Tư vấn mua hàng:</span>
+            <strong>1800 6868 (Miễn phí)</strong>
+          </div>
+        </div>
+        <div class="footer-contact-item">
+          <i class="fas fa-headset"></i>
+          <div>
+            <span>Hỗ trợ kỹ thuật:</span>
+            <strong>1800 6969 (8:00 - 21:00)</strong>
+          </div>
+        </div>
+        <div class="footer-contact-item">
+          <i class="fas fa-location-dot"></i>
+          <div>
+            <span>Địa chỉ cửa hàng:</span>
+            <span>Hà Nội • TP. Hồ Chí Minh • Đà Nẵng</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dòng bản quyền dưới cùng -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-inner">
+        <p>© 2026 SmartStore. Dự án môn học Lập trình JavaScript Nâng Cao (FPT Polytechnic).</p>
+        <p>Thành viên nhóm: Nhóm 3 người • Sinh viên thực hiện</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= THÔNG BÁO TOAST ================= -->
+  <div id="toast" class="toast-notice"></div>
+
+  <!-- File JavaScript User -->
+  <script src="js/app.js"></script>
+</body>
+</html>
