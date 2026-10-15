@@ -1,140 +1,215 @@
 /**
  * ============================================================================
- * JAVASCRIPT BẢNG QUẢN TRỊ ADMIN (ADMIN APP - admin.js)
+ * JAVASCRIPT BẢNG QUẢN TRỊ ADMIN (ADMIN APP - admin.js) - BẢN TỐI ƯU HIỆN ĐẠI
  * ============================================================================
+ * Dự án: Website Gaming Phone (SmartStore)
+ * Môn học: Lập trình JavaScript Nâng Cao (WEB2064)
  * 
- * CÁC CHỨC NĂNG CHÍNH:
- * 1. Đăng nhập bảo mật riêng cho Admin (kiểm tra role === 'admin' từ db.json).
- * 2. Lưu phiên đăng nhập của Admin (session trong localStorage).
- * 3. Quản lý Sản Phẩm (Thêm, Sửa, Xóa) có chọn ảnh từ máy tính (Choose File Base64).
- * 4. Quản lý Danh Mục điện thoại (Thêm, Xóa).
- * 5. Quản lý Đơn Hàng và Khách Hàng.
- * 6. Tự động tính toán các thẻ thống kê: Doanh thu, Đã bán, Tồn kho, Đơn hàng.
+ * ĐẶC ĐIỂM KIẾN TRÚC & CÔNG NGHỆ ÁP DỤNG:
+ * - Chuẩn cú pháp ECMAScript 2020+ (ES6+): Arrow Functions, Destructuring, Optional Chaining (?.), Nullish Coalescing (??).
+ * - Các hàm có sẵn hiện đại: Intl.NumberFormat (tiền tệ chuẩn VNĐ), Promise.all (nạp dữ liệu song song), Array.prototype.reduce (thống kê KPI chuẩn).
+ * - FileReader API: Chuyển đổi tệp ảnh máy tính sang Base64 có kiểm soát kích thước tối đa (1.5MB) tránh tràn bộ nhớ CSDL.
+ * - Ràng buộc toàn vẹn dữ liệu quan hệ: Ngăn chặn xóa danh mục khi vẫn còn sản phẩm con trực thuộc.
+ * - Bảo mật XSS: Mã hóa an toàn mọi chuỗi ký tự hiển thị trên các bảng quản trị.
  */
 
 // ============================================================================
-// 1. CẤU HÌNH API
+// 1. CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
 // ============================================================================
+/**
+ * Địa chỉ gốc của máy chủ Mock API (JSON-Server chạy trên cổng 3000).
+ */
 const API_BASE = 'http://localhost:3000';
 const API_PRODUCTS = `${API_BASE}/products`;
 const API_CATEGORIES = `${API_BASE}/categories`;
 const API_ORDERS = `${API_BASE}/orders`;
 const API_USERS = `${API_BASE}/users`;
 
-// ============================================================================
-// 2. BIẾN TOÀN CỤC QUẢN LÝ DỮ LIỆU ADMIN (STATE)
-// ============================================================================
-let danhSachSanPham = [];
-let danhSachDanhMuc = [];
-let danhSachDonHang = [];
-let danhSachKhachHang = [];
-
-let idSanPhamDangSua = null;
-let anhSanPhamBase64 = '';
+/**
+ * Ảnh thumbnail đại diện mặc định cho bảng quản trị khi ảnh sản phẩm bị lỗi URL.
+ */
+const ANH_MAC_DINH_ADMIN = 'https://picsum.photos/40/40';
 
 // ============================================================================
-// 3. HÀM TIỆN ÍCH DÙNG CHUNG
+// 2. BIẾN TRẠNG THÁI QUẢN TRỊ (ADMIN STATE MANAGEMENT)
 // ============================================================================
+let danhSachSanPham = [];      // Danh sách sản phẩm quản trị
+let danhSachDanhMuc = [];      // Danh sách thương hiệu điện thoại
+let danhSachDonHang = [];      // Danh sách đơn hàng từ khách
+let danhSachKhachHang = [];    // Danh sách tài khoản người dùng
 
-function dinhDangTien(soTien) {
-  return Number(soTien || 0).toLocaleString('vi-VN') + ' đ';
-}
-
-function hienThongBao(noiDung, laLoi = false) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-
-  toast.textContent = noiDung;
-  toast.className = 'toast-notice show' + (laLoi ? ' error' : '');
-
-  setTimeout(function () {
-    toast.className = 'toast-notice';
-  }, 3000);
-}
+let idSanPhamDangSua = null;   // ID sản phẩm đang trong chế độ chỉnh sửa (null nếu thêm mới)
+let anhSanPhamBase64 = '';     // Chuỗi Base64 của ảnh sản phẩm tải lên từ máy tính
+let toastTimeoutAdmin = null;  // Định danh bộ đếm thời gian thông báo Toast Admin
 
 // ============================================================================
-// 4. KIỂM TRA ĐĂNG NHẬP VÀ PHÂN QUYỀN ADMIN
+// 3. CÁC HÀM TIỆN ÍCH DÙNG CHUNG (UTILITY FUNCTIONS)
 // ============================================================================
 
 /**
- * Kiểm tra xem người dùng đã đăng nhập tài khoản Admin chưa.
- * Nếu chưa đăng nhập: Hiển thị form đăng nhập Admin.
- * Nếu đã đăng nhập: Hiển thị bảng điều khiển Dashboard.
+ * DOM Selector Helper ($): Rút gọn cú pháp document.getElementById và document.querySelector.
+ * @param {string} selector - ID hoặc CSS Selector
+ * @returns {HTMLElement|null}
  */
-function kiemTraDangNhapAdmin() {
+const $ = (selector) => {
+  if (typeof selector !== 'string') return null;
+  const isSimpleId = !selector.includes(' ') && !selector.includes('.') && !selector.includes('[');
+  return isSimpleId ? document.getElementById(selector.replace(/^#/, '')) : document.querySelector(selector);
+};
+
+/**
+ * DOM Selector All Helper ($$): Rút gọn cú pháp document.querySelectorAll.
+ * @param {string} selector - CSS Selector
+ * @returns {NodeListOf<HTMLElement>}
+ */
+const $$ = (selector) => document.querySelectorAll(selector);
+
+/**
+ * Hàm gọi API dùng chung (API Fetch Wrapper):
+ * Đóng gói Fetch API, thiết lập Header JSON và xử lý lỗi mạng tập trung.
+ * @param {string} url - Endpoint API
+ * @param {string} [method='GET'] - Phương thức HTTP (GET, POST, PUT, DELETE)
+ * @param {object|null} [data=null] - Payload dữ liệu
+ * @returns {Promise<any>}
+ */
+const apiFetch = async (url, method = 'GET', data = null) => {
+  const options = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (data) options.body = JSON.stringify(data);
+
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+};
+
+/**
+ * Phòng chống tấn công XSS bằng RegEx thay thế ký tự điều khiển thành HTML entities.
+ * @param {any} str - Dữ liệu chuỗi đầu vào
+ * @returns {string} Chuỗi an toàn
+ */
+const escapeHTML = (str) => {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+/**
+ * Định dạng tiền tệ VNĐ chuẩn quốc tế sử dụng Intl.NumberFormat('vi-VN').
+ * @param {number|string} soTien - Số tiền cần định dạng
+ * @returns {string}
+ */
+const dinhDangTien = (soTien) => 
+  new Intl.NumberFormat('vi-VN').format(Number(soTien) || 0) + ' đ';
+
+/**
+ * Hiển thị thông báo Toast góc màn hình có tự hủy hẹn giờ cũ (Debounce).
+ * @param {string} noiDung - Nội dung thông báo
+ * @param {boolean} [laLoi=false] - Cờ thông báo lỗi hay thành công
+ */
+const hienThongBao = (noiDung, laLoi = false) => {
+  const toast = $('#toast');
+  if (!toast) return;
+
+  toast.textContent = noiDung;
+  toast.className = `toast-notice show${laLoi ? ' error' : ''}`;
+
+  if (toastTimeoutAdmin) clearTimeout(toastTimeoutAdmin);
+  toastTimeoutAdmin = setTimeout(() => {
+    toast.className = 'toast-notice';
+  }, 3000);
+};
+
+// ============================================================================
+// 4. MODULE XÁC THỰC & PHÂN QUYỀN ADMIN (ADMIN AUTHENTICATION)
+// ============================================================================
+
+/**
+ * Kiểm tra phiên đăng nhập của Quản trị viên trong LocalStorage:
+ * Nếu đã đăng nhập và có role === 'admin', mở thẳng bảng điều khiển Dashboard.
+ */
+const kiemTraDangNhapAdmin = () => {
   const savedAdmin = localStorage.getItem('smartstore_admin');
-  const loginScreen = document.getElementById('admin-login-screen');
-  const dashboardScreen = document.getElementById('admin-dashboard-screen');
-  const loggedName = document.getElementById('admin-logged-name');
+  const loginScreen = $('#admin-login-screen');
+  const dashboardScreen = $('#admin-dashboard-screen');
+  const loggedName = $('#admin-logged-name');
 
   if (savedAdmin) {
     try {
       const admin = JSON.parse(savedAdmin);
-      if (admin && admin.role === 'admin') {
-        // ĐÃ ĐĂNG NHẬP ADMIN THÀNH CÔNG
-        loginScreen.style.display = 'none';
-        dashboardScreen.style.display = 'block';
+      if (admin?.role === 'admin') {
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (dashboardScreen) dashboardScreen.style.display = 'block';
         if (loggedName) loggedName.textContent = admin.name;
-        // Tải dữ liệu các bảng quản trị
         taiDuLieuAdmin();
         return;
       }
-    } catch (e) {
+    } catch {
       localStorage.removeItem('smartstore_admin');
     }
   }
 
-  // CHƯA ĐĂNG NHẬP: Hiển thị màn hình Login Admin
-  loginScreen.style.display = 'flex';
-  dashboardScreen.style.display = 'none';
-}
+  if (loginScreen) loginScreen.style.display = 'flex';
+  if (dashboardScreen) dashboardScreen.style.display = 'none';
+};
 
 /**
- * Xử lý Form Đăng Nhập dành riêng cho Admin.
+ * Xử lý biểu mẫu Đăng Nhập dành riêng cho Admin:
+ * Kiểm tra tài khoản có role === 'admin' từ máy chủ.
+ * @param {Event} event - Sự kiện submit form
  */
-async function xuLyDangNhapAdmin(event) {
+const xuLyDangNhapAdmin = async (event) => {
   event.preventDefault();
-  const email = document.getElementById('admin-email').value.trim().toLowerCase();
-  const password = document.getElementById('admin-password').value.trim();
+  const email = ($('#admin-email')?.value ?? '').trim().toLowerCase();
+  const password = ($('#admin-password')?.value ?? '').trim();
 
   try {
-    const res = await fetch(API_USERS);
-    const users = await res.json();
-
-    // Tìm tài khoản có role === 'admin' khớp email và password
-    const adminUser = users.find(function (u) {
-      return u.email.toLowerCase() === email && String(u.password) === password && u.role === 'admin';
-    });
+    const users = await apiFetch(API_USERS);
+    const adminUser = users.find(u => 
+      u.email.toLowerCase() === email && 
+      String(u.password) === password && 
+      u.role === 'admin'
+    );
 
     if (!adminUser) {
       hienThongBao('Tài khoản hoặc mật khẩu không chính xác hoặc bạn không có quyền Admin!', true);
       return;
     }
 
-    // Lưu phiên đăng nhập Admin
     localStorage.setItem('smartstore_admin', JSON.stringify(adminUser));
     hienThongBao('Đăng nhập Quản trị viên thành công!');
     kiemTraDangNhapAdmin();
   } catch (err) {
     console.error('Lỗi đăng nhập admin:', err);
-    hienThongBao('Không thể kết nối đến máy chủ xác thực!', true);
+    hienThongBao('Không thể kết nối đến máy chủ xác thực tài khoản!', true);
   }
-}
+};
 
 /**
- * Đăng xuất khỏi bảng Quản trị.
+ * Đăng xuất tài khoản Quản trị viên.
  */
-function dangXuatAdmin() {
+const dangXuatAdmin = () => {
   localStorage.removeItem('smartstore_admin');
   hienThongBao('Đã đăng xuất Quản trị viên.');
   kiemTraDangNhapAdmin();
-}
+};
 
 // ============================================================================
-// 5. TẢI TOÀN BỘ DỮ LIỆU QUẢN TRỊ & THỐNG KÊ
+// 5. TẢI DỮ LIỆU ĐỒNG THỜI & BÁO CÁO THỐNG KÊ (DATA & KPIS)
 // ============================================================================
 
-async function taiDuLieuAdmin() {
+/**
+ * Nạp đồng thời toàn bộ dữ liệu hệ thống sử dụng hàm Promise.all() hiện đại:
+ * Giúp giảm tối đa thời gian chờ mạng so với việc gọi các hàm tuần tự (Sequential Await).
+ */
+const taiDuLieuAdmin = async () => {
   await Promise.all([
     taiDanhMucAdmin(),
     taiSanPhamAdmin(),
@@ -142,179 +217,187 @@ async function taiDuLieuAdmin() {
     taiKhachHangAdmin()
   ]);
   capNhatThongKe();
-}
+};
 
-async function taiDanhMucAdmin() {
+const taiDanhMucAdmin = async () => {
   try {
-    const res = await fetch(API_CATEGORIES);
-    danhSachDanhMuc = await res.json();
-
-    // Đổ vào select box trong form thêm sản phẩm
-    const selectBox = document.getElementById('form-product-cate');
+    danhSachDanhMuc = await apiFetch(API_CATEGORIES);
+    const selectBox = $('#form-product-cate');
     if (selectBox) {
-      selectBox.innerHTML = danhSachDanhMuc.map(function (c) {
-        return `<option value="${c.id}">${c.name}</option>`;
-      }).join('');
+      selectBox.innerHTML = danhSachDanhMuc.map(({ id, name }) => 
+        `<option value="${escapeHTML(id)}">${escapeHTML(name)}</option>`
+      ).join('');
     }
-
-    // Render danh mục ra bảng
     hienThiDanhMucAdmin();
   } catch (err) {
-    console.error('Lỗi tải danh mục admin:', err);
+    console.error('Lỗi khi tải danh mục admin:', err);
   }
-}
+};
 
-async function taiSanPhamAdmin() {
+const taiSanPhamAdmin = async () => {
   try {
-    const res = await fetch(API_PRODUCTS);
-    danhSachSanPham = await res.json();
+    danhSachSanPham = await apiFetch(API_PRODUCTS);
     hienThiSanPhamAdmin();
   } catch (err) {
-    console.error('Lỗi tải sản phẩm admin:', err);
+    console.error('Lỗi khi tải sản phẩm admin:', err);
   }
-}
+};
 
-async function taiDonHangAdmin() {
+const taiDonHangAdmin = async () => {
   try {
-    const res = await fetch(API_ORDERS);
-    danhSachDonHang = await res.json();
+    danhSachDonHang = await apiFetch(API_ORDERS);
     hienThiDonHangAdmin();
   } catch (err) {
-    console.error('Lỗi tải đơn hàng admin:', err);
+    console.error('Lỗi khi tải đơn hàng admin:', err);
   }
-}
+};
 
-async function taiKhachHangAdmin() {
+const taiKhachHangAdmin = async () => {
   try {
-    const res = await fetch(API_USERS);
-    danhSachKhachHang = await res.json();
+    danhSachKhachHang = await apiFetch(API_USERS);
     hienThiKhachHangAdmin();
   } catch (err) {
-    console.error('Lỗi tải khách hàng admin:', err);
+    console.error('Lỗi khi tải khách hàng admin:', err);
   }
-}
+};
 
 /**
- * Cập nhật 4 thẻ thống kê: Doanh thu, Số sản phẩm đã bán, Tồn kho, Số đơn hàng.
+ * Cập nhật 4 thẻ KPI thống kê hệ thống theo thời gian thực:
+ * 1. Tổng doanh thu: Tính tổng trường total_amount của tất cả đơn hàng.
+ * 2. Tổng số sản phẩm đã bán: Tính tổng thực tế các món (items.quantity) hoặc items_count từ từng đơn hàng.
+ * 3. Hàng tồn kho: Tính tổng trường quantity của toàn bộ các sản phẩm.
+ * 4. Tổng đơn hàng: Độ dài mảng danh sách đơn hàng.
  */
-function capNhatThongKe() {
-  let tongDoanhThu = 0;
-  danhSachDonHang.forEach(function (dh) {
-    tongDoanhThu += Number(dh.total_amount || 0);
-  });
+const capNhatThongKe = () => {
+  const tongDoanhThu = danhSachDonHang.reduce((sum, dh) => sum + (Number(dh.total_amount) || 0), 0);
 
-  let tongTonKho = 0;
-  danhSachSanPham.forEach(function (sp) {
-    tongTonKho += Number(sp.quantity || 0);
-  });
+  const tongDaBan = danhSachDonHang.reduce((sum, dh) => {
+    if (dh.items && Array.isArray(dh.items) && dh.items.length > 0) {
+      return sum + dh.items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+    }
+    return sum + (Number(dh.items_count) || 0);
+  }, 0);
 
-  const revEl = document.getElementById('stat-revenue');
-  const soldEl = document.getElementById('stat-sold');
-  const stockEl = document.getElementById('stat-stock');
-  const ordEl = document.getElementById('stat-orders');
+  const tongTonKho = danhSachSanPham.reduce((sum, sp) => sum + (Number(sp.quantity) || 0), 0);
+  const tongDonHang = danhSachDonHang.length;
 
-  if (revEl) revEl.textContent = dinhDangTien(tongDoanhThu);
-  if (soldEl) soldEl.textContent = danhSachDonHang.length;
-  if (stockEl) stockEl.textContent = tongTonKho;
-  if (ordEl) ordEl.textContent = danhSachDonHang.length;
-}
+  if ($('#stat-revenue')) $('#stat-revenue').textContent = dinhDangTien(tongDoanhThu);
+  if ($('#stat-sold')) $('#stat-sold').textContent = tongDaBan;
+  if ($('#stat-stock')) $('#stat-stock').textContent = tongTonKho;
+  if ($('#stat-orders')) $('#stat-orders').textContent = tongDonHang;
+};
 
 // ============================================================================
-// 6. RENDER DỮ LIỆU RA CÁC BẢNG QUẢN TRỊ
+// 6. MODULE HIỂN THỊ DỮ LIỆU BẢNG QUẢN TRỊ (TABLE RENDERING)
 // ============================================================================
 
-function hienThiSanPhamAdmin() {
-  const tbody = document.getElementById('admin-product-tbody');
+/**
+ * Render bảng danh sách sản phẩm.
+ */
+const hienThiSanPhamAdmin = () => {
+  const tbody = $('#admin-product-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = danhSachSanPham.map(function (sp) {
-    const hang = danhSachDanhMuc.find(function (c) { return String(c.id) === String(sp.cate_id); });
-    const tenHang = hang ? hang.name : 'Chưa phân loại';
+  tbody.innerHTML = danhSachSanPham.map((sp) => {
+    const hang = danhSachDanhMuc.find(c => String(c.id) === String(sp.cate_id));
+    const tenHang = hang?.name ?? 'Chưa phân loại';
 
     return `
       <tr>
-        <td><strong>#${sp.id}</strong></td>
+        <td><strong>#${escapeHTML(sp.id)}</strong></td>
         <td>
-          <img src="${sp.image || 'https://picsum.photos/40/40'}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;" alt="${sp.name}" />
+          <img src="${escapeHTML(sp.image || ANH_MAC_DINH_ADMIN)}" 
+               style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;" 
+               alt="${escapeHTML(sp.name)}" 
+               onerror="this.onerror=null;this.src='${ANH_MAC_DINH_ADMIN}';" />
         </td>
-        <td><strong>${sp.name}</strong></td>
-        <td><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${tenHang}</span></td>
+        <td><strong>${escapeHTML(sp.name)}</strong></td>
+        <td><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${escapeHTML(tenHang)}</span></td>
         <td style="color: var(--accent); font-weight: 700;">${dinhDangTien(sp.price)}</td>
         <td>${sp.quantity || 0}</td>
         <td>
-          <button class="action-btn edit" onclick="moFormSuaSanPham('${sp.id}')">
+          <button class="action-btn edit" onclick="moFormSuaSanPham('${escapeHTML(sp.id)}')">
             <i class="fas fa-pen"></i> Sửa
           </button>
-          <button class="action-btn delete" onclick="xoaSanPham('${sp.id}')">
+          <button class="action-btn delete" onclick="xoaSanPham('${escapeHTML(sp.id)}')">
             <i class="fas fa-trash"></i> Xóa
           </button>
         </td>
       </tr>
     `;
   }).join('');
-}
+};
 
-function hienThiDanhMucAdmin() {
-  const tbody = document.getElementById('admin-category-tbody');
+/**
+ * Render bảng danh sách danh mục thương hiệu.
+ */
+const hienThiDanhMucAdmin = () => {
+  const tbody = $('#admin-category-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = danhSachDanhMuc.map(function (cat) {
-    return `
-      <tr>
-        <td><strong>#${cat.id}</strong></td>
-        <td><strong>${cat.name}</strong></td>
-        <td>${cat.parent_id || '0 (Gốc)'}</td>
-        <td>
-          <button class="action-btn delete" onclick="xoaDanhMuc('${cat.id}')">
-            <i class="fas fa-trash"></i> Xóa
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
+  tbody.innerHTML = danhSachDanhMuc.map(({ id, name, parent_id }) => `
+    <tr>
+      <td><strong>#${escapeHTML(id)}</strong></td>
+      <td><strong>${escapeHTML(name)}</strong></td>
+      <td>${escapeHTML(parent_id || '0 (Gốc)')}</td>
+      <td>
+        <button class="action-btn delete" onclick="xoaDanhMuc('${escapeHTML(id)}')">
+          <i class="fas fa-trash"></i> Xóa
+        </button>
+      </td>
+    </tr>
+  `).join('');
+};
 
-function hienThiDonHangAdmin() {
-  const tbody = document.getElementById('admin-order-tbody');
+/**
+ * Render bảng danh sách đơn hàng đã tiếp nhận.
+ */
+const hienThiDonHangAdmin = () => {
+  const tbody = $('#admin-order-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = danhSachDonHang.map(function (dh) {
-    return `
-      <tr>
-        <td><strong>#${dh.id}</strong></td>
-        <td><strong>${dh.customer_name}</strong></td>
-        <td>${dh.phone}</td>
-        <td style="color: var(--accent); font-weight: 700;">${dinhDangTien(dh.total_amount)}</td>
-        <td>${dh.created_date}</td>
-        <td><span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-weight: 600;">${dh.status}</span></td>
-      </tr>
-    `;
-  }).join('');
-}
+  tbody.innerHTML = danhSachDonHang.map(({ id, customer_name, phone, total_amount, created_date, status }) => `
+    <tr>
+      <td><strong>#${escapeHTML(id)}</strong></td>
+      <td><strong>${escapeHTML(customer_name)}</strong></td>
+      <td>${escapeHTML(phone)}</td>
+      <td style="color: var(--accent); font-weight: 700;">${dinhDangTien(total_amount)}</td>
+      <td>${escapeHTML(created_date)}</td>
+      <td><span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-weight: 600;">${escapeHTML(status)}</span></td>
+    </tr>
+  `).join('');
+};
 
-function hienThiKhachHangAdmin() {
-  const tbody = document.getElementById('admin-user-tbody');
+/**
+ * Render bảng danh sách tài khoản khách hàng.
+ */
+const hienThiKhachHangAdmin = () => {
+  const tbody = $('#admin-user-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = danhSachKhachHang.map(function (u, index) {
-    return `
-      <tr>
-        <td>${index + 1}</td>
-        <td><strong>${u.name}</strong></td>
-        <td>${u.email}</td>
-        <td>${u.phone}</td>
-        <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${u.role}</span></td>
-        <td>${u.address || '—'}</td>
-      </tr>
-    `;
-  }).join('');
-}
+  tbody.innerHTML = danhSachKhachHang.map(({ name, email, phone, role, address }, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td><strong>${escapeHTML(name)}</strong></td>
+      <td>${escapeHTML(email)}</td>
+      <td>${escapeHTML(phone)}</td>
+      <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${escapeHTML(role)}</span></td>
+      <td>${escapeHTML(address || '—')}</td>
+    </tr>
+  `).join('');
+};
 
 // ============================================================================
-// 7. XỬ LÝ CHỌN ẢNH TỪ MÁY TÍNH BẰNG CHOOSE FILE (FILEREADER)
+// 7. XỬ LÝ CHỌN ẢNH TỪ MÁY TÍNH (FILEREADER API)
 // ============================================================================
-function xuLyChonAnhSanPham(event) {
-  const file = event.target.files[0];
+
+/**
+ * Đọc file ảnh từ máy tính chuyển đổi sang chuỗi Base64:
+ * Sử dụng FileReader.readAsDataURL() và kiểm tra dung lượng tối đa 1.5MB để bảo vệ CSDL.
+ * @param {Event} event - Sự kiện change của thẻ input file
+ */
+const xuLyChonAnhSanPham = (event) => {
+  const file = event.target.files?.[0];
   if (!file) return;
 
   if (!file.type.startsWith('image/')) {
@@ -323,50 +406,57 @@ function xuLyChonAnhSanPham(event) {
     return;
   }
 
+  // Chặn tệp ảnh vượt quá 1.5MB để tránh lag ứng dụng
+  if (file.size > 1.5 * 1024 * 1024) {
+    hienThongBao('Ảnh quá lớn (>1.5MB)! Vui lòng chọn ảnh dung lượng nhẹ hơn.', true);
+    event.target.value = '';
+    return;
+  }
+
   const reader = new FileReader();
-  reader.onload = function (e) {
+  reader.onload = (e) => {
     anhSanPhamBase64 = e.target.result;
-    const previewBox = document.getElementById('product-img-preview');
-    const previewImg = document.getElementById('preview-product-thumb');
+    const previewBox = $('#product-img-preview');
+    const previewImg = $('#preview-product-thumb');
     if (previewBox && previewImg) {
       previewImg.src = anhSanPhamBase64;
       previewBox.style.display = 'flex';
     }
   };
   reader.readAsDataURL(file);
-}
+};
 
 // ============================================================================
-// 8. CÁC HÀM THAO TÁC MODAL THÊM / SỬA / XÓA SẢN PHẨM & DANH MỤC
+// 8. CRUD SẢN PHẨM & QUẢN LÝ MODAL (PRODUCT MANAGEMENT)
 // ============================================================================
 
-function moFormThemSanPham() {
+const moFormThemSanPham = () => {
   idSanPhamDangSua = null;
   anhSanPhamBase64 = '';
-  document.getElementById('product-form').reset();
-  document.getElementById('form-product-id').value = '';
-  document.getElementById('product-modal-title').textContent = 'Thêm Sản Phẩm Mới';
-  document.getElementById('product-img-preview').style.display = 'none';
-  document.getElementById('product-modal').classList.add('open');
-}
+  $('#product-form')?.reset();
+  if ($('#form-product-id')) $('#form-product-id').value = '';
+  $('#product-modal-title').textContent = 'Thêm Sản Phẩm Mới';
+  if ($('#product-img-preview')) $('#product-img-preview').style.display = 'none';
+  $('#product-modal')?.classList.add('open');
+};
 
-function moFormSuaSanPham(id) {
-  const sp = danhSachSanPham.find(function (item) { return String(item.id) === String(id); });
+const moFormSuaSanPham = (id) => {
+  const sp = danhSachSanPham.find(item => String(item.id) === String(id));
   if (!sp) return;
 
   idSanPhamDangSua = String(sp.id);
   anhSanPhamBase64 = sp.image || '';
 
-  document.getElementById('product-modal-title').textContent = 'Sửa Sản Phẩm #' + sp.id;
-  document.getElementById('form-product-id').value = sp.id;
-  document.getElementById('form-product-name').value = sp.name;
-  document.getElementById('form-product-cate').value = sp.cate_id;
-  document.getElementById('form-product-price').value = sp.price;
-  document.getElementById('form-product-qty').value = sp.quantity || 10;
-  document.getElementById('form-product-detail').value = sp.detail || '';
+  $('#product-modal-title').textContent = `Sửa Sản Phẩm #${sp.id}`;
+  $('#form-product-id').value = sp.id;
+  $('#form-product-name').value = sp.name;
+  $('#form-product-cate').value = sp.cate_id;
+  $('#form-product-price').value = sp.price;
+  $('#form-product-qty').value = sp.quantity || 10;
+  $('#form-product-detail').value = sp.detail || '';
 
-  const previewBox = document.getElementById('product-img-preview');
-  const previewImg = document.getElementById('preview-product-thumb');
+  const previewBox = $('#product-img-preview');
+  const previewImg = $('#preview-product-thumb');
   if (previewBox && previewImg) {
     if (anhSanPhamBase64) {
       previewImg.src = anhSanPhamBase64;
@@ -376,169 +466,177 @@ function moFormSuaSanPham(id) {
     }
   }
 
-  document.getElementById('product-modal').classList.add('open');
-}
+  $('#product-modal')?.classList.add('open');
+};
 
-function dongModalSanPham() {
-  document.getElementById('product-modal').classList.remove('open');
-  document.getElementById('product-form').reset();
+const dongModalSanPham = () => {
+  $('#product-modal')?.classList.remove('open');
+  $('#product-form')?.reset();
   idSanPhamDangSua = null;
   anhSanPhamBase64 = '';
-}
+};
 
-async function xuLyLuuSanPham(event) {
+/**
+ * Lưu sản phẩm (Thêm mới qua POST hoặc Cập nhật qua PUT).
+ * @param {Event} event - Sự kiện submit form
+ */
+const xuLyLuuSanPham = async (event) => {
   event.preventDefault();
 
-  const name = document.getElementById('form-product-name').value.trim();
-  const cate_id = document.getElementById('form-product-cate').value;
-  const price = Number(document.getElementById('form-product-price').value);
-  const quantity = Number(document.getElementById('form-product-qty').value);
-  const detail = document.getElementById('form-product-detail').value.trim();
-  const image = anhSanPhamBase64 || 'https://picsum.photos/300/300';
+  const name = $('#form-product-name')?.value.trim();
+  const cate_id = $('#form-product-cate')?.value;
+  const price = Number($('#form-product-price')?.value) || 0;
+  const quantity = Number($('#form-product-qty')?.value) || 0;
+  const detail = $('#form-product-detail')?.value.trim();
+  const image = anhSanPhamBase64 || ANH_MAC_DINH_ADMIN;
 
   if (!name || price <= 0) {
-    hienThongBao('Vui lòng nhập tên và giá bán lớn hơn 0!', true);
+    hienThongBao('Vui lòng nhập tên và giá bán hợp lệ lớn hơn 0!', true);
     return;
   }
 
-  const payload = {
-    name: name,
-    cate_id: cate_id,
-    price: price,
-    quantity: quantity,
-    detail: detail,
-    image: image
-  };
+  const payload = { name, cate_id, price, quantity, detail, image };
 
   try {
     if (idSanPhamDangSua) {
-      // SỬA SẢN PHẨM (PUT)
       payload.id = idSanPhamDangSua;
-      await fetch(`${API_PRODUCTS}/${idSanPhamDangSua}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      await apiFetch(`${API_PRODUCTS}/${idSanPhamDangSua}`, 'PUT', payload);
       hienThongBao(`Đã cập nhật sản phẩm "${name}"!`);
     } else {
-      // THÊM MỚI (POST)
       payload.id = String(Date.now());
-      await fetch(API_PRODUCTS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      await apiFetch(API_PRODUCTS, 'POST', payload);
       hienThongBao(`Đã thêm mới sản phẩm "${name}"!`);
     }
 
     dongModalSanPham();
-    taiSanPhamAdmin();
+    await taiSanPhamAdmin();
     capNhatThongKe();
   } catch (err) {
     console.error('Lỗi lưu sản phẩm:', err);
-    hienThongBao('Không thể lưu sản phẩm!', true);
+    hienThongBao('Không thể lưu sản phẩm, vui lòng kiểm tra server!', true);
   }
-}
+};
 
-async function xoaSanPham(id) {
+/**
+ * Xóa một sản phẩm thông qua phương thức DELETE.
+ * @param {string|number} id - ID sản phẩm
+ */
+const xoaSanPham = async (id) => {
   if (!confirm(`Bạn có chắc chắn muốn xóa sản phẩm #${id}?`)) return;
 
   try {
-    await fetch(`${API_PRODUCTS}/${id}`, { method: 'DELETE' });
+    await apiFetch(`${API_PRODUCTS}/${id}`, 'DELETE');
     hienThongBao(`Đã xóa sản phẩm #${id}!`);
-    taiSanPhamAdmin();
+    await taiSanPhamAdmin();
     capNhatThongKe();
   } catch (err) {
     console.error('Lỗi xóa sản phẩm:', err);
     hienThongBao('Xóa sản phẩm thất bại!', true);
   }
-}
+};
 
-// Thao tác Danh mục
-function moFormThemDanhMuc() {
-  document.getElementById('category-form').reset();
-  document.getElementById('category-modal').classList.add('open');
-}
+// ============================================================================
+// 9. CRUD DANH MỤC THƯƠNG HIỆU (CATEGORY MANAGEMENT & INTEGRITY CHECK)
+// ============================================================================
 
-function dongModalDanhMuc() {
-  document.getElementById('category-modal').classList.remove('open');
-}
+const moFormThemDanhMuc = () => {
+  $('#category-form')?.reset();
+  $('#category-modal')?.classList.add('open');
+};
 
-async function xuLyLuuDanhMuc(event) {
+const dongModalDanhMuc = () => $('#category-modal')?.classList.remove('open');
+
+/**
+ * Thêm danh mục thương hiệu mới qua POST /categories.
+ * @param {Event} event - Sự kiện submit form
+ */
+const xuLyLuuDanhMuc = async (event) => {
   event.preventDefault();
-  const name = document.getElementById('form-category-name').value.trim();
+  const name = $('#form-category-name')?.value.trim();
   if (!name) return;
 
   const payload = {
     id: String(Date.now()),
-    name: name,
+    name,
     parent_id: "0"
   };
 
   try {
-    await fetch(API_CATEGORIES, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    await apiFetch(API_CATEGORIES, 'POST', payload);
     dongModalDanhMuc();
-    taiDanhMucAdmin();
+    await taiDanhMucAdmin();
     hienThongBao(`Đã thêm thương hiệu "${name}"!`);
   } catch (err) {
     console.error('Lỗi lưu danh mục:', err);
     hienThongBao('Không thể thêm danh mục!', true);
   }
-}
+};
 
-async function xoaDanhMuc(id) {
+/**
+ * Xóa danh mục thương hiệu:
+ * Bắt buộc kiểm tra tính toàn vẹn quan hệ (Data Integrity Constraint):
+ * Nếu vẫn còn sản phẩm mang cate_id của danh mục này, hệ thống sẽ ngăn chặn việc xóa.
+ * @param {string|number} id - ID danh mục
+ */
+const xoaDanhMuc = async (id) => {
+  const sanPhamThuocDanhMuc = danhSachSanPham.filter(sp => String(sp.cate_id) === String(id));
+  if (sanPhamThuocDanhMuc.length > 0) {
+    hienThongBao(`Không thể xóa! Có ${sanPhamThuocDanhMuc.length} sản phẩm đang thuộc thương hiệu này. Vui lòng chuyển hoặc xóa các sản phẩm đó trước!`, true);
+    return;
+  }
+
   if (!confirm(`Bạn có chắc muốn xóa thương hiệu #${id}?`)) return;
+
   try {
-    await fetch(`${API_CATEGORIES}/${id}`, { method: 'DELETE' });
+    await apiFetch(`${API_CATEGORIES}/${id}`, 'DELETE');
     hienThongBao(`Đã xóa thương hiệu #${id}!`);
-    taiDanhMucAdmin();
+    await taiDanhMucAdmin();
   } catch (err) {
     console.error('Lỗi xóa danh mục:', err);
+    hienThongBao('Không thể xóa danh mục!', true);
   }
-}
+};
+
+// Gắn các hàm tương tác ra đối tượng Window để các nút HTML inline (onclick) gọi được
+window.moFormSuaSanPham = moFormSuaSanPham;
+window.xoaSanPham = xoaSanPham;
+window.xoaDanhMuc = xoaDanhMuc;
 
 // ============================================================================
-// 9. KHỞI TẠO VÀ GẮN SỰ KIỆN KHI MỞ TRANG ADMIN (INIT)
+// 10. KHỞI TẠO VÀ GẮN SỰ KIỆN KHI MỞ TRANG ADMIN (APPLICATION BOOTSTRAP)
 // ============================================================================
-document.addEventListener('DOMContentLoaded', function () {
-  // 1. Kiểm tra trạng thái đăng nhập
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Kiểm tra quyền hạn và trạng thái đăng nhập Admin
   kiemTraDangNhapAdmin();
 
-  // 2. Sự kiện đăng nhập & đăng xuất
-  document.getElementById('admin-login-form')?.addEventListener('submit', xuLyDangNhapAdmin);
-  document.getElementById('btn-admin-logout')?.addEventListener('click', dangXuatAdmin);
+  // 2. Gắn sự kiện biểu mẫu đăng nhập & đăng xuất
+  $('#admin-login-form')?.addEventListener('submit', xuLyDangNhapAdmin);
+  $('#btn-admin-logout')?.addEventListener('click', dangXuatAdmin);
 
-  // 3. Chuyển đổi tab con trong Admin (Sản phẩm, Danh mục, Đơn hàng, Khách hàng)
-  const adminTabBtns = document.querySelectorAll('.admin-tab-btn');
-  const adminSubPanels = document.querySelectorAll('.admin-subpanel');
-  adminTabBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      adminTabBtns.forEach(function (b) { b.classList.remove('active'); });
-      adminSubPanels.forEach(function (p) { p.style.display = 'none'; });
+  // 3. Chuyển đổi các tab bảng con trong Dashboard (Sản phẩm, Danh mục, Đơn hàng, Khách hàng)
+  $$('.admin-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+      $$('.admin-subpanel').forEach(p => p.style.display = 'none');
 
       btn.classList.add('active');
-      const subtabId = btn.getAttribute('data-subtab');
-      const targetSubpanel = document.getElementById(subtabId);
+      const targetSubpanel = $(`#${btn.dataset.subtab}`);
       if (targetSubpanel) targetSubpanel.style.display = 'block';
     });
   });
 
-  // 4. Sự kiện Modal Sản Phẩm & Danh Mục
-  document.getElementById('btn-admin-add-product')?.addEventListener('click', moFormThemSanPham);
-  document.getElementById('btn-admin-add-category')?.addEventListener('click', moFormThemDanhMuc);
+  // 4. Sự kiện Modal Sản phẩm & Danh mục
+  $('#btn-admin-add-product')?.addEventListener('click', moFormThemSanPham);
+  $('#btn-admin-add-category')?.addEventListener('click', moFormThemDanhMuc);
 
-  document.getElementById('btn-close-product-modal')?.addEventListener('click', dongModalSanPham);
-  document.getElementById('btn-cancel-product-modal')?.addEventListener('click', dongModalSanPham);
-  document.getElementById('product-form')?.addEventListener('submit', xuLyLuuSanPham);
+  $('#btn-close-product-modal')?.addEventListener('click', dongModalSanPham);
+  $('#btn-cancel-product-modal')?.addEventListener('click', dongModalSanPham);
+  $('#product-form')?.addEventListener('submit', xuLyLuuSanPham);
 
-  document.getElementById('btn-close-category-modal')?.addEventListener('click', dongModalDanhMuc);
-  document.getElementById('btn-cancel-category-modal')?.addEventListener('click', dongModalDanhMuc);
-  document.getElementById('category-form')?.addEventListener('submit', xuLyLuuDanhMuc);
+  $('#btn-close-category-modal')?.addEventListener('click', dongModalDanhMuc);
+  $('#btn-cancel-category-modal')?.addEventListener('click', dongModalDanhMuc);
+  $('#category-form')?.addEventListener('submit', xuLyLuuDanhMuc);
 
-  // Chọn ảnh sản phẩm từ máy tính (Choose File)
-  document.getElementById('form-product-file')?.addEventListener('change', xuLyChonAnhSanPham);
+  // 5. Sự kiện tải ảnh từ máy tính (FileReader)
+  $('#form-product-file')?.addEventListener('change', xuLyChonAnhSanPham);
 });
