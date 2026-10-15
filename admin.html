@@ -122,6 +122,12 @@
 
       <!-- Bảng 1: Quản lý Sản phẩm -->
       <div id="admin-tab-products" class="admin-subpanel" style="display: block;">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input type="text" id="admin-search-product" class="search-input" placeholder="Tìm sản phẩm theo tên..." style="max-width: 280px;" />
+          <select id="admin-filter-category" class="select-box" style="max-width: 200px;">
+            <option value="">Tất cả thương hiệu</option>
+          </select>
+        </div>
         <div class="admin-table-box">
           <table class="admin-table">
             <thead>
@@ -167,12 +173,13 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Mã ĐH</th>
+                <th style="width: 110px;">Mã ĐH</th>
                 <th>Khách hàng</th>
                 <th>Số điện thoại</th>
                 <th>Tổng tiền</th>
                 <th>Ngày đặt</th>
-                <th>Trạng thái</th>
+                <th style="width: 170px;">Trạng thái</th>
+                <th style="width: 130px;">Hành động</th>
               </tr>
             </thead>
             <tbody id="admin-order-tbody">
@@ -282,6 +289,22 @@
           <button type="submit" class="btn-primary">Lưu danh mục</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL XEM CHI TIẾT ĐƠN HÀNG (ADMIN) ================= -->
+  <div id="admin-order-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="admin-order-modal-title" class="modal-title">Chi Tiết Đơn Hàng</h3>
+        <button class="btn-close-modal" id="btn-close-order-modal">&times;</button>
+      </div>
+      <div id="admin-order-detail-content" style="margin-top: 15px;">
+        <!-- Dữ liệu chi tiết đơn hàng đổ từ JavaScript -->
+      </div>
+      <div class="modal-footer" style="margin-top: 20px;">
+        <button type="button" class="btn-secondary" id="btn-close-order-detail">Đóng Cửa Sổ</button>
+      </div>
     </div>
   </div>
 

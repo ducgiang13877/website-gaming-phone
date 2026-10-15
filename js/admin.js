@@ -1,97 +1,122 @@
 /**
  * ============================================================================
- * JAVASCRIPT BẢNG QUẢN TRỊ ADMIN (ADMIN APP - admin.js) - BẢN TỐI ƯU HIỆN ĐẠI
+ * TỆP JAVASCRIPT QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN PANEL - js/admin.js)
  * ============================================================================
  * Dự án: Website Gaming Phone (SmartStore)
  * Môn học: Lập trình JavaScript Nâng Cao (WEB2064)
  * 
- * ĐẶC ĐIỂM KIẾN TRÚC & CÔNG NGHỆ ÁP DỤNG:
- * - Chuẩn cú pháp ECMAScript 2020+ (ES6+): Arrow Functions, Destructuring, Optional Chaining (?.), Nullish Coalescing (??).
- * - Các hàm có sẵn hiện đại: Intl.NumberFormat (tiền tệ chuẩn VNĐ), Promise.all (nạp dữ liệu song song), Array.prototype.reduce (thống kê KPI chuẩn).
- * - FileReader API: Chuyển đổi tệp ảnh máy tính sang Base64 có kiểm soát kích thước tối đa (1.5MB) tránh tràn bộ nhớ CSDL.
- * - Ràng buộc toàn vẹn dữ liệu quan hệ: Ngăn chặn xóa danh mục khi vẫn còn sản phẩm con trực thuộc.
- * - Bảo mật XSS: Mã hóa an toàn mọi chuỗi ký tự hiển thị trên các bảng quản trị.
+ * PHONG CÁCH VIẾT CODE DÀNH CHO SINH VIÊN:
+ * 1. Mã nguồn tối ưu, hiện đại, chuẩn ES6+ nhưng cấu trúc cực kỳ rõ ràng, dễ tiếp thu.
+ * 2. Đầy đủ các tính năng nâng cao:
+ *    - Tự động tăng ID sản phẩm (+1) khi thêm sản phẩm mới (không dùng Date.now()).
+ *    - Đầy đủ chức năng CRUD sản phẩm (Thêm, Sửa, Xóa, Tìm kiếm & Lọc theo hãng).
+ *    - Quản lý trạng thái đơn hàng linh hoạt: "Đang xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy".
+ *    - Xem modal chi tiết các món hàng và địa chỉ giao hàng trong từng đơn.
+ *    - Báo cáo thống kê KPI tự động: Doanh thu, Đã bán, Tồn kho, Đơn hàng.
+ * 3. Chú thích (comment) chi tiết, sư phạm, giải thích từng dòng lệnh và luồng hoạt động.
+ * ============================================================================
  */
 
 // ============================================================================
-// 1. CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
+// PHẦN 1: CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
 // ============================================================================
-/**
- * Địa chỉ gốc của máy chủ Mock API (JSON-Server chạy trên cổng 3000).
- */
+
+// Địa chỉ gốc của máy chủ Mock API JSON-Server (chạy cổng 3000)
 const API_BASE = 'http://localhost:3000';
-const API_PRODUCTS = `${API_BASE}/products`;
-const API_CATEGORIES = `${API_BASE}/categories`;
-const API_ORDERS = `${API_BASE}/orders`;
-const API_USERS = `${API_BASE}/users`;
+
+// Các đường dẫn API quản trị tương ứng
+const API_PRODUCTS = `${API_BASE}/products`;      // Quản lý sản phẩm
+const API_CATEGORIES = `${API_BASE}/categories`;  // Quản lý thương hiệu
+const API_ORDERS = `${API_BASE}/orders`;          // Quản lý đơn hàng
+const API_USERS = `${API_BASE}/users`;            // Quản lý người dùng
+
+// Ảnh thay thế mặc định khi sản phẩm chưa có ảnh hoặc lỗi URL
+const ANH_MAC_DINH_ADMIN = 'https://picsum.photos/50/50';
+
+// Khóa lưu trạng thái đăng nhập của Admin vào localStorage
+const KEY_ADMIN_LOGGED = 'smartstore_admin_logged';
+
+// ============================================================================
+// PHẦN 2: CÁC BIẾN QUẢN LÝ TRẠNG THÁI (ADMIN STATE MANAGEMENT)
+// ============================================================================
+
+let danhSachSanPham = [];    // Mảng lưu danh sách sản phẩm lấy từ server
+let danhSachDanhMuc = [];    // Mảng lưu danh mục thương hiệu
+let danhSachDonHang = [];    // Mảng lưu toàn bộ đơn đặt hàng của khách
+let danhSachKhachHang = [];  // Mảng lưu danh sách tài khoản người dùng
+
+let idSanPhamDangSua = null; // ID của sản phẩm đang được sửa (null nếu là thêm mới)
+let idDanhMucDangSua = null; // ID của danh mục đang được sửa (null nếu thêm mới)
+let anhSanPhamBase64 = '';   // Chuỗi ảnh dạng Base64 khi admin chọn tải ảnh từ máy tính
+let timerToastAdmin = null;  // Bộ đếm thời gian cho thông báo Toast
+
+// ============================================================================
+// PHẦN 3: CÁC HÀM TIỆN ÍCH DÙNG CHUNG (UTILITIES)
+// ============================================================================
 
 /**
- * Ảnh thumbnail đại diện mặc định cho bảng quản trị khi ảnh sản phẩm bị lỗi URL.
- */
-const ANH_MAC_DINH_ADMIN = 'https://picsum.photos/40/40';
-
-// ============================================================================
-// 2. BIẾN TRẠNG THÁI QUẢN TRỊ (ADMIN STATE MANAGEMENT)
-// ============================================================================
-let danhSachSanPham = [];      // Danh sách sản phẩm quản trị
-let danhSachDanhMuc = [];      // Danh sách thương hiệu điện thoại
-let danhSachDonHang = [];      // Danh sách đơn hàng từ khách
-let danhSachKhachHang = [];    // Danh sách tài khoản người dùng
-
-let idSanPhamDangSua = null;   // ID sản phẩm đang trong chế độ chỉnh sửa (null nếu thêm mới)
-let anhSanPhamBase64 = '';     // Chuỗi Base64 của ảnh sản phẩm tải lên từ máy tính
-let toastTimeoutAdmin = null;  // Định danh bộ đếm thời gian thông báo Toast Admin
-
-// ============================================================================
-// 3. CÁC HÀM TIỆN ÍCH DÙNG CHUNG (UTILITY FUNCTIONS)
-// ============================================================================
-
-/**
- * DOM Selector Helper ($): Rút gọn cú pháp document.getElementById và document.querySelector.
- * @param {string} selector - ID hoặc CSS Selector
+ * Hàm hỗ trợ lấy phần tử HTML nhanh theo ID hoặc CSS Selector ($)
+ * @param {string} selector - ID hoặc chuỗi selector CSS
  * @returns {HTMLElement|null}
  */
 const $ = (selector) => {
   if (typeof selector !== 'string') return null;
-  const isSimpleId = !selector.includes(' ') && !selector.includes('.') && !selector.includes('[');
-  return isSimpleId ? document.getElementById(selector.replace(/^#/, '')) : document.querySelector(selector);
+  const laIdDonGian = !selector.includes(' ') && !selector.includes('.') && !selector.includes('[');
+  return laIdDonGian 
+    ? document.getElementById(selector.replace(/^#/, '')) 
+    : document.querySelector(selector);
 };
 
 /**
- * DOM Selector All Helper ($$): Rút gọn cú pháp document.querySelectorAll.
- * @param {string} selector - CSS Selector
+ * Hàm hỗ trợ lấy danh sách nhiều phần tử HTML ($$)
+ * @param {string} selector - Chuỗi CSS Selector
  * @returns {NodeListOf<HTMLElement>}
  */
 const $$ = (selector) => document.querySelectorAll(selector);
 
 /**
- * Hàm gọi API dùng chung (API Fetch Wrapper):
- * Đóng gói Fetch API, thiết lập Header JSON và xử lý lỗi mạng tập trung.
- * @param {string} url - Endpoint API
- * @param {string} [method='GET'] - Phương thức HTTP (GET, POST, PUT, DELETE)
- * @param {object|null} [data=null] - Payload dữ liệu
+ * Hàm gọi dữ liệu API chung (Fetch Wrapper)
+ * Tác dụng: Tự động thiết lập method, header JSON, stringify dữ liệu và kiểm tra lỗi HTTP
+ * @param {string} url - Đường dẫn API
+ * @param {string} phuongThuc - 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'
+ * @param {object|null} duLieu - Dữ liệu payload gửi lên server
  * @returns {Promise<any>}
  */
-const apiFetch = async (url, method = 'GET', data = null) => {
-  const options = {
-    method,
+const goiApi = async (url, phuongThuc = 'GET', duLieu = null) => {
+  const cauHinh = {
+    method: phuongThuc,
     headers: { 'Content-Type': 'application/json' }
   };
-  if (data) options.body = JSON.stringify(data);
+  if (duLieu !== null) {
+    cauHinh.body = JSON.stringify(duLieu);
+  }
 
-  const res = await fetch(url, options);
+  const res = await fetch(url, cauHinh);
   if (!res.ok) {
-    throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
+    throw new Error(`Lỗi API (${res.status}): ${res.statusText}`);
   }
   return res.json();
 };
 
 /**
- * Phòng chống tấn công XSS bằng RegEx thay thế ký tự điều khiển thành HTML entities.
- * @param {any} str - Dữ liệu chuỗi đầu vào
- * @returns {string} Chuỗi an toàn
+ * Hàm định dạng số tiền sang chuẩn Việt Nam Đồng (VNĐ)
+ * @param {number|string} soTien - Giá trị số tiền
+ * @returns {string} Chuỗi tiền đã định dạng
  */
-const escapeHTML = (str) => {
+const dinhDangTien = (soTien) => {
+  const giaTri = Number(soTien) || 0;
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(giaTri);
+};
+
+/**
+ * Hàm làm sạch chuỗi HTML phòng chống tấn công XSS
+ * @param {any} str - Chuỗi nhập từ bên ngoài
+ * @returns {string}
+ */
+const lamSachHtml = (str) => {
   if (str == null) return '';
   return String(str)
     .replace(/&/g, '&amp;')
@@ -102,541 +127,954 @@ const escapeHTML = (str) => {
 };
 
 /**
- * Định dạng tiền tệ VNĐ chuẩn quốc tế sử dụng Intl.NumberFormat('vi-VN').
- * @param {number|string} soTien - Số tiền cần định dạng
- * @returns {string}
+ * Hàm hiển thị thông báo Toast góc màn hình Admin
+ * @param {string} noiDung - Lời nhắn
+ * @param {string} loai - 'success', 'error', 'warning', 'info'
  */
-const dinhDangTien = (soTien) => 
-  new Intl.NumberFormat('vi-VN').format(Number(soTien) || 0) + ' đ';
-
-/**
- * Hiển thị thông báo Toast góc màn hình có tự hủy hẹn giờ cũ (Debounce).
- * @param {string} noiDung - Nội dung thông báo
- * @param {boolean} [laLoi=false] - Cờ thông báo lỗi hay thành công
- */
-const hienThongBao = (noiDung, laLoi = false) => {
-  const toast = $('#toast');
+const hienThiThongBaoAdmin = (noiDung, loai = 'info') => {
+  const toast = $('toast');
   if (!toast) return;
 
-  toast.textContent = noiDung;
-  toast.className = `toast-notice show${laLoi ? ' error' : ''}`;
+  if (timerToastAdmin) clearTimeout(timerToastAdmin);
 
-  if (toastTimeoutAdmin) clearTimeout(toastTimeoutAdmin);
-  toastTimeoutAdmin = setTimeout(() => {
-    toast.className = 'toast-notice';
+  const bieuTuong = {
+    success: '<i class="fas fa-circle-check"></i>',
+    error: '<i class="fas fa-circle-xmark"></i>',
+    warning: '<i class="fas fa-triangle-exclamation"></i>',
+    info: '<i class="fas fa-circle-info"></i>'
+  }[loai] || '<i class="fas fa-circle-info"></i>';
+
+  toast.innerHTML = `${bieuTuong} <span>${lamSachHtml(noiDung)}</span>`;
+  toast.className = `toast-notice toast-${loai} show`;
+
+  timerToastAdmin = setTimeout(() => {
+    toast.classList.remove('show');
   }, 3000);
 };
 
 // ============================================================================
-// 4. MODULE XÁC THỰC & PHÂN QUYỀN ADMIN (ADMIN AUTHENTICATION)
+// PHẦN 4: THUẬT TOÁN TỰ ĐỘNG TĂNG ID SẢN PHẨM (+1) (AUTO-INCREMENT ID)
 // ============================================================================
 
 /**
- * Kiểm tra phiên đăng nhập của Quản trị viên trong LocalStorage:
- * Nếu đã đăng nhập và có role === 'admin', mở thẳng bảng điều khiển Dashboard.
+ * Hàm tự động tính toán ID cho sản phẩm mới theo quy tắc TỰ ĐỘNG TĂNG +1:
+ * Luồng hoạt động:
+ * 1. Duyệt qua mảng danhSachSanPham hiện tại bằng hàm .map().
+ * 2. Chuyển đổi thuộc tính sp.id sang số nguyên bằng parseInt(sp.id, 10).
+ * 3. Lọc bỏ các giá trị không phải số (NaN) bằng hàm .filter().
+ * 4. Tìm số ID lớn nhất trong mảng bằng toán tử Spread (...): Math.max(...danhSachIdSo).
+ * 5. Nếu chưa có sản phẩm nào (mảng rỗng) thì ID lớn nhất là 0.
+ * 6. ID mới = ID lớn nhất + 1.
+ * 7. Trả về ID mới dưới dạng chuỗi (String) để chuẩn hóa theo chuẩn REST API của JSON-Server.
+ * 
+ * Ví dụ: Các ID hiện tại là ["1", "2", "3", "5"] -> max là 5 -> ID mới sẽ là "6".
+ * 
+ * @returns {string} Chuỗi ID tự động tăng mới
+ */
+const taoIdSanPhamMoi = () => {
+  // Lấy danh sách các ID số hợp lệ
+  const danhSachIdSo = danhSachSanPham
+    .map(sp => parseInt(sp.id, 10))
+    .filter(id => !isNaN(id) && id > 0);
+
+  // Tìm ID lớn nhất hiện tại
+  const idLonNhat = danhSachIdSo.length > 0 ? Math.max(...danhSachIdSo) : 0;
+
+  // Cộng thêm 1 để ra ID sản phẩm tiếp theo
+  const idMoi = idLonNhat + 1;
+
+  // Trả về dạng chuỗi
+  return String(idMoi);
+};
+
+// ============================================================================
+// PHẦN 5: KIỂM TRA ĐĂNG NHẬP VÀ KHỞI TẠO DỮ LIỆU ADMIN DASHBOARD
+// ============================================================================
+
+/**
+ * Kiểm tra xem người dùng đã đăng nhập tài khoản quản trị Admin hay chưa
  */
 const kiemTraDangNhapAdmin = () => {
-  const savedAdmin = localStorage.getItem('smartstore_admin');
-  const loginScreen = $('#admin-login-screen');
-  const dashboardScreen = $('#admin-dashboard-screen');
-  const loggedName = $('#admin-logged-name');
+  const adminDaDangNhap = localStorage.getItem(KEY_ADMIN_LOGGED);
+  const manHinhDangNhap = $('admin-login-screen');
+  const manHinhDashboard = $('admin-dashboard-screen');
 
-  if (savedAdmin) {
-    try {
-      const admin = JSON.parse(savedAdmin);
-      if (admin?.role === 'admin') {
-        if (loginScreen) loginScreen.style.display = 'none';
-        if (dashboardScreen) dashboardScreen.style.display = 'block';
-        if (loggedName) loggedName.textContent = admin.name;
-        taiDuLieuAdmin();
-        return;
-      }
-    } catch {
-      localStorage.removeItem('smartstore_admin');
-    }
-  }
-
-  if (loginScreen) loginScreen.style.display = 'flex';
-  if (dashboardScreen) dashboardScreen.style.display = 'none';
-};
-
-/**
- * Xử lý biểu mẫu Đăng Nhập dành riêng cho Admin:
- * Kiểm tra tài khoản có role === 'admin' từ máy chủ.
- * @param {Event} event - Sự kiện submit form
- */
-const xuLyDangNhapAdmin = async (event) => {
-  event.preventDefault();
-  const email = ($('#admin-email')?.value ?? '').trim().toLowerCase();
-  const password = ($('#admin-password')?.value ?? '').trim();
-
-  try {
-    const users = await apiFetch(API_USERS);
-    const adminUser = users.find(u => 
-      u.email.toLowerCase() === email && 
-      String(u.password) === password && 
-      u.role === 'admin'
-    );
-
-    if (!adminUser) {
-      hienThongBao('Tài khoản hoặc mật khẩu không chính xác hoặc bạn không có quyền Admin!', true);
-      return;
-    }
-
-    localStorage.setItem('smartstore_admin', JSON.stringify(adminUser));
-    hienThongBao('Đăng nhập Quản trị viên thành công!');
-    kiemTraDangNhapAdmin();
-  } catch (err) {
-    console.error('Lỗi đăng nhập admin:', err);
-    hienThongBao('Không thể kết nối đến máy chủ xác thực tài khoản!', true);
+  if (adminDaDangNhap === 'true') {
+    if (manHinhDangNhap) manHinhDangNhap.style.display = 'none';
+    if (manHinhDashboard) manHinhDashboard.style.display = 'block';
+    taiToanBoDuLieuAdmin();
+  } else {
+    if (manHinhDangNhap) manHinhDangNhap.style.display = 'flex';
+    if (manHinhDashboard) manHinhDashboard.style.display = 'none';
   }
 };
 
 /**
- * Đăng xuất tài khoản Quản trị viên.
+ * Tải toàn bộ dữ liệu quản trị từ máy chủ (Sản phẩm, Danh mục, Đơn hàng, Khách hàng)
+ * Sử dụng Promise.all để gọi đồng thời 4 API, giúp trang tải nhanh nhất có thể.
  */
-const dangXuatAdmin = () => {
-  localStorage.removeItem('smartstore_admin');
-  hienThongBao('Đã đăng xuất Quản trị viên.');
-  kiemTraDangNhapAdmin();
-};
-
-// ============================================================================
-// 5. TẢI DỮ LIỆU ĐỒNG THỜI & BÁO CÁO THỐNG KÊ (DATA & KPIS)
-// ============================================================================
-
-/**
- * Nạp đồng thời toàn bộ dữ liệu hệ thống sử dụng hàm Promise.all() hiện đại:
- * Giúp giảm tối đa thời gian chờ mạng so với việc gọi các hàm tuần tự (Sequential Await).
- */
-const taiDuLieuAdmin = async () => {
-  await Promise.all([
-    taiDanhMucAdmin(),
-    taiSanPhamAdmin(),
-    taiDonHangAdmin(),
-    taiKhachHangAdmin()
-  ]);
-  capNhatThongKe();
-};
-
-const taiDanhMucAdmin = async () => {
+const taiToanBoDuLieuAdmin = async () => {
   try {
-    danhSachDanhMuc = await apiFetch(API_CATEGORIES);
-    const selectBox = $('#form-product-cate');
-    if (selectBox) {
-      selectBox.innerHTML = danhSachDanhMuc.map(({ id, name }) => 
-        `<option value="${escapeHTML(id)}">${escapeHTML(name)}</option>`
-      ).join('');
-    }
-    hienThiDanhMucAdmin();
-  } catch (err) {
-    console.error('Lỗi khi tải danh mục admin:', err);
-  }
-};
+    const [duLieuSP, duLieuDM, duLieuDH, duLieuKH] = await Promise.all([
+      goiApi(API_PRODUCTS),
+      goiApi(API_CATEGORIES),
+      goiApi(API_ORDERS),
+      goiApi(API_USERS)
+    ]);
 
-const taiSanPhamAdmin = async () => {
-  try {
-    danhSachSanPham = await apiFetch(API_PRODUCTS);
-    hienThiSanPhamAdmin();
-  } catch (err) {
-    console.error('Lỗi khi tải sản phẩm admin:', err);
-  }
-};
+    danhSachSanPham = Array.isArray(duLieuSP) ? duLieuSP : [];
+    danhSachDanhMuc = Array.isArray(duLieuDM) ? duLieuDM : [];
+    danhSachDonHang = Array.isArray(duLieuDH) ? duLieuDH : [];
+    danhSachKhachHang = Array.isArray(duLieuKH) ? duLieuKH : [];
 
-const taiDonHangAdmin = async () => {
-  try {
-    danhSachDonHang = await apiFetch(API_ORDERS);
-    hienThiDonHangAdmin();
-  } catch (err) {
-    console.error('Lỗi khi tải đơn hàng admin:', err);
-  }
-};
+    // Cập nhật các bảng và các chỉ số thống kê
+    capNhatThongKeKPI();
+    napDanhMucVaoSelectForm();
+    hienThiBangSanPhamAdmin();
+    hienThiBangDanhMucAdmin();
+    hienThiBangDonHangAdmin();
+    hienThiBangKhachHangAdmin();
 
-const taiKhachHangAdmin = async () => {
-  try {
-    danhSachKhachHang = await apiFetch(API_USERS);
-    hienThiKhachHangAdmin();
-  } catch (err) {
-    console.error('Lỗi khi tải khách hàng admin:', err);
+  } catch (loi) {
+    console.error('Lỗi khi tải dữ liệu Admin:', loi);
+    hienThiThongBaoAdmin('Không thể tải dữ liệu từ JSON-Server! Vui lòng kiểm tra cổng 3000.', 'error');
   }
 };
 
 /**
- * Cập nhật 4 thẻ KPI thống kê hệ thống theo thời gian thực:
- * 1. Tổng doanh thu: Tính tổng trường total_amount của tất cả đơn hàng.
- * 2. Tổng số sản phẩm đã bán: Tính tổng thực tế các món (items.quantity) hoặc items_count từ từng đơn hàng.
- * 3. Hàng tồn kho: Tính tổng trường quantity của toàn bộ các sản phẩm.
- * 4. Tổng đơn hàng: Độ dài mảng danh sách đơn hàng.
+ * Hàm tính toán và hiển thị các số liệu thống kê KPI (Báo cáo doanh thu, sản phẩm)
+ * Luồng hoạt động:
+ * 1. Tổng doanh thu: Tính tổng tiền từ các đơn hàng (loại trừ đơn hàng 'Đã hủy').
+ * 2. Sản phẩm đã bán: Đếm tổng số lượng món hàng từ các đơn hàng hợp lệ.
+ * 3. Hàng tồn kho: Tính tổng trường quantity của tất cả sản phẩm.
+ * 4. Tổng đơn hàng: Đếm tổng số lượng đơn hàng trong hệ thống.
  */
-const capNhatThongKe = () => {
-  const tongDoanhThu = danhSachDonHang.reduce((sum, dh) => sum + (Number(dh.total_amount) || 0), 0);
+const capNhatThongKeKPI = () => {
+  // Lọc ra các đơn hàng hợp lệ (không bị hủy)
+  const donHangHopLe = danhSachDonHang.filter(don => don.status !== 'Đã hủy');
 
-  const tongDaBan = danhSachDonHang.reduce((sum, dh) => {
-    if (dh.items && Array.isArray(dh.items) && dh.items.length > 0) {
-      return sum + dh.items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+  // 1. Tính tổng doanh thu bằng hàm .reduce()
+  const tongDoanhThu = donHangHopLe.reduce((tong, don) => tong + (Number(don.total_price) || 0), 0);
+
+  // 2. Tính tổng số sản phẩm đã bán ra
+  const tongDaBan = donHangHopLe.reduce((tong, don) => {
+    if (Array.isArray(don.items)) {
+      return tong + don.items.reduce((sub, item) => sub + (Number(item.quantity) || 0), 0);
     }
-    return sum + (Number(dh.items_count) || 0);
+    return tong;
   }, 0);
 
-  const tongTonKho = danhSachSanPham.reduce((sum, sp) => sum + (Number(sp.quantity) || 0), 0);
+  // 3. Tính tổng lượng hàng tồn kho hiện có
+  const tongTonKho = danhSachSanPham.reduce((tong, sp) => tong + (Number(sp.quantity) || 0), 0);
+
+  // 4. Tổng số đơn hàng
   const tongDonHang = danhSachDonHang.length;
 
-  if ($('#stat-revenue')) $('#stat-revenue').textContent = dinhDangTien(tongDoanhThu);
-  if ($('#stat-sold')) $('#stat-sold').textContent = tongDaBan;
-  if ($('#stat-stock')) $('#stat-stock').textContent = tongTonKho;
-  if ($('#stat-orders')) $('#stat-orders').textContent = tongDonHang;
+  // Cập nhật lên các thẻ HTML
+  if ($('stat-revenue')) $('stat-revenue').textContent = dinhDangTien(tongDoanhThu);
+  if ($('stat-sold')) $('stat-sold').textContent = tongDaBan.toLocaleString('vi-VN');
+  if ($('stat-stock')) $('stat-stock').textContent = tongTonKho.toLocaleString('vi-VN');
+  if ($('stat-orders')) $('stat-orders').textContent = tongDonHang.toLocaleString('vi-VN');
+};
+
+/**
+ * Đổ danh mục thương hiệu vào các ô select trên form sản phẩm và bộ lọc
+ */
+const napDanhMucVaoSelectForm = () => {
+  const selectCateForm = $('form-product-cate');
+  const selectFilterCate = $('admin-filter-category');
+
+  let optForm = '<option value="">-- Chọn thương hiệu --</option>';
+  let optFilter = '<option value="">Tất cả thương hiệu</option>';
+
+  danhSachDanhMuc.forEach(dm => {
+    optForm += `<option value="${lamSachHtml(dm.id)}">${lamSachHtml(dm.name)}</option>`;
+    optFilter += `<option value="${lamSachHtml(dm.id)}">${lamSachHtml(dm.name)}</option>`;
+  });
+
+  if (selectCateForm) selectCateForm.innerHTML = optForm;
+  if (selectFilterCate) selectFilterCate.innerHTML = optFilter;
 };
 
 // ============================================================================
-// 6. MODULE HIỂN THỊ DỮ LIỆU BẢNG QUẢN TRỊ (TABLE RENDERING)
+// PHẦN 6: QUẢN LÝ SẢN PHẨM (CRUD SẢN PHẨM - CREATE, READ, UPDATE, DELETE)
 // ============================================================================
 
 /**
- * Render bảng danh sách sản phẩm.
+ * READ: Hàm hiển thị bảng danh sách sản phẩm quản trị (kèm tìm kiếm & lọc hãng)
  */
-const hienThiSanPhamAdmin = () => {
-  const tbody = $('#admin-product-tbody');
+const hienThiBangSanPhamAdmin = () => {
+  const tbody = $('admin-product-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = danhSachSanPham.map((sp) => {
-    const hang = danhSachDanhMuc.find(c => String(c.id) === String(sp.cate_id));
-    const tenHang = hang?.name ?? 'Chưa phân loại';
+  // Lấy từ khóa tìm kiếm và hãng đang lọc
+  const tuKhoa = ($('admin-search-product')?.value || '').trim().toLowerCase();
+  const maDanhMuc = $('admin-filter-category')?.value || '';
+
+  // Lọc sản phẩm
+  const sanPhamDaLoc = danhSachSanPham.filter(sp => {
+    const ten = (sp.name || '').toLowerCase();
+    const thoaManTen = tuKhoa === '' || ten.includes(tuKhoa);
+    const thoaManHang = maDanhMuc === '' || String(sp.category_id) === String(maDanhMuc);
+    return thoaManTen && thoaManHang;
+  });
+
+  if (sanPhamDaLoc.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">
+          Không tìm thấy sản phẩm nào phù hợp!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Render các dòng của bảng bằng .map()
+  const chuoiHtml = sanPhamDaLoc.map(sp => {
+    const danhMuc = danhSachDanhMuc.find(dm => String(dm.id) === String(sp.category_id));
+    const tenHang = danhMuc ? danhMuc.name : 'Chưa phân loại';
+    const tonKho = Number(sp.quantity) || 0;
 
     return `
       <tr>
-        <td><strong>#${escapeHTML(sp.id)}</strong></td>
+        <td style="font-weight: 700; color: #2563eb;">#${lamSachHtml(sp.id)}</td>
         <td>
-          <img src="${escapeHTML(sp.image || ANH_MAC_DINH_ADMIN)}" 
-               style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;" 
-               alt="${escapeHTML(sp.name)}" 
-               onerror="this.onerror=null;this.src='${ANH_MAC_DINH_ADMIN}';" />
+          <img 
+            src="${lamSachHtml(sp.image || ANH_MAC_DINH_ADMIN)}" 
+            alt="${lamSachHtml(sp.name)}" 
+            style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
+            onerror="this.onerror=null; this.src='${ANH_MAC_DINH_ADMIN}';"
+          />
         </td>
-        <td><strong>${escapeHTML(sp.name)}</strong></td>
-        <td><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${escapeHTML(tenHang)}</span></td>
-        <td style="color: var(--accent); font-weight: 700;">${dinhDangTien(sp.price)}</td>
-        <td>${sp.quantity || 0}</td>
+        <td style="font-weight: 600; color: #1e293b;">${lamSachHtml(sp.name)}</td>
+        <td><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${lamSachHtml(tenHang)}</span></td>
+        <td style="font-weight: 600; color: #0f172a;">${dinhDangTien(sp.price)}</td>
         <td>
-          <button class="action-btn edit" onclick="moFormSuaSanPham('${escapeHTML(sp.id)}')">
-            <i class="fas fa-pen"></i> Sửa
-          </button>
-          <button class="action-btn delete" onclick="xoaSanPham('${escapeHTML(sp.id)}')">
-            <i class="fas fa-trash"></i> Xóa
-          </button>
+          <span style="font-weight: 700; color: ${tonKho > 0 ? '#16a34a' : '#dc2626'};">
+            ${tonKho} máy
+          </span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button 
+              type="button" 
+              class="btn-primary" 
+              style="padding: 5px 10px; font-size: 12px;" 
+              onclick="suaSanPham('${sp.id}')"
+              title="Chỉnh sửa sản phẩm"
+            >
+              <i class="fas fa-pen-to-square"></i> Sửa
+            </button>
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              style="padding: 5px 10px; font-size: 12px; background: #fee2e2; color: #b91c1c; border-color: #fecaca;" 
+              onclick="xoaSanPham('${sp.id}')"
+              title="Xóa sản phẩm"
+            >
+              <i class="fas fa-trash"></i> Xóa
+            </button>
+          </div>
         </td>
       </tr>
     `;
   }).join('');
+
+  tbody.innerHTML = chuoiHtml;
 };
 
 /**
- * Render bảng danh sách danh mục thương hiệu.
+ * CREATE: Hàm mở modal thêm sản phẩm mới
+ * Đặt idSanPhamDangSua = null và reset trắng form
  */
-const hienThiDanhMucAdmin = () => {
-  const tbody = $('#admin-category-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = danhSachDanhMuc.map(({ id, name, parent_id }) => `
-    <tr>
-      <td><strong>#${escapeHTML(id)}</strong></td>
-      <td><strong>${escapeHTML(name)}</strong></td>
-      <td>${escapeHTML(parent_id || '0 (Gốc)')}</td>
-      <td>
-        <button class="action-btn delete" onclick="xoaDanhMuc('${escapeHTML(id)}')">
-          <i class="fas fa-trash"></i> Xóa
-        </button>
-      </td>
-    </tr>
-  `).join('');
-};
-
-/**
- * Render bảng danh sách đơn hàng đã tiếp nhận.
- */
-const hienThiDonHangAdmin = () => {
-  const tbody = $('#admin-order-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = danhSachDonHang.map(({ id, customer_name, phone, total_amount, created_date, status }) => `
-    <tr>
-      <td><strong>#${escapeHTML(id)}</strong></td>
-      <td><strong>${escapeHTML(customer_name)}</strong></td>
-      <td>${escapeHTML(phone)}</td>
-      <td style="color: var(--accent); font-weight: 700;">${dinhDangTien(total_amount)}</td>
-      <td>${escapeHTML(created_date)}</td>
-      <td><span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-weight: 600;">${escapeHTML(status)}</span></td>
-    </tr>
-  `).join('');
-};
-
-/**
- * Render bảng danh sách tài khoản khách hàng.
- */
-const hienThiKhachHangAdmin = () => {
-  const tbody = $('#admin-user-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = danhSachKhachHang.map(({ name, email, phone, role, address }, index) => `
-    <tr>
-      <td>${index + 1}</td>
-      <td><strong>${escapeHTML(name)}</strong></td>
-      <td>${escapeHTML(email)}</td>
-      <td>${escapeHTML(phone)}</td>
-      <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${escapeHTML(role)}</span></td>
-      <td>${escapeHTML(address || '—')}</td>
-    </tr>
-  `).join('');
-};
-
-// ============================================================================
-// 7. XỬ LÝ CHỌN ẢNH TỪ MÁY TÍNH (FILEREADER API)
-// ============================================================================
-
-/**
- * Đọc file ảnh từ máy tính chuyển đổi sang chuỗi Base64:
- * Sử dụng FileReader.readAsDataURL() và kiểm tra dung lượng tối đa 1.5MB để bảo vệ CSDL.
- * @param {Event} event - Sự kiện change của thẻ input file
- */
-const xuLyChonAnhSanPham = (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    hienThongBao('Vui lòng chọn một file hình ảnh hợp lệ!', true);
-    event.target.value = '';
-    return;
-  }
-
-  // Chặn tệp ảnh vượt quá 1.5MB để tránh lag ứng dụng
-  if (file.size > 1.5 * 1024 * 1024) {
-    hienThongBao('Ảnh quá lớn (>1.5MB)! Vui lòng chọn ảnh dung lượng nhẹ hơn.', true);
-    event.target.value = '';
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    anhSanPhamBase64 = e.target.result;
-    const previewBox = $('#product-img-preview');
-    const previewImg = $('#preview-product-thumb');
-    if (previewBox && previewImg) {
-      previewImg.src = anhSanPhamBase64;
-      previewBox.style.display = 'flex';
-    }
-  };
-  reader.readAsDataURL(file);
-};
-
-// ============================================================================
-// 8. CRUD SẢN PHẨM & QUẢN LÝ MODAL (PRODUCT MANAGEMENT)
-// ============================================================================
-
-const moFormThemSanPham = () => {
+const moModalThemSanPham = () => {
   idSanPhamDangSua = null;
   anhSanPhamBase64 = '';
-  $('#product-form')?.reset();
-  if ($('#form-product-id')) $('#form-product-id').value = '';
-  $('#product-modal-title').textContent = 'Thêm Sản Phẩm Mới';
-  if ($('#product-img-preview')) $('#product-img-preview').style.display = 'none';
-  $('#product-modal')?.classList.add('open');
+
+  const modal = $('product-modal');
+  const title = $('product-modal-title');
+  const form = $('product-form');
+  const preview = $('product-img-preview');
+
+  if (title) title.textContent = 'Thêm Sản Phẩm Mới (ID Tự Động Tăng)';
+  if (form) form.reset();
+  if (preview) preview.style.display = 'none';
+
+  if (modal) modal.classList.add('open');
 };
 
-const moFormSuaSanPham = (id) => {
-  const sp = danhSachSanPham.find(item => String(item.id) === String(id));
-  if (!sp) return;
+/**
+ * UPDATE: Hàm mở modal chỉnh sửa sản phẩm
+ * Điền sẵn dữ liệu cũ của sản phẩm vào form để admin chỉnh sửa
+ * @param {string|number} sanPhamId - ID sản phẩm cần sửa
+ */
+const suaSanPham = (sanPhamId) => {
+  const sp = danhSachSanPham.find(item => String(item.id) === String(sanPhamId));
+  if (!sp) {
+    hienThiThongBaoAdmin('Không tìm thấy thông tin sản phẩm!', 'error');
+    return;
+  }
 
-  idSanPhamDangSua = String(sp.id);
+  idSanPhamDangSua = sp.id;
   anhSanPhamBase64 = sp.image || '';
 
-  $('#product-modal-title').textContent = `Sửa Sản Phẩm #${sp.id}`;
-  $('#form-product-id').value = sp.id;
-  $('#form-product-name').value = sp.name;
-  $('#form-product-cate').value = sp.cate_id;
-  $('#form-product-price').value = sp.price;
-  $('#form-product-qty').value = sp.quantity || 10;
-  $('#form-product-detail').value = sp.detail || '';
+  const modal = $('product-modal');
+  const title = $('product-modal-title');
 
-  const previewBox = $('#product-img-preview');
-  const previewImg = $('#preview-product-thumb');
-  if (previewBox && previewImg) {
-    if (anhSanPhamBase64) {
-      previewImg.src = anhSanPhamBase64;
+  if (title) title.textContent = `Chỉnh Sửa Sản Phẩm (#${sp.id})`;
+
+  // Điền dữ liệu vào form
+  if ($('form-product-name')) $('form-product-name').value = sp.name || '';
+  if ($('form-product-cate')) $('form-product-cate').value = sp.category_id || '';
+  if ($('form-product-price')) $('form-product-price').value = sp.price || '';
+  if ($('form-product-qty')) $('form-product-qty').value = sp.quantity || 0;
+  if ($('form-product-detail')) $('form-product-detail').value = sp.detail || '';
+
+  // Hiển thị ảnh xem trước
+  const previewBox = $('product-img-preview');
+  const thumbImg = $('preview-product-thumb');
+  if (previewBox && thumbImg) {
+    if (sp.image) {
+      thumbImg.src = sp.image;
       previewBox.style.display = 'flex';
     } else {
       previewBox.style.display = 'none';
     }
   }
 
-  $('#product-modal')?.classList.add('open');
+  if (modal) modal.classList.add('open');
 };
-
-const dongModalSanPham = () => {
-  $('#product-modal')?.classList.remove('open');
-  $('#product-form')?.reset();
-  idSanPhamDangSua = null;
-  anhSanPhamBase64 = '';
-};
+window.suaSanPham = suaSanPham;
 
 /**
- * Lưu sản phẩm (Thêm mới qua POST hoặc Cập nhật qua PUT).
- * @param {Event} event - Sự kiện submit form
+ * DELETE: Hàm xóa sản phẩm
+ * Xác nhận với người dùng trước khi gửi yêu cầu DELETE lên máy chủ
+ * @param {string|number} sanPhamId - ID sản phẩm cần xóa
  */
-const xuLyLuuSanPham = async (event) => {
-  event.preventDefault();
+const xoaSanPham = async (sanPhamId) => {
+  const sp = danhSachSanPham.find(item => String(item.id) === String(sanPhamId));
+  const tenSP = sp ? sp.name : `ID #${sanPhamId}`;
 
-  const name = $('#form-product-name')?.value.trim();
-  const cate_id = $('#form-product-cate')?.value;
-  const price = Number($('#form-product-price')?.value) || 0;
-  const quantity = Number($('#form-product-qty')?.value) || 0;
-  const detail = $('#form-product-detail')?.value.trim();
-  const image = anhSanPhamBase64 || ANH_MAC_DINH_ADMIN;
+  const xacNhan = confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${tenSP}" không?\nHành động này không thể hoàn tác!`);
+  if (!xacNhan) return;
 
-  if (!name || price <= 0) {
-    hienThongBao('Vui lòng nhập tên và giá bán hợp lệ lớn hơn 0!', true);
+  try {
+    // Gửi yêu cầu DELETE lên máy chủ
+    await goiApi(`${API_PRODUCTS}/${sanPhamId}`, 'DELETE');
+
+    // Cập nhật lại mảng dữ liệu local bằng hàm .filter()
+    danhSachSanPham = danhSachSanPham.filter(item => String(item.id) !== String(sanPhamId));
+
+    // Làm mới bảng và thống kê
+    hienThiBangSanPhamAdmin();
+    capNhatThongKeKPI();
+
+    hienThiThongBaoAdmin(`Đã xóa sản phẩm "${tenSP}" thành công!`, 'success');
+
+  } catch (loi) {
+    console.error('Lỗi khi xóa sản phẩm:', loi);
+    hienThiThongBaoAdmin('Không thể xóa sản phẩm. Vui lòng thử lại!', 'error');
+  }
+};
+window.xoaSanPham = xoaSanPham;
+
+/**
+ * CREATE & UPDATE: Hàm xử lý nộp form sản phẩm (#product-form)
+ * Luồng hoạt động:
+ * - Nếu idSanPhamDangSua === null: Thêm mới sản phẩm với ID TỰ TĂNG (+1) bằng hàm taoIdSanPhamMoi().
+ * - Nếu idSanPhamDangSua !== null: Cập nhật sản phẩm cũ bằng phương thức PUT/PATCH.
+ */
+const xuLyLuuSanPham = async (suKien) => {
+  suKien.preventDefault();
+
+  const name = ($('form-product-name')?.value || '').trim();
+  const category_id = ($('form-product-cate')?.value || '').trim();
+  const price = Number($('form-product-price')?.value) || 0;
+  const quantity = Number($('form-product-qty')?.value) || 0;
+  const detail = ($('form-product-detail')?.value || '').trim();
+
+  if (!name || !category_id || price <= 0) {
+    hienThiThongBaoAdmin('Vui lòng nhập đầy đủ tên, hãng và giá sản phẩm hợp lệ!', 'warning');
     return;
   }
 
-  const payload = { name, cate_id, price, quantity, detail, image };
+  const nutLuu = $('btn-submit-product');
+  if (nutLuu) {
+    nutLuu.disabled = true;
+    nutLuu.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+  }
 
   try {
-    if (idSanPhamDangSua) {
-      payload.id = idSanPhamDangSua;
-      await apiFetch(`${API_PRODUCTS}/${idSanPhamDangSua}`, 'PUT', payload);
-      hienThongBao(`Đã cập nhật sản phẩm "${name}"!`);
+    if (idSanPhamDangSua === null) {
+      // ===== 1. CHẾ ĐỘ THÊM MỚI (CREATE): TỰ ĐỘNG TĂNG ID (+1) =====
+      const idMoi = taoIdSanPhamMoi();
+
+      const sanPhamMoi = {
+        id: idMoi,
+        name,
+        category_id,
+        price,
+        quantity,
+        detail,
+        image: anhSanPhamBase64 || ANH_MAC_DINH_ADMIN
+      };
+
+      // Gửi POST lên server
+      const spDaTao = await goiApi(API_PRODUCTS, 'POST', sanPhamMoi);
+      danhSachSanPham.push(spDaTao);
+
+      hienThiThongBaoAdmin(`Đã thêm sản phẩm "${name}" thành công với ID #${idMoi}!`, 'success');
+
     } else {
-      payload.id = String(Date.now());
-      await apiFetch(API_PRODUCTS, 'POST', payload);
-      hienThongBao(`Đã thêm mới sản phẩm "${name}"!`);
+      // ===== 2. CHẾ ĐỘ CẬP NHẬT (UPDATE): SỬA SẢN PHẨM CŨ =====
+      const sanPhamCapNhat = {
+        name,
+        category_id,
+        price,
+        quantity,
+        detail,
+        image: anhSanPhamBase64 || ANH_MAC_DINH_ADMIN
+      };
+
+      // Gửi PATCH lên server
+      const spDaSua = await goiApi(`${API_PRODUCTS}/${idSanPhamDangSua}`, 'PATCH', sanPhamCapNhat);
+
+      // Cập nhật lại trong mảng local
+      const viTri = danhSachSanPham.findIndex(item => String(item.id) === String(idSanPhamDangSua));
+      if (viTri !== -1) {
+        danhSachSanPham[viTri] = { ...danhSachSanPham[viTri], ...spDaSua };
+      }
+
+      hienThiThongBaoAdmin(`Đã cập nhật sản phẩm "${name}" thành công!`, 'success');
     }
 
-    dongModalSanPham();
-    await taiSanPhamAdmin();
-    capNhatThongKe();
-  } catch (err) {
-    console.error('Lỗi lưu sản phẩm:', err);
-    hienThongBao('Không thể lưu sản phẩm, vui lòng kiểm tra server!', true);
+    // Đóng modal và làm mới giao diện
+    $('product-modal')?.classList.remove('open');
+    hienThiBangSanPhamAdmin();
+    capNhatThongKeKPI();
+
+  } catch (loi) {
+    console.error('Lỗi khi lưu sản phẩm:', loi);
+    hienThiThongBaoAdmin('Có lỗi xảy ra khi lưu sản phẩm!', 'error');
+  } finally {
+    if (nutLuu) {
+      nutLuu.disabled = false;
+      nutLuu.innerHTML = 'Lưu sản phẩm';
+    }
   }
 };
 
 /**
- * Xóa một sản phẩm thông qua phương thức DELETE.
- * @param {string|number} id - ID sản phẩm
+ * Hàm đọc tệp ảnh máy tính được chọn từ thẻ <input type="file"> và chuyển sang Base64
+ * Sử dụng FileReader API có sẵn của trình duyệt
  */
-const xoaSanPham = async (id) => {
-  if (!confirm(`Bạn có chắc chắn muốn xóa sản phẩm #${id}?`)) return;
+const xuLyChonAnhTuMay = (suKien) => {
+  const tep = suKien.target.files?.[0];
+  if (!tep) return;
 
-  try {
-    await apiFetch(`${API_PRODUCTS}/${id}`, 'DELETE');
-    hienThongBao(`Đã xóa sản phẩm #${id}!`);
-    await taiSanPhamAdmin();
-    capNhatThongKe();
-  } catch (err) {
-    console.error('Lỗi xóa sản phẩm:', err);
-    hienThongBao('Xóa sản phẩm thất bại!', true);
-  }
-};
-
-// ============================================================================
-// 9. CRUD DANH MỤC THƯƠNG HIỆU (CATEGORY MANAGEMENT & INTEGRITY CHECK)
-// ============================================================================
-
-const moFormThemDanhMuc = () => {
-  $('#category-form')?.reset();
-  $('#category-modal')?.classList.add('open');
-};
-
-const dongModalDanhMuc = () => $('#category-modal')?.classList.remove('open');
-
-/**
- * Thêm danh mục thương hiệu mới qua POST /categories.
- * @param {Event} event - Sự kiện submit form
- */
-const xuLyLuuDanhMuc = async (event) => {
-  event.preventDefault();
-  const name = $('#form-category-name')?.value.trim();
-  if (!name) return;
-
-  const payload = {
-    id: String(Date.now()),
-    name,
-    parent_id: "0"
-  };
-
-  try {
-    await apiFetch(API_CATEGORIES, 'POST', payload);
-    dongModalDanhMuc();
-    await taiDanhMucAdmin();
-    hienThongBao(`Đã thêm thương hiệu "${name}"!`);
-  } catch (err) {
-    console.error('Lỗi lưu danh mục:', err);
-    hienThongBao('Không thể thêm danh mục!', true);
-  }
-};
-
-/**
- * Xóa danh mục thương hiệu:
- * Bắt buộc kiểm tra tính toàn vẹn quan hệ (Data Integrity Constraint):
- * Nếu vẫn còn sản phẩm mang cate_id của danh mục này, hệ thống sẽ ngăn chặn việc xóa.
- * @param {string|number} id - ID danh mục
- */
-const xoaDanhMuc = async (id) => {
-  const sanPhamThuocDanhMuc = danhSachSanPham.filter(sp => String(sp.cate_id) === String(id));
-  if (sanPhamThuocDanhMuc.length > 0) {
-    hienThongBao(`Không thể xóa! Có ${sanPhamThuocDanhMuc.length} sản phẩm đang thuộc thương hiệu này. Vui lòng chuyển hoặc xóa các sản phẩm đó trước!`, true);
+  // Kiểm tra kích thước tệp ảnh (giới hạn tối đa 1.5MB tránh làm phình db.json)
+  if (tep.size > 1.5 * 1024 * 1024) {
+    hienThiThongBaoAdmin('Kích thước ảnh quá lớn (vượt quá 1.5MB)! Vui lòng chọn ảnh nhẹ hơn.', 'warning');
+    suKien.target.value = '';
     return;
   }
 
-  if (!confirm(`Bạn có chắc muốn xóa thương hiệu #${id}?`)) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    anhSanPhamBase64 = e.target.result; // Chuỗi Base64 data:image/...
+    const previewBox = $('product-img-preview');
+    const thumbImg = $('preview-product-thumb');
+    if (previewBox && thumbImg) {
+      thumbImg.src = anhSanPhamBase64;
+      previewBox.style.display = 'flex';
+    }
+  };
+  reader.readAsDataURL(tep);
+};
+
+// ============================================================================
+// PHẦN 7: QUẢN LÝ ĐƠN HÀNG (ORDER MANAGEMENT & STATUSES & DETAIL MODAL)
+// ============================================================================
+
+/**
+ * Hàm hiển thị bảng quản lý đơn hàng của Admin (#admin-tab-orders)
+ * Luồng hoạt động:
+ * 1. Duyệt qua mảng danhSachDonHang (sắp xếp mới nhất lên đầu).
+ * 2. Cột Trạng thái: Render một ô chọn <select class="order-status-select"> gồm các lựa chọn:
+ *    - "Đang xử lý"
+ *    - "Đang giao hàng"
+ *    - "Đã giao hàng"
+ *    - "Đã hủy"
+ * 3. Khi Admin đổi lựa chọn, tự động gọi hàm doiTrangThaiDonHang() để cập nhật ngay vào db.json.
+ * 4. Cột Hành động: Có nút xem Chi tiết đơn hàng và nút Xóa đơn hàng.
+ */
+const hienThiBangDonHangAdmin = () => {
+  const tbody = $('admin-order-tbody');
+  if (!tbody) return;
+
+  if (danhSachDonHang.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">
+          Hiện tại chưa có đơn đặt hàng nào trong hệ thống!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Đảo ngược mảng để đơn hàng mới nhất hiển thị trên cùng
+  const danhSachDaoNguoc = [...danhSachDonHang].reverse();
+
+  const chuoiHtml = danhSachDaoNguoc.map(don => {
+    const maDon = don.order_code || don.id || '#SMARTSTORE';
+    const thoiGian = don.created_at ? new Date(don.created_at).toLocaleString('vi-VN') : '—';
+    const trangThaiHienTai = don.status || 'Đang xử lý';
+
+    // Tạo các tùy chọn cho thẻ select trạng thái
+    const cacTrangThai = ['Đang xử lý', 'Đang giao hàng', 'Đã giao hàng', 'Đã hủy'];
+    const optTrangThai = cacTrangThai.map(tt => `
+      <option value="${tt}" ${tt === trangThaiHienTai ? 'selected' : ''}>${tt}</option>
+    `).join('');
+
+    return `
+      <tr>
+        <td style="font-weight: 700; color: #2563eb; letter-spacing: 0.5px;">${lamSachHtml(maDon)}</td>
+        <td style="font-weight: 600; color: #1e293b;">${lamSachHtml(don.customer_name || 'Khách vãng lai')}</td>
+        <td>${lamSachHtml(don.customer_phone || '—')}</td>
+        <td style="font-weight: 700; color: #ef4444;">${dinhDangTien(don.total_price)}</td>
+        <td style="font-size: 13px; color: #64748b;">${thoiGian}</td>
+        <td>
+          <select 
+            class="order-status-select" 
+            onchange="doiTrangThaiDonHang('${don.id}', this.value)"
+            title="Nhấn để đổi trạng thái đơn hàng"
+          >
+            ${optTrangThai}
+          </select>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button 
+              type="button" 
+              class="btn-primary" 
+              style="padding: 5px 10px; font-size: 12px;" 
+              onclick="xemChiTietDonHangAdmin('${don.id}')"
+              title="Xem các món hàng đã mua"
+            >
+              <i class="fas fa-eye"></i> Chi tiết
+            </button>
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              style="padding: 5px 10px; font-size: 12px; background: #fee2e2; color: #b91c1c; border-color: #fecaca;" 
+              onclick="xoaDonHangAdmin('${don.id}')"
+              title="Xóa đơn hàng"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.innerHTML = chuoiHtml;
+};
+
+/**
+ * Hàm cập nhật trạng thái đơn hàng trực tiếp bằng HTTP PATCH lên máy chủ
+ * Luồng hoạt động:
+ * 1. Nhận ID đơn hàng và trạng thái mới được chọn từ ô select ('Đang xử lý', 'Đang giao hàng', 'Đã giao hàng', 'Đã hủy').
+ * 2. Gửi PATCH lên API_ORDERS/${donHangId} với { status: trangThaiMoi }.
+ * 3. Cập nhật lại thuộc tính status trong mảng danhSachDonHang.
+ * 4. Cập nhật lại các số liệu thống kê KPI doanh thu.
+ * 5. Hiển thị thông báo Toast xanh báo thành công.
+ * 
+ * @param {string|number} donHangId - ID của đơn hàng
+ * @param {string} trangThaiMoi - Trạng thái mới
+ */
+const doiTrangThaiDonHang = async (donHangId, trangThaiMoi) => {
+  const donHang = danhSachDonHang.find(don => String(don.id) === String(donHangId));
+  if (!donHang) return;
+
+  const maDon = donHang.order_code || donHang.id;
 
   try {
-    await apiFetch(`${API_CATEGORIES}/${id}`, 'DELETE');
-    hienThongBao(`Đã xóa thương hiệu #${id}!`);
-    await taiDanhMucAdmin();
-  } catch (err) {
-    console.error('Lỗi xóa danh mục:', err);
-    hienThongBao('Không thể xóa danh mục!', true);
+    // Gửi yêu cầu PATCH cập nhật trạng thái lên server
+    await goiApi(`${API_ORDERS}/${donHangId}`, 'PATCH', { status: trangThaiMoi });
+
+    // Cập nhật lại dữ liệu local
+    donHang.status = trangThaiMoi;
+
+    // Cập nhật lại KPI
+    capNhatThongKeKPI();
+
+    hienThiThongBaoAdmin(`Đã cập nhật trạng thái đơn ${maDon} thành "${trangThaiMoi}"!`, 'success');
+
+  } catch (loi) {
+    console.error('Lỗi khi cập nhật trạng thái đơn hàng:', loi);
+    hienThiThongBaoAdmin('Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại!', 'error');
+    // Làm mới lại bảng để quay về trạng thái cũ
+    hienThiBangDonHangAdmin();
+  }
+};
+window.doiTrangThaiDonHang = doiTrangThaiDonHang;
+
+/**
+ * Hàm xem chi tiết các món hàng và địa chỉ giao hàng của đơn hàng trong Modal
+ * @param {string|number} donHangId - ID đơn hàng cần xem
+ */
+const xemChiTietDonHangAdmin = (donHangId) => {
+  const donHang = danhSachDonHang.find(don => String(don.id) === String(donHangId));
+  if (!donHang) {
+    hienThiThongBaoAdmin('Không tìm thấy thông tin đơn hàng!', 'error');
+    return;
+  }
+
+  const modal = $('admin-order-modal');
+  const title = $('admin-order-modal-title');
+  const content = $('admin-order-detail-content');
+
+  const maDon = donHang.order_code || donHang.id || '#SMARTSTORE';
+  const thoiGian = donHang.created_at ? new Date(donHang.created_at).toLocaleString('vi-VN') : '—';
+
+  if (title) title.textContent = `Chi Tiết Đơn Hàng ${maDon}`;
+
+  // Tạo danh sách các món hàng
+  let chuoiCacMon = '';
+  if (Array.isArray(donHang.items) && donHang.items.length > 0) {
+    chuoiCacMon = donHang.items.map(item => `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #e2e8f0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img 
+            src="${lamSachHtml(item.image || ANH_MAC_DINH_ADMIN)}" 
+            alt="${lamSachHtml(item.product_name)}" 
+            style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
+            onerror="this.onerror=null; this.src='${ANH_MAC_DINH_ADMIN}';"
+          />
+          <div>
+            <strong style="color: #1e293b; font-size: 0.95rem;">${lamSachHtml(item.product_name)}</strong>
+            <div style="font-size: 0.85rem; color: #64748b;">Số lượng: x${item.quantity} • Đơn giá: ${dinhDangTien(item.price)}</div>
+          </div>
+        </div>
+        <strong style="color: #0f172a; font-size: 1rem;">${dinhDangTien(item.price * item.quantity)}</strong>
+      </div>
+    `).join('');
+  } else {
+    chuoiCacMon = '<p style="color: #64748b; font-style: italic;">Không có thông tin chi tiết sản phẩm.</p>';
+  }
+
+  if (content) {
+    content.innerHTML = `
+      <div style="background: #f8fafc; padding: 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+          <div><strong>Khách hàng:</strong> ${lamSachHtml(donHang.customer_name || '—')}</div>
+          <div><strong>Số điện thoại:</strong> ${lamSachHtml(donHang.customer_phone || '—')}</div>
+          <div><strong>Email:</strong> ${lamSachHtml(donHang.customer_email || '—')}</div>
+          <div><strong>Ngày đặt:</strong> ${thoiGian}</div>
+        </div>
+        <div style="margin-top: 6px;"><strong>Địa chỉ giao hàng:</strong> ${lamSachHtml(donHang.shipping_address || '—')}</div>
+        <div style="margin-top: 6px;"><strong>Trạng thái hiện tại:</strong> <span class="badge" style="background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 4px;">${lamSachHtml(donHang.status || 'Đang xử lý')}</span></div>
+      </div>
+
+      <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 10px;"><i class="fas fa-boxes-stacked"></i> Danh Sách Sản Phẩm Đã Mua:</h4>
+      <div style="max-height: 250px; overflow-y: auto; padding-right: 6px;">
+        ${chuoiCacMon}
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 2px solid #e2e8f0;">
+        <span style="font-size: 1rem; color: #64748b;">Tổng cộng thanh toán:</span>
+        <strong style="font-size: 1.3rem; color: #ef4444;">${dinhDangTien(donHang.total_price)}</strong>
+      </div>
+    `;
+  }
+
+  if (modal) modal.classList.add('open');
+};
+window.xemChiTietDonHangAdmin = xemChiTietDonHangAdmin;
+
+/**
+ * Hàm xóa đơn hàng
+ * @param {string|number} donHangId - ID đơn hàng cần xóa
+ */
+const xoaDonHangAdmin = async (donHangId) => {
+  const don = danhSachDonHang.find(item => String(item.id) === String(donHangId));
+  const maDon = don ? (don.order_code || don.id) : `#${donHangId}`;
+
+  const xacNhan = confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${maDon} không?`);
+  if (!xacNhan) return;
+
+  try {
+    await goiApi(`${API_ORDERS}/${donHangId}`, 'DELETE');
+    danhSachDonHang = danhSachDonHang.filter(item => String(item.id) !== String(donHangId));
+
+    hienThiBangDonHangAdmin();
+    capNhatThongKeKPI();
+
+    hienThiThongBaoAdmin(`Đã xóa đơn hàng ${maDon} thành công!`, 'success');
+
+  } catch (loi) {
+    console.error('Lỗi khi xóa đơn hàng:', loi);
+    hienThiThongBaoAdmin('Không thể xóa đơn hàng lúc này!', 'error');
+  }
+};
+window.xoaDonHangAdmin = xoaDonHangAdmin;
+
+// ============================================================================
+// PHẦN 8: QUẢN LÝ DANH MỤC THƯƠNG HIỆU (CATEGORY MANAGEMENT)
+// ============================================================================
+
+/**
+ * Hiển thị bảng danh mục thương hiệu (#admin-tab-categories)
+ */
+const hienThiBangDanhMucAdmin = () => {
+  const tbody = $('admin-category-tbody');
+  if (!tbody) return;
+
+  if (danhSachDanhMuc.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Chưa có danh mục nào!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = danhSachDanhMuc.map(dm => `
+    <tr>
+      <td style="font-weight: 700; color: #2563eb;">#${lamSachHtml(dm.id)}</td>
+      <td style="font-weight: 600;">${lamSachHtml(dm.name)}</td>
+      <td style="color: #64748b;">${lamSachHtml(dm.parent_id || '0 (Gốc)')}</td>
+      <td>
+        <div style="display: flex; gap: 6px;">
+          <button 
+            type="button" 
+            class="btn-primary" 
+            style="padding: 5px 10px; font-size: 12px;" 
+            onclick="suaDanhMuc('${dm.id}')"
+          >
+            <i class="fas fa-pen-to-square"></i> Sửa
+          </button>
+          <button 
+            type="button" 
+            class="btn-secondary" 
+            style="padding: 5px 10px; font-size: 12px; background: #fee2e2; color: #b91c1c; border-color: #fecaca;" 
+            onclick="xoaDanhMuc('${dm.id}')"
+          >
+            <i class="fas fa-trash"></i> Xóa
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+};
+
+/**
+ * Mở modal thêm danh mục
+ */
+const moModalThemDanhMuc = () => {
+  idDanhMucDangSua = null;
+  const modal = $('category-modal');
+  const title = $('category-modal-title');
+  const form = $('category-form');
+
+  if (title) title.textContent = 'Thêm Danh Mục Mới';
+  if (form) form.reset();
+  if (modal) modal.classList.add('open');
+};
+
+/**
+ * Mở modal sửa danh mục
+ */
+const suaDanhMuc = (danhMucId) => {
+  const dm = danhSachDanhMuc.find(item => String(item.id) === String(danhMucId));
+  if (!dm) return;
+
+  idDanhMucDangSua = dm.id;
+  const modal = $('category-modal');
+  const title = $('category-modal-title');
+
+  if (title) title.textContent = `Sửa Danh Mục (#${dm.id})`;
+  if ($('form-category-name')) $('form-category-name').value = dm.name || '';
+  if (modal) modal.classList.add('open');
+};
+window.suaDanhMuc = suaDanhMuc;
+
+/**
+ * Xóa danh mục (Có kiểm tra ràng buộc toàn vẹn dữ liệu)
+ */
+const xoaDanhMuc = async (danhMucId) => {
+  // Kiểm tra xem có sản phẩm nào đang thuộc danh mục này không
+  const sanPhamThuocDanhMuc = danhSachSanPham.filter(sp => String(sp.category_id) === String(danhMucId));
+  if (sanPhamThuocDanhMuc.length > 0) {
+    hienThiThongBaoAdmin(`Không thể xóa! Đang có ${sanPhamThuocDanhMuc.length} sản phẩm thuộc thương hiệu này.`, 'warning');
+    return;
+  }
+
+  const dm = danhSachDanhMuc.find(item => String(item.id) === String(danhMucId));
+  const tenDM = dm ? dm.name : `#${danhMucId}`;
+
+  const xacNhan = confirm(`Bạn có chắc chắn muốn xóa danh mục "${tenDM}" không?`);
+  if (!xacNhan) return;
+
+  try {
+    await goiApi(`${API_CATEGORIES}/${danhMucId}`, 'DELETE');
+    danhSachDanhMuc = danhSachDanhMuc.filter(item => String(item.id) !== String(danhMucId));
+
+    hienThiBangDanhMucAdmin();
+    napDanhMucVaoSelectForm();
+
+    hienThiThongBaoAdmin(`Đã xóa danh mục "${tenDM}" thành công!`, 'success');
+
+  } catch (loi) {
+    console.error('Lỗi khi xóa danh mục:', loi);
+    hienThiThongBaoAdmin('Không thể xóa danh mục!', 'error');
+  }
+};
+window.xoaDanhMuc = xoaDanhMuc;
+
+/**
+ * Xử lý lưu form danh mục
+ */
+const xuLyLuuDanhMuc = async (suKien) => {
+  suKien.preventDefault();
+  const name = ($('form-category-name')?.value || '').trim();
+  if (!name) return;
+
+  try {
+    if (idDanhMucDangSua === null) {
+      // Thêm mới
+      const danhMucMoi = { name, parent_id: 0 };
+      const dmDaTao = await goiApi(API_CATEGORIES, 'POST', danhMucMoi);
+      danhSachDanhMuc.push(dmDaTao);
+      hienThiThongBaoAdmin(`Đã thêm danh mục "${name}"!`, 'success');
+    } else {
+      // Cập nhật
+      const dmDaSua = await goiApi(`${API_CATEGORIES}/${idDanhMucDangSua}`, 'PATCH', { name });
+      const viTri = danhSachDanhMuc.findIndex(item => String(item.id) === String(idDanhMucDangSua));
+      if (viTri !== -1) danhSachDanhMuc[viTri] = { ...danhSachDanhMuc[viTri], ...dmDaSua };
+      hienThiThongBaoAdmin(`Đã sửa danh mục thành "${name}"!`, 'success');
+    }
+
+    $('category-modal')?.classList.remove('open');
+    hienThiBangDanhMucAdmin();
+    napDanhMucVaoSelectForm();
+
+  } catch (loi) {
+    console.error('Lỗi khi lưu danh mục:', loi);
+    hienThiThongBaoAdmin('Không thể lưu danh mục!', 'error');
   }
 };
 
-// Gắn các hàm tương tác ra đối tượng Window để các nút HTML inline (onclick) gọi được
-window.moFormSuaSanPham = moFormSuaSanPham;
-window.xoaSanPham = xoaSanPham;
-window.xoaDanhMuc = xoaDanhMuc;
+// ============================================================================
+// PHẦN 9: QUẢN LÝ KHÁCH HÀNG (USER MANAGEMENT - LAB 7.2)
+// ============================================================================
+
+/**
+ * Hiển thị bảng danh sách tài khoản khách hàng (#admin-tab-users)
+ */
+const hienThiBangKhachHangAdmin = () => {
+  const tbody = $('admin-user-tbody');
+  if (!tbody) return;
+
+  if (danhSachKhachHang.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Chưa có tài khoản nào!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = danhSachKhachHang.map((kh, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td style="font-weight: 600; color: #1e293b;">${lamSachHtml(kh.name || '—')}</td>
+      <td>${lamSachHtml(kh.email || '—')}</td>
+      <td>${lamSachHtml(kh.phone || '—')}</td>
+      <td>
+        <span class="badge" style="background: ${kh.role === 'admin' ? '#fef3c7' : '#e0f2fe'}; color: ${kh.role === 'admin' ? '#b45309' : '#0369a1'}; padding: 3px 8px; border-radius: 4px; font-size: 12px;">
+          ${kh.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
+        </span>
+      </td>
+      <td style="font-size: 13px; color: #64748b;">${lamSachHtml(kh.address || '—')}</td>
+    </tr>
+  `).join('');
+};
 
 // ============================================================================
-// 10. KHỞI TẠO VÀ GẮN SỰ KIỆN KHI MỞ TRANG ADMIN (APPLICATION BOOTSTRAP)
+// PHẦN 10: ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN & ĐĂNG KÝ SỰ KIỆN KHỞI CHẠY
 // ============================================================================
+
+/**
+ * Xử lý đăng nhập tài khoản quản trị
+ */
+const xuLyDangNhapAdmin = (suKien) => {
+  suKien.preventDefault();
+  const email = ($('admin-email')?.value || '').trim();
+  const password = ($('admin-password')?.value || '').trim();
+
+  // Kiểm tra tài khoản admin (mặc định admin / admin hoặc có role: admin trong db)
+  const laAdminHopLe = (email === 'admin@smartstore.vn' && password === 'admin') ||
+    danhSachKhachHang.some(u => u.email === email && u.password === password && u.role === 'admin');
+
+  if (laAdminHopLe) {
+    localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
+    hienThiThongBaoAdmin('Đăng nhập Quản trị viên thành công!', 'success');
+    kiemTraDangNhapAdmin();
+  } else {
+    hienThiThongBaoAdmin('Email hoặc mật khẩu Admin không đúng! (Gợi ý: admin@smartstore.vn / admin)', 'error');
+  }
+};
+
+/**
+ * Xử lý đăng xuất tài khoản quản trị
+ */
+const xuLyDangXuatAdmin = () => {
+  const xacNhan = confirm('Bạn có chắc chắn muốn đăng xuất khỏi trang Quản trị không?');
+  if (!xacNhan) return;
+
+  localStorage.removeItem(KEY_ADMIN_LOGGED);
+  kiemTraDangNhapAdmin();
+  hienThiThongBaoAdmin('Đã đăng xuất trang Quản trị.', 'info');
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Kiểm tra quyền hạn và trạng thái đăng nhập Admin
+  // 1. Kiểm tra trạng thái đăng nhập
   kiemTraDangNhapAdmin();
 
-  // 2. Gắn sự kiện biểu mẫu đăng nhập & đăng xuất
-  $('#admin-login-form')?.addEventListener('submit', xuLyDangNhapAdmin);
-  $('#btn-admin-logout')?.addEventListener('click', dangXuatAdmin);
-
-  // 3. Chuyển đổi các tab bảng con trong Dashboard (Sản phẩm, Danh mục, Đơn hàng, Khách hàng)
+  // 2. Chuyển đổi giữa các tab quản trị con
   $$('.admin-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       $$('.admin-tab-btn').forEach(b => b.classList.remove('active'));
       $$('.admin-subpanel').forEach(p => p.style.display = 'none');
 
       btn.classList.add('active');
-      const targetSubpanel = $(`#${btn.dataset.subtab}`);
-      if (targetSubpanel) targetSubpanel.style.display = 'block';
+      const targetSubtab = btn.getAttribute('data-subtab');
+      if ($(targetSubtab)) $(targetSubtab).style.display = 'block';
     });
   });
 
-  // 4. Sự kiện Modal Sản phẩm & Danh mục
-  $('#btn-admin-add-product')?.addEventListener('click', moFormThemSanPham);
-  $('#btn-admin-add-category')?.addEventListener('click', moFormThemDanhMuc);
+  // 3. Sự kiện mở modal thêm sản phẩm và thêm danh mục
+  $('btn-admin-add-product')?.addEventListener('click', moModalThemSanPham);
+  $('btn-admin-add-category')?.addEventListener('click', moModalThemDanhMuc);
 
-  $('#btn-close-product-modal')?.addEventListener('click', dongModalSanPham);
-  $('#btn-cancel-product-modal')?.addEventListener('click', dongModalSanPham);
-  $('#product-form')?.addEventListener('submit', xuLyLuuSanPham);
+  // 4. Sự kiện đóng modal
+  $('btn-close-product-modal')?.addEventListener('click', () => $('product-modal')?.classList.remove('open'));
+  $('btn-cancel-product-modal')?.addEventListener('click', () => $('product-modal')?.classList.remove('open'));
 
-  $('#btn-close-category-modal')?.addEventListener('click', dongModalDanhMuc);
-  $('#btn-cancel-category-modal')?.addEventListener('click', dongModalDanhMuc);
-  $('#category-form')?.addEventListener('submit', xuLyLuuDanhMuc);
+  $('btn-close-category-modal')?.addEventListener('click', () => $('category-modal')?.classList.remove('open'));
+  $('btn-cancel-category-modal')?.addEventListener('click', () => $('category-modal')?.classList.remove('open'));
 
-  // 5. Sự kiện tải ảnh từ máy tính (FileReader)
-  $('#form-product-file')?.addEventListener('change', xuLyChonAnhSanPham);
+  $('btn-close-order-modal')?.addEventListener('click', () => $('admin-order-modal')?.classList.remove('open'));
+  $('btn-close-order-detail')?.addEventListener('click', () => $('admin-order-modal')?.classList.remove('open'));
+
+  // 5. Sự kiện nộp form sản phẩm và danh mục
+  $('product-form')?.addEventListener('submit', xuLyLuuSanPham);
+  $('category-form')?.addEventListener('submit', xuLyLuuDanhMuc);
+
+  // 6. Sự kiện chọn ảnh từ máy tính (FileReader)
+  $('form-product-file')?.addEventListener('change', xuLyChonAnhTuMay);
+
+  // 7. Sự kiện tìm kiếm & lọc trên bảng sản phẩm
+  $('admin-search-product')?.addEventListener('input', hienThiBangSanPhamAdmin);
+  $('admin-filter-category')?.addEventListener('change', hienThiBangSanPhamAdmin);
+
+  // 8. Sự kiện đăng nhập / đăng xuất admin
+  $('admin-login-form')?.addEventListener('submit', xuLyDangNhapAdmin);
+  $('btn-admin-logout')?.addEventListener('click', xuLyDangXuatAdmin);
 });

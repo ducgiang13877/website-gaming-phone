@@ -71,6 +71,9 @@
       <div id="product-grid" class="product-grid">
         <!-- Render từ JavaScript -->
       </div>
+
+      <!-- Thanh phân trang danh sách sản phẩm (Pagination) -->
+      <div id="shop-pagination" class="pagination-wrapper"></div>
     </section>
 
     <!-- ================= 2. TRANG GIỎ HÀNG & THANH TOÁN ================= -->
@@ -237,7 +240,16 @@
 
           <!-- Bảng xem thông tin chi tiết tài khoản -->
           <div class="profile-info-card">
-            <h4 class="profile-section-title"><i class="fas fa-id-card"></i> Thông Tin Cá Nhân</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h4 class="profile-section-title" style="margin-bottom: 0;"><i class="fas fa-id-card"></i> Thông Tin Cá Nhân</h4>
+              <button type="button" class="btn-secondary" id="btn-toggle-edit-profile" style="padding: 6px 12px; font-size: 0.85rem;">
+                <i class="fas fa-user-pen"></i> Sửa thông tin
+              </button>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Họ và tên:</span>
+              <strong id="profile-name-val" class="profile-value">—</strong>
+            </div>
             <div class="profile-row">
               <span class="profile-label">Số điện thoại:</span>
               <strong id="profile-phone" class="profile-value">—</strong>
@@ -250,6 +262,33 @@
               <span class="profile-label">Vai trò tài khoản:</span>
               <span id="profile-role" class="profile-badge">Khách hàng</span>
             </div>
+          </div>
+
+          <!-- Khung chỉnh sửa thông tin cá nhân (Ẩn mặc định, bật khi bấm Sửa thông tin) -->
+          <div id="edit-profile-card" class="edit-profile-card hidden">
+            <h4 class="profile-section-title"><i class="fas fa-user-gear"></i> Cập Nhật Thông Tin Cá Nhân</h4>
+            <form id="edit-profile-form">
+              <div class="form-group">
+                <label class="form-label" for="edit-profile-name">Họ và tên *</label>
+                <input type="text" id="edit-profile-name" class="form-input" placeholder="Nhập họ và tên..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-profile-phone">Số điện thoại *</label>
+                <input type="tel" id="edit-profile-phone" class="form-input" placeholder="Nhập số điện thoại..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-profile-address">Địa chỉ nhận hàng chi tiết *</label>
+                <input type="text" id="edit-profile-address" class="form-input" placeholder="Nhập địa chỉ giao hàng..." required />
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="submit" class="btn-primary" style="flex: 1;">
+                  <i class="fas fa-floppy-disk"></i> Lưu Thay Đổi
+                </button>
+                <button type="button" class="btn-secondary" id="btn-cancel-edit-profile">
+                  <i class="fas fa-xmark"></i> Hủy Bỏ
+                </button>
+              </div>
+            </form>
           </div>
 
           <!-- Nút truy cập nhanh lịch sử đơn hàng từ tài khoản -->
