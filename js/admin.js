@@ -254,14 +254,17 @@ const capNhatThongKeKPI = () => {
   const donHangHopLe = danhSachDonHang.filter(don => don.status !== 'Đã hủy');
 
   // 1. Tính tổng doanh thu bằng hàm .reduce()
-  const tongDoanhThu = donHangHopLe.reduce((tong, don) => tong + (Number(don.total_price) || 0), 0);
+  const tongDoanhThu = donHangHopLe.reduce((tong, don) => {
+    const gia = Number(don.total_price != null ? don.total_price : don.total_amount) || 0;
+    return tong + gia;
+  }, 0);
 
   // 2. Tính tổng số sản phẩm đã bán ra
   const tongDaBan = donHangHopLe.reduce((tong, don) => {
-    if (Array.isArray(don.items)) {
+    if (Array.isArray(don.items) && don.items.length > 0) {
       return tong + don.items.reduce((sub, item) => sub + (Number(item.quantity) || 0), 0);
     }
-    return tong;
+    return tong + (Number(don.items_count) || 1);
   }, 0);
 
   // 3. Tính tổng lượng hàng tồn kho hiện có
@@ -315,7 +318,8 @@ const hienThiBangSanPhamAdmin = () => {
   const sanPhamDaLoc = danhSachSanPham.filter(sp => {
     const ten = (sp.name || '').toLowerCase();
     const thoaManTen = tuKhoa === '' || ten.includes(tuKhoa);
-    const thoaManHang = maDanhMuc === '' || String(sp.category_id) === String(maDanhMuc);
+    const maDanhMucSP = sp.cate_id || sp.category_id || '';
+    const thoaManHang = maDanhMuc === '' || String(maDanhMucSP) === String(maDanhMuc);
     return thoaManTen && thoaManHang;
   });
 
@@ -332,7 +336,8 @@ const hienThiBangSanPhamAdmin = () => {
 
   // Render các dòng của bảng bằng .map()
   const chuoiHtml = sanPhamDaLoc.map(sp => {
-    const danhMuc = danhSachDanhMuc.find(dm => String(dm.id) === String(sp.category_id));
+    const maDanhMucSP = sp.cate_id || sp.category_id || '';
+    const danhMuc = danhSachDanhMuc.find(dm => String(dm.id) === String(maDanhMucSP));
     const tenHang = danhMuc ? danhMuc.name : 'Chưa phân loại';
     const tonKho = Number(sp.quantity) || 0;
 
@@ -426,7 +431,7 @@ const suaSanPham = (sanPhamId) => {
 
   // Điền dữ liệu vào form
   if ($('form-product-name')) $('form-product-name').value = sp.name || '';
-  if ($('form-product-cate')) $('form-product-cate').value = sp.category_id || '';
+  if ($('form-product-cate')) $('form-product-cate').value = sp.cate_id || sp.category_id || '';
   if ($('form-product-price')) $('form-product-price').value = sp.price || '';
   if ($('form-product-qty')) $('form-product-qty').value = sp.quantity || 0;
   if ($('form-product-detail')) $('form-product-detail').value = sp.detail || '';
@@ -513,6 +518,7 @@ const xuLyLuuSanPham = async (suKien) => {
       const sanPhamMoi = {
         id: idMoi,
         name,
+        cate_id: category_id,
         category_id,
         price,
         quantity,
@@ -530,6 +536,7 @@ const xuLyLuuSanPham = async (suKien) => {
       // ===== 2. CHẾ ĐỘ CẬP NHẬT (UPDATE): SỬA SẢN PHẨM CŨ =====
       const sanPhamCapNhat = {
         name,
+        cate_id: category_id,
         category_id,
         price,
         quantity,
@@ -629,7 +636,10 @@ const hienThiBangDonHangAdmin = () => {
 
   const chuoiHtml = danhSachDaoNguoc.map(don => {
     const maDon = don.order_code || don.id || '#SMARTSTORE';
-    const thoiGian = don.created_at ? new Date(don.created_at).toLocaleString('vi-VN') : '—';
+    const ngayTao = don.created_at || don.created_date;
+    const thoiGian = ngayTao ? new Date(ngayTao).toLocaleString('vi-VN') : '—';
+    const sdt = don.customer_phone || don.phone || '—';
+    const tongTien = Number(don.total_price != null ? don.total_price : don.total_amount) || 0;
     const trangThaiHienTai = don.status || 'Đang xử lý';
 
     // Tạo các tùy chọn cho thẻ select trạng thái
@@ -642,8 +652,8 @@ const hienThiBangDonHangAdmin = () => {
       <tr>
         <td style="font-weight: 700; color: #2563eb; letter-spacing: 0.5px;">${lamSachHtml(maDon)}</td>
         <td style="font-weight: 600; color: #1e293b;">${lamSachHtml(don.customer_name || 'Khách vãng lai')}</td>
-        <td>${lamSachHtml(don.customer_phone || '—')}</td>
-        <td style="font-weight: 700; color: #ef4444;">${dinhDangTien(don.total_price)}</td>
+        <td>${lamSachHtml(sdt)}</td>
+        <td style="font-weight: 700; color: #ef4444;">${dinhDangTien(tongTien)}</td>
         <td style="font-size: 13px; color: #64748b;">${thoiGian}</td>
         <td>
           <select 
@@ -738,7 +748,11 @@ const xemChiTietDonHangAdmin = (donHangId) => {
   const content = $('admin-order-detail-content');
 
   const maDon = donHang.order_code || donHang.id || '#SMARTSTORE';
-  const thoiGian = donHang.created_at ? new Date(donHang.created_at).toLocaleString('vi-VN') : '—';
+  const ngayTao = donHang.created_at || donHang.created_date;
+  const thoiGian = ngayTao ? new Date(ngayTao).toLocaleString('vi-VN') : '—';
+  const sdt = donHang.customer_phone || donHang.phone || '—';
+  const diaChi = donHang.shipping_address || donHang.address || '—';
+  const tongTien = Number(donHang.total_price != null ? donHang.total_price : donHang.total_amount) || 0;
 
   if (title) title.textContent = `Chi Tiết Đơn Hàng ${maDon}`;
 
@@ -750,12 +764,12 @@ const xemChiTietDonHangAdmin = (donHangId) => {
         <div style="display: flex; align-items: center; gap: 12px;">
           <img 
             src="${lamSachHtml(item.image || ANH_MAC_DINH_ADMIN)}" 
-            alt="${lamSachHtml(item.product_name)}" 
+            alt="${lamSachHtml(item.product_name || item.name || 'Điện thoại')}" 
             style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
             onerror="this.onerror=null; this.src='${ANH_MAC_DINH_ADMIN}';"
           />
           <div>
-            <strong style="color: #1e293b; font-size: 0.95rem;">${lamSachHtml(item.product_name)}</strong>
+            <strong style="color: #1e293b; font-size: 0.95rem;">${lamSachHtml(item.product_name || item.name || 'Điện thoại')}</strong>
             <div style="font-size: 0.85rem; color: #64748b;">Số lượng: x${item.quantity} • Đơn giá: ${dinhDangTien(item.price)}</div>
           </div>
         </div>
@@ -771,11 +785,11 @@ const xemChiTietDonHangAdmin = (donHangId) => {
       <div style="background: #f8fafc; padding: 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
           <div><strong>Khách hàng:</strong> ${lamSachHtml(donHang.customer_name || '—')}</div>
-          <div><strong>Số điện thoại:</strong> ${lamSachHtml(donHang.customer_phone || '—')}</div>
+          <div><strong>Số điện thoại:</strong> ${lamSachHtml(sdt)}</div>
           <div><strong>Email:</strong> ${lamSachHtml(donHang.customer_email || '—')}</div>
           <div><strong>Ngày đặt:</strong> ${thoiGian}</div>
         </div>
-        <div style="margin-top: 6px;"><strong>Địa chỉ giao hàng:</strong> ${lamSachHtml(donHang.shipping_address || '—')}</div>
+        <div style="margin-top: 6px;"><strong>Địa chỉ giao hàng:</strong> ${lamSachHtml(diaChi)}</div>
         <div style="margin-top: 6px;"><strong>Trạng thái hiện tại:</strong> <span class="badge" style="background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 4px;">${lamSachHtml(donHang.status || 'Đang xử lý')}</span></div>
       </div>
 
@@ -786,7 +800,7 @@ const xemChiTietDonHangAdmin = (donHangId) => {
 
       <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 2px solid #e2e8f0;">
         <span style="font-size: 1rem; color: #64748b;">Tổng cộng thanh toán:</span>
-        <strong style="font-size: 1.3rem; color: #ef4444;">${dinhDangTien(donHang.total_price)}</strong>
+        <strong style="font-size: 1.3rem; color: #ef4444;">${dinhDangTien(tongTien)}</strong>
       </div>
     `;
   }
