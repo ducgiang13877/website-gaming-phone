@@ -47,7 +47,8 @@
       "price": 19490000,
       "quantity": 35,
       "detail": "Màn hình Dynamic Island thời thượng, camera 48MP bắt nét siêu đỉnh, mặt lưng kính pha màu.",
-      "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/thumbnail.webp"
+      "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-6/thumbnail.webp",
+      "category_id": "1"
     },
     {
       "id": "4",
@@ -250,7 +251,7 @@
       "address": "Cầu Giấy, Hà Nội",
       "total_amount": 29990000,
       "created_date": "2026-10-10",
-      "status": "Đã giao hàng"
+      "status": "Đang xử lý"
     },
     {
       "id": "2",

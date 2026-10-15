@@ -16,6 +16,49 @@
  */
 
 // ============================================================================
+// CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI ĐẶT HÀNG / GỬI API
+// ============================================================================
+(function() {
+  const GocWebSocket = window.WebSocket;
+  if (!GocWebSocket) return;
+
+  window.WebSocket = function(...args) {
+    const ws = new GocWebSocket(...args);
+    const url = args[0] ? String(args[0]) : '';
+    const laDevServer = url.includes('/ws') || url.includes('127.0.0.1') || url.includes('localhost');
+
+    if (laDevServer) {
+      let hamOnMessageGoc = null;
+
+      Object.defineProperty(ws, 'onmessage', {
+        set(fn) { hamOnMessageGoc = fn; },
+        get() { return hamOnMessageGoc; }
+      });
+
+      ws.addEventListener('message', (suKien) => {
+        if (suKien.data === 'reload') {
+          const thoiGianApiGanNhat = window.__lastApiCallTime || 0;
+          const khoangCach = Date.now() - thoiGianApiGanNhat;
+
+          if (khoangCach < 4000) {
+            console.log('🛡️ [SmartStore Client] Đã chặn Live Server tự động reload khi dữ liệu đơn hàng cập nhật!');
+            return;
+          }
+        }
+
+        if (typeof hamOnMessageGoc === 'function') {
+          hamOnMessageGoc.call(ws, suKien);
+        }
+      });
+    }
+
+    return ws;
+  };
+
+  window.WebSocket.prototype = GocWebSocket.prototype;
+})();
+
+// ============================================================================
 // PHẦN 1: CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
 // ============================================================================
 
@@ -83,6 +126,11 @@ const $$ = (selector) => document.querySelectorAll(selector);
  * @returns {Promise<any>}
  */
 const goiApi = async (url, phuongThuc = 'GET', duLieuGuiDi = null) => {
+  // Ghi nhận thời gian gửi request POST/PATCH/PUT/DELETE để ngăn chặn Live Server reload do db.json thay đổi
+  if (phuongThuc !== 'GET') {
+    window.__lastApiCallTime = Date.now();
+  }
+
   const cauHinh = {
     method: phuongThuc,
     headers: { 'Content-Type': 'application/json' }

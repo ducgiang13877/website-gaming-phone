@@ -18,6 +18,64 @@
  */
 
 // ============================================================================
+// CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI CRUD (LIVE-RELOAD DEFENSE)
+// ============================================================================
+// Giải thích cho sinh viên:
+// Khi lập trình viên chạy dự án bằng tiện ích mở rộng Live Server (VS Code) hoặc nodemon,
+// mỗi khi JSON-Server thực hiện ghi dữ liệu mới (POST, PUT, PATCH, DELETE) vào file db.json,
+// tiện ích Live Server sẽ phát hiện file db.json thay đổi và gửi lệnh WebSocket 'reload'
+// ép trình duyệt phải tải lại trang.
+// Đoạn mã thông minh dưới đây chặn bắt lệnh reload này khi vừa có thao tác CRUD,
+// giúp toàn bộ việc Thêm, Sửa, Xóa diễn ra mượt mà 100% trong trang (Single Page App).
+(function() {
+  const GocWebSocket = window.WebSocket;
+  if (!GocWebSocket) return;
+
+  window.WebSocket = function(...args) {
+    const ws = new GocWebSocket(...args);
+    const url = args[0] ? String(args[0]) : '';
+
+    // Kiểm tra xem WebSocket này có thuộc về Live Server / Hot Reload không
+    const laDevServer = url.includes('/ws') || url.includes('127.0.0.1') || url.includes('localhost');
+
+    if (laDevServer) {
+      let hamOnMessageGoc = null;
+
+      Object.defineProperty(ws, 'onmessage', {
+        set(fn) {
+          hamOnMessageGoc = fn;
+        },
+        get() {
+          return hamOnMessageGoc;
+        }
+      });
+
+      ws.addEventListener('message', (suKien) => {
+        // Khi nhận tín hiệu 'reload' từ Live Server
+        if (suKien.data === 'reload') {
+          const thoiGianApiGanNhat = window.__lastApiCallTime || 0;
+          const khoangCach = Date.now() - thoiGianApiGanNhat;
+
+          // Nếu vừa có thao tác CRUD trong vòng 4 giây gần đây, chặn ngay lệnh reload
+          if (khoangCach < 4000) {
+            console.log('🛡️ [SmartStore Admin] Đã chặn Live Server tự động reload trang sau thao tác CRUD!');
+            return; // Hủy lệnh reload
+          }
+        }
+
+        if (typeof hamOnMessageGoc === 'function') {
+          hamOnMessageGoc.call(ws, suKien);
+        }
+      });
+    }
+
+    return ws;
+  };
+
+  window.WebSocket.prototype = GocWebSocket.prototype;
+})();
+
+// ============================================================================
 // PHẦN 1: CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
 // ============================================================================
 
@@ -83,6 +141,11 @@ const $$ = (selector) => document.querySelectorAll(selector);
  * @returns {Promise<any>}
  */
 const goiApi = async (url, phuongThuc = 'GET', duLieu = null) => {
+  // Ghi nhận thời gian gửi yêu cầu CRUD (POST, PUT, PATCH, DELETE) để chống tự động reload trang
+  if (phuongThuc !== 'GET') {
+    window.__lastApiCallTime = Date.now();
+  }
+
   const cauHinh = {
     method: phuongThuc,
     headers: { 'Content-Type': 'application/json' }
@@ -1087,21 +1150,44 @@ const xuLyDangXuatAdmin = () => {
   hienThiThongBaoAdmin('Đã đăng xuất trang Quản trị.', 'info');
 };
 
+/**
+ * Chuyển đổi giữa các tab quản trị con và lưu trạng thái vào sessionStorage
+ * Tác dụng: Giúp giữ nguyên tab mà Admin đang thao tác (không bị tự động nhảy về tab đầu tiên)
+ * @param {string} targetSubtab - ID của tab cần hiển thị ('admin-tab-products', 'admin-tab-categories', 'admin-tab-orders', 'admin-tab-users')
+ */
+const chuyenTabAdmin = (targetSubtab) => {
+  if (!targetSubtab) return;
+
+  // 1. Cập nhật giao diện nút tab active
+  $$('.admin-tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-subtab') === targetSubtab);
+  });
+
+  // 2. Ẩn/hiện nội dung subpanel tương ứng
+  $$('.admin-subpanel').forEach(p => {
+    p.style.display = p.id === targetSubtab ? 'block' : 'none';
+  });
+
+  // 3. Ghi nhớ tab hiện tại vào sessionStorage
+  sessionStorage.setItem('smartstore_admin_active_tab', targetSubtab);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Kiểm tra trạng thái đăng nhập
   kiemTraDangNhapAdmin();
 
-  // 2. Chuyển đổi giữa các tab quản trị con
+  // 2. Chuyển đổi giữa các tab quản trị con (hỗ trợ lưu trạng thái vào sessionStorage)
   $$('.admin-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      $$('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-      $$('.admin-subpanel').forEach(p => p.style.display = 'none');
-
-      btn.classList.add('active');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const targetSubtab = btn.getAttribute('data-subtab');
-      if ($(targetSubtab)) $(targetSubtab).style.display = 'block';
+      chuyenTabAdmin(targetSubtab);
     });
   });
+
+  // Khôi phục tab quản trị đang làm việc gần nhất (mặc định: admin-tab-products)
+  const tabDaLuu = sessionStorage.getItem('smartstore_admin_active_tab') || 'admin-tab-products';
+  chuyenTabAdmin(tabDaLuu);
 
   // 3. Sự kiện mở modal thêm sản phẩm và thêm danh mục
   $('btn-admin-add-product')?.addEventListener('click', moModalThemSanPham);
