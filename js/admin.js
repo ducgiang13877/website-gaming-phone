@@ -193,8 +193,24 @@ const taoIdSanPhamMoi = () => {
 
 /**
  * Kiểm tra xem người dùng đã đăng nhập tài khoản quản trị Admin hay chưa
+ * Đồng thời tự động đồng bộ phiên từ giao diện User (smartstore_user)
  */
 const kiemTraDangNhapAdmin = () => {
+  // 1. Đồng bộ phiên đăng nhập từ giao diện User:
+  // Nếu localStorage đã có smartstore_user với role === 'admin' hoặc email là admin@smartstore.vn,
+  // hệ thống sẽ tự động xác nhận quyền Admin mà không bắt đăng nhập lại thủ công.
+  try {
+    const userDaLuu = localStorage.getItem('smartstore_user');
+    if (userDaLuu) {
+      const user = JSON.parse(userDaLuu);
+      if (user && (user.role === 'admin' || user.email === 'admin@smartstore.vn')) {
+        localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
+      }
+    }
+  } catch (e) {
+    console.error('Lỗi đọc smartstore_user:', e);
+  }
+
   const adminDaDangNhap = localStorage.getItem(KEY_ADMIN_LOGGED);
   const manHinhDangNhap = $('admin-login-screen');
   const manHinhDashboard = $('admin-dashboard-screen');
@@ -202,6 +218,15 @@ const kiemTraDangNhapAdmin = () => {
   if (adminDaDangNhap === 'true') {
     if (manHinhDangNhap) manHinhDangNhap.style.display = 'none';
     if (manHinhDashboard) manHinhDashboard.style.display = 'block';
+
+    // Hiển thị tên Admin trên thanh Header
+    try {
+      const user = JSON.parse(localStorage.getItem('smartstore_user') || '{}');
+      if ($('admin-logged-name')) {
+        $('admin-logged-name').textContent = user.name ? `${user.name} (Admin)` : 'Quản Trị Viên (Admin)';
+      }
+    } catch (e) {}
+
     taiToanBoDuLieuAdmin();
   } else {
     if (manHinhDangNhap) manHinhDangNhap.style.display = 'flex';
@@ -1014,20 +1039,34 @@ const hienThiBangKhachHangAdmin = () => {
 // PHẦN 10: ĐĂNG NHẬP / ĐĂNG XUẤT ADMIN & ĐĂNG KÝ SỰ KIỆN KHỞI CHẠY
 // ============================================================================
 
+
+
 /**
- * Xử lý đăng nhập tài khoản quản trị
+ * Xử lý đăng nhập tài khoản quản trị trực tiếp trên trang admin.html
  */
 const xuLyDangNhapAdmin = (suKien) => {
   suKien.preventDefault();
   const email = ($('admin-email')?.value || '').trim();
   const password = ($('admin-password')?.value || '').trim();
 
-  // Kiểm tra tài khoản admin (mặc định admin / admin hoặc có role: admin trong db)
-  const laAdminHopLe = (email === 'admin@smartstore.vn' && password === 'admin') ||
-    danhSachKhachHang.some(u => u.email === email && u.password === password && u.role === 'admin');
+  // Kiểm tra tài khoản admin trong database hoặc tài khoản admin mặc định
+  const taiKhoanAdmin = danhSachKhachHang.find(u => u.email === email && u.password === password && u.role === 'admin');
+  const laAdminMacDinh = email === 'admin@smartstore.vn' && password === 'admin';
 
-  if (laAdminHopLe) {
+  if (laAdminMacDinh || taiKhoanAdmin) {
     localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
+
+    // Đồng bộ sang smartstore_user để khi Admin bấm "Xem Cửa Hàng (Shop)" sẽ duy trì được tài khoản
+    const thongTinLuu = taiKhoanAdmin || {
+      id: '1',
+      name: 'Quản Trị Viên (Admin)',
+      email: 'admin@smartstore.vn',
+      phone: '0988888888',
+      role: 'admin',
+      address: 'Hà Nội'
+    };
+    localStorage.setItem('smartstore_user', JSON.stringify(thongTinLuu));
+
     hienThiThongBaoAdmin('Đăng nhập Quản trị viên thành công!', 'success');
     kiemTraDangNhapAdmin();
   } else {
@@ -1043,6 +1082,7 @@ const xuLyDangXuatAdmin = () => {
   if (!xacNhan) return;
 
   localStorage.removeItem(KEY_ADMIN_LOGGED);
+  localStorage.removeItem('smartstore_user');
   kiemTraDangNhapAdmin();
   hienThiThongBaoAdmin('Đã đăng xuất trang Quản trị.', 'info');
 };

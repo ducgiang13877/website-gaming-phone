@@ -34,6 +34,7 @@ const ANH_MAC_DINH = 'https://picsum.photos/300/300';
 // Khóa lưu vào localStorage
 const KEY_GIO_HANG = 'smartstore_cart';
 const KEY_NGUOI_DUNG = 'smartstore_user';
+const KEY_ADMIN_LOGGED = 'smartstore_admin_logged';
 
 // Cấu hình phân trang sản phẩm
 const SO_SAN_PHAM_MOI_TRANG = 8; // Tối đa 8 sản phẩm mỗi trang
@@ -245,9 +246,10 @@ const khoiTaoUngDung = async () => {
       try { nguoiDungHienTai = JSON.parse(userDaLuu); } catch { nguoiDungHienTai = null; }
     }
 
-    // Cập nhật số lượng giỏ hàng và tên người dùng trên thanh Header
+    // Cập nhật số lượng giỏ hàng, tên người dùng và các nút quyền hạn trên Header
     capNhatSoLuongGioHangTrenHeader();
     capNhatTenTaiKhoanTrenHeader();
+    capNhatGiaoDienTaiKhoan();
 
     // 3. Tải song song danh sách sản phẩm và danh mục
     const [duLieuSP, duLieuDM] = await Promise.all([
@@ -1065,26 +1067,42 @@ const hienThiLichSuDonHang = async () => {
 const capNhatGiaoDienTaiKhoan = () => {
   const hopDaDangNhap = $('account-logged-box');
   const hopChuaDangNhap = $('auth-forms-wrapper');
+  const nutAdminHeader = $('nav-btn-admin');
+  const theShortcutAdmin = $('admin-shortcut-card');
   if (!hopDaDangNhap || !hopChuaDangNhap) return;
 
   if (nguoiDungHienTai) {
     hopDaDangNhap.classList.remove('hidden');
     hopChuaDangNhap.classList.add('hidden');
 
+    const laAdmin = nguoiDungHienTai.role === 'admin' || nguoiDungHienTai.email === 'admin@smartstore.vn';
+
     if ($('account-user-name')) $('account-user-name').textContent = nguoiDungHienTai.name || 'Người dùng';
     if ($('account-user-email')) $('account-user-email').textContent = nguoiDungHienTai.email || '';
     if ($('profile-name-val')) $('profile-name-val').textContent = nguoiDungHienTai.name || '—';
     if ($('profile-phone')) $('profile-phone').textContent = nguoiDungHienTai.phone || '—';
     if ($('profile-address')) $('profile-address').textContent = nguoiDungHienTai.address || '—';
-    if ($('profile-role')) $('profile-role').textContent = nguoiDungHienTai.role === 'admin' ? 'Quản trị viên (Admin)' : 'Khách hàng';
+    if ($('profile-role')) $('profile-role').textContent = laAdmin ? 'Quản trị viên (Admin)' : 'Khách hàng';
 
     // Điền vào form sửa
     if ($('edit-profile-name')) $('edit-profile-name').value = nguoiDungHienTai.name || '';
     if ($('edit-profile-phone')) $('edit-profile-phone').value = nguoiDungHienTai.phone || '';
     if ($('edit-profile-address')) $('edit-profile-address').value = nguoiDungHienTai.address || '';
+
+    // Kiểm tra và hiển thị lối tắt trang Quản trị dành cho Admin
+    if (laAdmin) {
+      localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
+      if (nutAdminHeader) nutAdminHeader.classList.remove('hidden');
+      if (theShortcutAdmin) theShortcutAdmin.classList.remove('hidden');
+    } else {
+      if (nutAdminHeader) nutAdminHeader.classList.add('hidden');
+      if (theShortcutAdmin) theShortcutAdmin.classList.add('hidden');
+    }
   } else {
     hopDaDangNhap.classList.add('hidden');
     hopChuaDangNhap.classList.remove('hidden');
+    if (nutAdminHeader) nutAdminHeader.classList.add('hidden');
+    if (theShortcutAdmin) theShortcutAdmin.classList.add('hidden');
   }
 
   capNhatTenTaiKhoanTrenHeader();
@@ -1167,6 +1185,26 @@ const xuLyDangNhap = async (suKien) => {
 
     nguoiDungHienTai = taiKhoan;
     localStorage.setItem(KEY_NGUOI_DUNG, JSON.stringify(nguoiDungHienTai));
+
+    // Kiểm tra xem tài khoản đăng nhập có quyền Quản Trị Viên (Admin) không
+    const laAdmin = taiKhoan.role === 'admin' || taiKhoan.email === 'admin@smartstore.vn';
+
+    if (laAdmin) {
+      // 1. Lưu cờ phiên đăng nhập Quản trị viên vào localStorage để admin.html tự động mở dashboard
+      localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
+
+      // 2. Cập nhật giao diện tài khoản
+      capNhatGiaoDienTaiKhoan();
+
+      // 3. Thông báo Toast nổi bật cho Admin biết hệ thống đang tự động điều hướng
+      hienThiThongBao('Đăng nhập Quản trị viên thành công! Đang chuyển sang Bảng Quản Trị...', 'success');
+
+      // 4. Tự động chuyển hướng sang trang admin.html sau 700ms
+      setTimeout(() => {
+        window.location.href = 'admin.html';
+      }, 700);
+      return;
+    }
 
     $('login-form')?.reset();
     capNhatGiaoDienTaiKhoan();
@@ -1280,6 +1318,7 @@ const xuLyDangXuat = () => {
 
   nguoiDungHienTai = null;
   localStorage.removeItem(KEY_NGUOI_DUNG);
+  localStorage.removeItem(KEY_ADMIN_LOGGED); // Xóa đồng thời cờ phiên quản trị
   capNhatGiaoDienTaiKhoan();
   hienThiThongBao('Đã đăng xuất tài khoản.', 'info');
 };
@@ -1296,9 +1335,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Duyệt qua tất cả các nút nav-item và gắn sự kiện click dựa trên data-view
   $$('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      e.preventDefault();
       const viewMucTieu = btn.getAttribute('data-view');
+      // Chỉ ngăn chặn hành vi mặc định khi là nút chuyển tab SPA nội bộ (có data-view)
       if (viewMucTieu) {
+        e.preventDefault();
         chuyenTrangView(viewMucTieu);
       }
     });

@@ -261,36 +261,6 @@
       "total_amount": 27490000,
       "created_date": "2026-10-11",
       "status": "Đang giao hàng"
-    },
-    {
-      "id": "Rw7q2VVFLNg",
-      "user_id": "2",
-      "customer_name": "Nguyễn Văn Hùng",
-      "phone": "0912345678",
-      "address": "Cầu Giấy, Hà Nội",
-      "total_amount": 25490000,
-      "created_date": "2026-10-12",
-      "status": "Đang xử lý"
-    },
-    {
-      "id": "KC-tv6DYEZI",
-      "user_id": "2",
-      "customer_name": "Nguyễn Văn Hùng",
-      "phone": "0912345678",
-      "address": "Cầu Giấy, Hà Nội",
-      "total_amount": 59980000,
-      "items_count": 2,
-      "items": [
-        {
-          "id": "1",
-          "name": "iPhone 15 Pro Max 256GB",
-          "price": 29990000,
-          "quantity": 2,
-          "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/thumbnail.webp"
-        }
-      ],
-      "created_date": "2026-10-13",
-      "status": "Đang xử lý"
     }
   ],
   "order_details": [

@@ -34,6 +34,10 @@
         <button class="nav-item" id="nav-btn-account" data-view="view-account">
           <i class="fas fa-user"></i> <span id="nav-account-text">Tài khoản</span>
         </button>
+        <!-- Nút chuyển sang trang Quản trị (Chỉ hiển thị cho tài khoản có quyền Admin) -->
+        <a href="admin.html" class="nav-item nav-admin-btn hidden" id="nav-btn-admin" title="Truy cập Bảng Quản Trị Hệ Thống">
+          <i class="fas fa-shield-halved"></i> <span>Trang Quản Trị</span>
+        </a>
       </nav>
     </div>
   </header>
@@ -237,6 +241,20 @@
           </div>
           <h3 id="account-user-name" class="account-name-heading"></h3>
           <p id="account-user-email" class="account-email-heading"></p>
+
+          <!-- Thẻ lối tắt Quản trị viên (Chỉ hiển thị khi tài khoản có quyền Admin) -->
+          <div id="admin-shortcut-card" class="admin-shortcut-card hidden">
+            <div class="admin-shortcut-content">
+              <i class="fas fa-shield-halved admin-shortcut-icon"></i>
+              <div>
+                <h4 class="admin-shortcut-title">Bảng Quản Trị Hệ Thống (Admin Panel)</h4>
+                <p class="admin-shortcut-desc">Tài khoản này có quyền Quản trị viên. Bạn có thể quản lý sản phẩm, đơn hàng và danh mục.</p>
+              </div>
+            </div>
+            <a href="admin.html" class="btn-primary btn-goto-admin">
+              <i class="fas fa-gauge-high"></i> Vào Trang Quản Trị
+            </a>
+          </div>
 
           <!-- Bảng xem thông tin chi tiết tài khoản -->
           <div class="profile-info-card">
