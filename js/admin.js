@@ -2,7 +2,6 @@
 // ============================================================================
 // CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI CRUD (LIVE-RELOAD DEFENSE)
 // ============================================================================
-// Giải thích cho sinh viên:
 // Khi lập trình viên chạy dự án bằng tiện ích mở rộng Live Server (VS Code) hoặc nodemon,
 // mỗi khi JSON-Server thực hiện ghi dữ liệu mới (POST, PUT, PATCH, DELETE) vào file db.json,
 // tiện ích Live Server sẽ phát hiện file db.json thay đổi và gửi lệnh WebSocket 'reload'
