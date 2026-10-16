@@ -1,396 +1,147 @@
-// ============================================================================
-// PHẦN 1: CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
-// ============================================================================
-
-// Địa chỉ máy chủ Mock API JSON-Server (chạy cổng 3000)
-const API_BASE = 'http://localhost:3000';
-
-// Các đường dẫn API
-const API_PRODUCTS = `${API_BASE}/products`;      // Danh sách điện thoại
-const API_CATEGORIES = `${API_BASE}/categories`;  // Danh mục thương hiệu
-const API_ORDERS = `${API_BASE}/orders`;          // Đơn hàng
-const API_USERS = `${API_BASE}/users`;            // Tài khoản người dùng
-
-// Ảnh thay thế dự phòng khi ảnh chính bị lỗi hoặc thiếu
-const ANH_MAC_DINH = 'https://picsum.photos/300/300';
-
-// Khóa lưu vào localStorage
-const KEY_GIO_HANG = 'smartstore_cart';
-const KEY_NGUOI_DUNG = 'smartstore_user';
-const KEY_ADMIN_LOGGED = 'smartstore_admin_logged';
-
-// Cấu hình phân trang sản phẩm
-const SO_SAN_PHAM_MOI_TRANG = 8; // Tối đa 8 sản phẩm mỗi trang
-let trangHienTai = 1;            // Trang hiện tại đang xem
-
-// ============================================================================
-// PHẦN 2: BIẾN QUẢN LÝ TRẠNG THÁI (APPLICATION STATE)
-// ============================================================================
-
-let danhSachSanPham = [];      // Mảng lưu danh sách sản phẩm lấy từ API
-let danhSachDanhMuc = [];      // Mảng lưu danh mục thương hiệu
-let gioHang = [];              // Mảng giỏ hàng hiện tại (đồng bộ với localStorage)
-let nguoiDungHienTai = null;   // Thông tin tài khoản đang đăng nhập
-let timerToast = null;         // Bộ đếm thời gian tự tắt thông báo Toast
-
-// ============================================================================
-// PHẦN 3: CÁC HÀM TIỆN ÍCH DÙNG CHUNG (UTILITIES)
-// ============================================================================
-
 /**
- * Hàm hỗ trợ lấy phần tử HTML nhanh theo ID hoặc CSS Selector ($)
- * @param {string} selector - ID hoặc bộ chọn CSS
- * @returns {HTMLElement|null}
+ * ============================================================================
+ * WEBSITE GAMING PHONE (SMARTSTORE) - GIAO DIỆN NGƯỜI DÙNG (js/app.js)
+ * ============================================================================
+ * Phong cách code: ES6+ Hiện đại, Ngắn gọn, Tối ưu và Dễ hiểu cho sinh viên.
+ * Chức năng: SPA điều hướng, Giỏ hàng, Đặt hàng, Phân trang, Bộ lọc & Tài khoản.
+ * ============================================================================
  */
-const $ = (selector) => {
-  if (typeof selector !== 'string') return null;
-  const laIdDonGian = !selector.includes(' ') && !selector.includes('.') && !selector.includes('[');
-  return laIdDonGian 
-    ? document.getElementById(selector.replace(/^#/, '')) 
-    : document.querySelector(selector);
-};
 
-/**
- * Hàm hỗ trợ lấy danh sách nhiều phần tử HTML ($$)
- * @param {string} selector - Bộ chọn CSS
- * @returns {NodeListOf<HTMLElement>}
- */
-const $$ = (selector) => document.querySelectorAll(selector);
+// ================= 1. CẤU HÌNH VÀ BIẾN TOÀN CỤC =================
+const API = 'http://localhost:3000';
+const DEFAULT_IMG = 'https://picsum.photos/300/300';
+const ITEMS_PER_PAGE = 8; // Hiển thị 8 sản phẩm mỗi trang
 
-/**
- * Hàm gọi API dùng chung (Fetch Wrapper)
- * Đóng gói phương thức gửi, thiết lập header JSON và kiểm tra lỗi mạng
- * @param {string} url - Đường dẫn API
- * @param {string} phuongThuc - 'GET', 'POST', 'PATCH', 'PUT', 'DELETE'
- * @param {object|null} duLieuGuiDi - Dữ liệu payload gửi lên
- * @returns {Promise<any>}
- */
-const goiApi = async (url, phuongThuc = 'GET', duLieuGuiDi = null) => {
-  const cauHinh = {
-    method: phuongThuc,
-    headers: { 'Content-Type': 'application/json' }
+let products = [];     // Danh sách sản phẩm từ server
+let categories = [];   // Danh mục thương hiệu
+let cart = JSON.parse(localStorage.getItem('smartstore_cart') || '[]'); // Giỏ hàng
+let currentUser = JSON.parse(localStorage.getItem('smartstore_user') || 'null'); // Người dùng
+let currentPage = 1;   // Trang hiện tại
+
+// ================= 2. HÀM TIỆN ÍCH DÙNG CHUNG =================
+const $ = (id) => document.getElementById(id);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// Định dạng tiền tệ VNĐ (ví dụ: 29.990.000 đ)
+const formatMoney = (amount) => (Number(amount) || 0).toLocaleString('vi-VN') + ' đ';
+
+// Hàm gọi API ngắn gọn bằng Fetch kết hợp async/await
+const api = async (endpoint, method = 'GET', body = null) => {
+  const options = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : null
   };
-
-  if (duLieuGuiDi !== null) {
-    cauHinh.body = JSON.stringify(duLieuGuiDi);
-  }
-
-  const phanHoi = await fetch(url, cauHinh);
-  if (!phanHoi.ok) {
-    throw new Error(`Lỗi máy chủ (${phanHoi.status}): ${phanHoi.statusText}`);
-  }
-  return phanHoi.json();
+  const res = await fetch(`${API}/${endpoint}`, options);
+  if (!res.ok) throw new Error(`Lỗi kết nối API: ${res.status}`);
+  return res.json();
 };
 
-/**
- * Hàm định dạng số tiền sang chuẩn Việt Nam Đồng (VNĐ)
- * @param {number|string} soTien - Giá trị số
- * @returns {string} Chuỗi tiền tệ ví dụ "29.990.000 đ"
- */
-const dinhDangTien = (soTien) => {
-  const giaTri = Number(soTien) || 0;
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(giaTri);
+// Hiển thị thông báo Toast góc màn hình (tự biến mất sau 3 giây)
+let toastTimer = null;
+const showToast = (message, type = 'info') => {
+  const toast = $('toast');
+  if (!toast) return;
+  const icons = {
+    success: 'fa-circle-check',
+    error: 'fa-circle-xmark',
+    warning: 'fa-triangle-exclamation',
+    info: 'fa-circle-info'
+  };
+  toast.innerHTML = `<i class="fas ${icons[type] || 'fa-info'}"></i> <span>${message}</span>`;
+  toast.className = `toast-notice toast-${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
 };
 
-/**
- * Hàm làm sạch HTML phòng chống tấn công XSS
- * @param {any} chuoiVanBan - Chuỗi nhập từ bên ngoài
- * @returns {string} Chuỗi an toàn
- */
-const lamSachHtml = (chuoiVanBan) => {
-  if (chuoiVanBan == null) return '';
-  return String(chuoiVanBan)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-/**
- * Hàm hiển thị thông báo Toast góc màn hình
- * @param {string} noiDung - Lời nhắn
- * @param {string} loai - 'success', 'error', 'warning', 'info'
- */
-const hienThiThongBao = (noiDung, loai = 'info') => {
-  const phanTuToast = $('toast');
-  if (!phanTuToast) return;
-
-  if (timerToast) clearTimeout(timerToast);
-
-  const bieuTuong = {
-    success: '<i class="fas fa-circle-check"></i>',
-    error: '<i class="fas fa-circle-xmark"></i>',
-    warning: '<i class="fas fa-triangle-exclamation"></i>',
-    info: '<i class="fas fa-circle-info"></i>'
-  }[loai] || '<i class="fas fa-circle-info"></i>';
-
-  phanTuToast.innerHTML = `${bieuTuong} <span>${lamSachHtml(noiDung)}</span>`;
-  phanTuToast.className = `toast-notice toast-${loai} show`;
-
-  timerToast = setTimeout(() => {
-    phanTuToast.classList.remove('show');
-  }, 3000);
-};
-
-/**
- * Hàm sinh mã đơn hàng chuẩn 11 ký tự:
- * - Bắt đầu bằng dấu #
- * - Sau dấu # là 10 ký tự gồm chữ VIẾT HOA (A-Z) và SỐ (0-9) ngẫu nhiên
- * - Tổng độ dài chính xác là 11 ký tự, không ký tự đặc biệt
- * @returns {string} Mã đơn hàng hợp lệ dạng #XXXXXXXXXX
- */
-const taoMaDonHang = () => {
-  const chuoiKyTu = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let maDon = '#';
+// Sinh mã đơn hàng chuẩn 11 ký tự dạng: # + 10 ký tự chữ hoa và số ngẫu nhiên
+const generateOrderCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '#';
   for (let i = 0; i < 10; i++) {
-    const viTri = Math.floor(Math.random() * chuoiKyTu.length);
-    maDon += chuoiKyTu.charAt(viTri);
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return maDon;
+  return code;
 };
 
-// ============================================================================
-// PHẦN 4: ĐIỀU HƯỚNG GIAO DIỆN (VIEW SWITCHER - SPA)
-// ============================================================================
-
-/**
- * Hàm chuyển đổi giữa các màn hình trong ứng dụng
- * Hỗ trợ chuyển qua lại mượt mà giữa:
- * - 'view-shop': Trang Cửa hàng
- * - 'view-cart': Trang Giỏ hàng & Thanh toán
- * - 'view-thankyou': Trang Cảm ơn sau khi đặt hàng
- * - 'view-orders': Trang Lịch sử đơn hàng
- * - 'view-account': Trang Tài khoản (Đăng nhập / Đăng ký / Sửa thông tin)
- * 
- * @param {string} viewId - ID của view cần hiển thị
- */
-const chuyenTrangView = (viewId) => {
-  // 1. Ẩn tất cả các view bằng cách gỡ class 'active'
-  $$('.view-panel').forEach(view => view.classList.remove('active'));
-
-  // 2. Kích hoạt view mục tiêu
-  const viewMucTieu = $(viewId);
-  if (viewMucTieu) {
-    viewMucTieu.classList.add('active');
-  }
-
-  // 3. Đổi trạng thái 'active' trên thanh menu Header
-  $$('.nav-item').forEach(btn => {
-    const mucTieu = btn.getAttribute('data-view');
-    if (mucTieu === viewId) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
-
-  // 4. Nếu vào trang Giỏ hàng thì làm mới bảng giỏ hàng
-  if (viewId === 'view-cart') {
-    hienThiBangGioHang();
-  }
-
-  // 5. Nếu vào trang Lịch sử đơn hàng thì gọi API tải danh sách đơn
-  if (viewId === 'view-orders') {
-    hienThiLichSuDonHang();
-  }
-
-  // 6. Nếu vào trang Tài khoản thì cập nhật giao diện người dùng
-  if (viewId === 'view-account') {
-    capNhatGiaoDienTaiKhoan();
-  }
-
-  // Cuộn nhẹ lên đầu trang
+// ================= 3. ĐIỀU HƯỚNG GIAO DIỆN (SPA VIEW SWITCHER) =================
+const switchView = (viewId) => {
+  // Ẩn tất cả view và chỉ hiển thị view mục tiêu
+  $$('.view-panel').forEach(panel => panel.classList.toggle('active', panel.id === viewId));
+  
+  // Cập nhật trạng thái active trên nút header
+  $$('.nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewId));
   window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-window.chuyenTrangView = chuyenTrangView;
 
-// ============================================================================
-// PHẦN 5: TẢI VÀ HIỂN THỊ SẢN PHẨM (SHOP & FILTER & PAGINATION)
-// ============================================================================
-
-/**
- * Hàm khởi tạo và tải toàn bộ dữ liệu ban đầu từ REST API
- */
-const khoiTaoUngDung = async () => {
-  try {
-    // 1. Phục hồi giỏ hàng từ localStorage
-    const gioHangDaLuu = localStorage.getItem(KEY_GIO_HANG);
-    if (gioHangDaLuu) {
-      try { gioHang = JSON.parse(gioHangDaLuu); } catch { gioHang = []; }
-    }
-
-    // 2. Phục hồi thông tin người dùng từ localStorage
-    const userDaLuu = localStorage.getItem(KEY_NGUOI_DUNG);
-    if (userDaLuu) {
-      try { nguoiDungHienTai = JSON.parse(userDaLuu); } catch { nguoiDungHienTai = null; }
-    }
-
-    // Cập nhật số lượng giỏ hàng, tên người dùng và các nút quyền hạn trên Header
-    capNhatSoLuongGioHangTrenHeader();
-    capNhatTenTaiKhoanTrenHeader();
-    capNhatGiaoDienTaiKhoan();
-
-    // 3. Tải song song danh sách sản phẩm và danh mục
-    const [duLieuSP, duLieuDM] = await Promise.all([
-      goiApi(API_PRODUCTS),
-      goiApi(API_CATEGORIES)
-    ]);
-
-    danhSachSanPham = Array.isArray(duLieuSP) ? duLieuSP : [];
-    danhSachDanhMuc = Array.isArray(duLieuDM) ? duLieuDM : [];
-
-    // 4. Đổ danh mục vào thẻ select lọc
-    napDanhMucVaoBoLoc();
-
-    // 5. Hiển thị danh sách sản phẩm ra lưới (kèm phân trang)
-    hienThiDanhSachSanPham();
-
-  } catch (loi) {
-    console.error('Lỗi khi tải dữ liệu từ máy chủ:', loi);
-    hienThiThongBao('Không thể kết nối đến máy chủ JSON-Server cổng 3000!', 'error');
-  }
+  // Tự động tải lại nội dung tương ứng khi chuyển view
+  if (viewId === 'view-cart') renderCartTable();
+  if (viewId === 'view-orders') renderOrderHistory();
+  if (viewId === 'view-account') renderAccountView();
 };
 
-/**
- * Đổ danh mục vào ô chọn lọc thương hiệu
- */
-const napDanhMucVaoBoLoc = () => {
-  const oChon = $('shop-filter-category');
-  if (!oChon) return;
+// ================= 4. HIỂN THỊ SẢN PHẨM, TÌM KIẾM & PHÂN TRANG =================
 
-  let html = '<option value="">Tất cả thương hiệu</option>';
-  danhSachDanhMuc.forEach(dm => {
-    html += `<option value="${lamSachHtml(dm.id)}">${lamSachHtml(dm.name)}</option>`;
-  });
-  oChon.innerHTML = html;
-};
+// Lọc danh sách sản phẩm theo từ khóa, thương hiệu và khoảng giá
+const getFilteredProducts = () => {
+  const keyword = ($('shop-search')?.value || '').trim().toLowerCase();
+  const categoryId = $('shop-filter-category')?.value || '';
+  const priceRange = $('shop-filter-price')?.value || '';
 
-/**
- * Lọc danh sách sản phẩm theo từ khóa tìm kiếm, danh mục và khoảng giá
- * Tương thích linh hoạt cả 2 trường 'cate_id' và 'category_id' trong db.json
- * @returns {Array} Danh sách sản phẩm thỏa mãn
- */
-const layDanhSachSanPhamDaLoc = () => {
-  const tuKhoa = ($('shop-search')?.value || '').trim().toLowerCase();
-  const maDanhMuc = $('shop-filter-category')?.value || '';
-  const mucGia = $('shop-filter-price')?.value || '';
+  return products.filter(sp => {
+    const matchName = !keyword || (sp.name || '').toLowerCase().includes(keyword);
+    const spCate = String(sp.cate_id || sp.category_id || '');
+    const matchCate = !categoryId || spCate === categoryId;
+    
+    const price = Number(sp.price) || 0;
+    const matchPrice = !priceRange
+      || (priceRange === 'duoi-10tr' && price < 10000000)
+      || (priceRange === '10tr-25tr' && price >= 10000000 && price <= 25000000)
+      || (priceRange === 'tren-25tr' && price > 25000000);
 
-  return danhSachSanPham.filter(sanPham => {
-    // 1. Khớp từ khóa tìm kiếm
-    const ten = (sanPham.name || '').toLowerCase();
-    const thoaManTuKhoa = tuKhoa === '' || ten.includes(tuKhoa);
-
-    // 2. Khớp mã danh mục (tương thích cả cate_id lẫn category_id)
-    const idDanhMucCuaSP = sanPham.cate_id || sanPham.category_id || '';
-    const thoaManDanhMuc = maDanhMuc === '' || String(idDanhMucCuaSP) === String(maDanhMuc);
-
-    // 3. Khớp khoảng giá
-    const gia = Number(sanPham.price) || 0;
-    let thoaManGia = true;
-    if (mucGia === 'duoi-10tr') thoaManGia = gia < 10000000;
-    else if (mucGia === '10tr-25tr') thoaManGia = gia >= 10000000 && gia <= 25000000;
-    else if (mucGia === 'tren-25tr') thoaManGia = gia > 25000000;
-
-    return thoaManTuKhoa && thoaManDanhMuc && thoaManGia;
+    return matchName && matchCate && matchPrice;
   });
 };
 
-/**
- * Hiển thị danh sách sản phẩm ra giao diện có phân trang (8 sản phẩm/trang)
- * ĐẶC BIỆT: Định dạng thẻ sản phẩm THU NHỎ, GỌN GÀNG, VỪA VẶN, ĐẸP MẮT
- */
-const hienThiDanhSachSanPham = () => {
-  const luoiSanPham = $('product-grid');
-  if (!luoiSanPham) return;
+// Hiển thị danh sách sản phẩm dạng thẻ lưới kèm phân trang
+const renderProducts = () => {
+  const grid = $('product-grid');
+  const filtered = getFilteredProducts();
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  
+  if (currentPage > totalPages) currentPage = totalPages;
 
-  const sanPhamDaLoc = layDanhSachSanPhamDaLoc();
+  // Cắt mảng sản phẩm cho trang hiện tại (8 sản phẩm)
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentItems = filtered.slice(start, start + ITEMS_PER_PAGE);
 
-  // Không có sản phẩm nào khớp
-  if (sanPhamDaLoc.length === 0) {
-    luoiSanPham.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <i class="fas fa-box-open" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 12px; display: block;"></i>
-        <h3 style="font-size: 1.1rem; color: #475569; margin-bottom: 6px;">Không tìm thấy điện thoại nào phù hợp!</h3>
-        <p style="color: #64748b; font-size: 0.85rem;">Hãy thử tìm kiếm với từ khóa khác hoặc điều chỉnh lại bộ lọc.</p>
-      </div>
-    `;
-    const thanhPhanTrang = $('shop-pagination');
-    if (thanhPhanTrang) thanhPhanTrang.innerHTML = '';
+  if (!currentItems.length) {
+    grid.innerHTML = `<div class="empty-list-box"><i class="fas fa-box-open"></i><p>Không tìm thấy điện thoại nào phù hợp!</p></div>`;
+    renderPagination(0);
     return;
   }
 
-  // Tính tổng số trang (mỗi trang 8 sản phẩm)
-  const tongSoTrang = Math.ceil(sanPhamDaLoc.length / SO_SAN_PHAM_MOI_TRANG);
-  if (trangHienTai > tongSoTrang) trangHienTai = tongSoTrang;
-  if (trangHienTai < 1) trangHienTai = 1;
-
-  // Cắt mảng lấy 8 sản phẩm của trang này bằng hàm .slice()
-  const batDau = (trangHienTai - 1) * SO_SAN_PHAM_MOI_TRANG;
-  const ketThuc = batDau + SO_SAN_PHAM_MOI_TRANG;
-  const sanPhamTrangNay = sanPhamDaLoc.slice(batDau, ketThuc);
-
-  // Tạo HTML thẻ sản phẩm nhỏ gọn
-  const chuoiHtml = sanPhamTrangNay.map(sanPham => {
-    const maDanhMucSP = sanPham.cate_id || sanPham.category_id;
-    const danhMuc = danhSachDanhMuc.find(dm => String(dm.id) === String(maDanhMucSP));
-    const tenHang = danhMuc ? danhMuc.name : 'Chính hãng';
-    const anh = sanPham.image || ANH_MAC_DINH;
-    const tonKho = Number(sanPham.quantity) || 0;
-    const conHang = tonKho > 0;
-
+  // Render danh sách sản phẩm
+  grid.innerHTML = currentItems.map(sp => {
+    const cate = categories.find(c => String(c.id) === String(sp.cate_id || sp.category_id));
+    const stock = Number(sp.quantity) || 0;
     return `
       <div class="product-card">
-        <!-- Khung ảnh nhỏ gọn, bấm vào xem chi tiết sản phẩm -->
-        <div class="product-img-box" onclick="xemChiTietSanPham('${sanPham.id}')" title="Bấm để xem chi tiết ${lamSachHtml(sanPham.name)}">
-          <span class="product-badge">${lamSachHtml(tenHang)}</span>
-          <img 
-            src="${lamSachHtml(anh)}" 
-            alt="${lamSachHtml(sanPham.name)}" 
-            onerror="this.onerror=null; this.src='${ANH_MAC_DINH}';"
-          />
+        <div class="product-badge">${cate?.name || 'Gaming'}</div>
+        <div class="product-thumb" onclick="openProductDetail('${sp.id}')">
+          <img src="${sp.image || DEFAULT_IMG}" alt="${sp.name}" onerror="this.src='${DEFAULT_IMG}'" />
         </div>
-
-        <!-- Thông tin sản phẩm -->
         <div class="product-info">
-          <h3 class="product-name" onclick="xemChiTietSanPham('${sanPham.id}')" title="${lamSachHtml(sanPham.name)}">
-            ${lamSachHtml(sanPham.name)}
-          </h3>
-          
-          <p class="product-desc" title="${lamSachHtml(sanPham.detail || '')}">
-            ${lamSachHtml(sanPham.detail || 'Gaming phone cấu hình mạnh mẽ, màn hình tần số quét cao.')}
-          </p>
-
-          <div class="product-price-box">
-            <span class="product-price">${dinhDangTien(sanPham.price)}</span>
-            <span class="product-stock" style="color: ${conHang ? '#16a34a' : '#dc2626'}; font-weight: 600;">
-              ${conHang ? `Còn: ${tonKho}` : 'Hết hàng'}
-            </span>
+          <h3 class="product-title" onclick="openProductDetail('${sp.id}')">${sp.name}</h3>
+          <div class="product-price">${formatMoney(sp.price)}</div>
+          <div class="product-stock ${stock > 0 ? 'in-stock' : 'out-stock'}">
+            ${stock > 0 ? `Còn hàng: ${stock} máy` : 'Tạm hết hàng'}
           </div>
-
-          <!-- 2 nút thao tác nhỏ gọn -->
-          <div class="product-actions-group">
-            <button 
-              type="button" 
-              class="btn-add-cart" 
-              onclick="themVaoGioHang('${sanPham.id}')"
-              ${!conHang ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-              title="Thêm vào giỏ"
-            >
+          <div class="product-actions">
+            <button class="btn-card-add" onclick="addToCart('${sp.id}')" ${stock <= 0 ? 'disabled' : ''}>
               <i class="fas fa-cart-plus"></i> Thêm giỏ
             </button>
-
-            <button 
-              type="button" 
-              class="btn-buy-now" 
-              onclick="muaNgay('${sanPham.id}')"
-              ${!conHang ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-              title="Mua ngay lập tức"
-            >
-              <i class="fas fa-bolt"></i> Mua ngay
+            <button class="btn-card-buy" onclick="buyNow('${sp.id}')" ${stock <= 0 ? 'disabled' : ''}>
+              Mua ngay
             </button>
           </div>
         </div>
@@ -398,999 +149,549 @@ const hienThiDanhSachSanPham = () => {
     `;
   }).join('');
 
-  luoiSanPham.innerHTML = chuoiHtml;
-
-  // Tạo thanh nút bấm phân trang
-  taoThanhPhanTrang(tongSoTrang, sanPhamDaLoc.length);
+  renderPagination(totalPages);
 };
 
-/**
- * Tạo thanh nút bấm phân trang ở dưới danh sách sản phẩm
- * @param {number} tongSoTrang - Tổng số trang
- * @param {number} tongSoSP - Tổng số sản phẩm sau khi lọc
- */
-const taoThanhPhanTrang = (tongSoTrang, tongSoSP) => {
-  const thanhPhanTrang = $('shop-pagination');
-  if (!thanhPhanTrang) return;
-
-  if (tongSoTrang <= 1) {
-    thanhPhanTrang.innerHTML = '';
+// Render thanh phân trang
+const renderPagination = (totalPages) => {
+  const wrapper = $('shop-pagination');
+  if (!wrapper || totalPages <= 1) {
+    if (wrapper) wrapper.innerHTML = '';
     return;
   }
-
   let html = '';
-
-  // Nút Trước
-  const coTruoc = trangHienTai > 1;
-  html += `
-    <button 
-      type="button" 
-      class="page-btn ${!coTruoc ? 'disabled' : ''}" 
-      onclick="chuyenTrangSanPham(${trangHienTai - 1})"
-      ${!coTruoc ? 'disabled' : ''}
-    >
-      <i class="fas fa-chevron-left"></i> Trước
-    </button>
-  `;
-
-  // Các nút số trang
-  for (let i = 1; i <= tongSoTrang; i++) {
-    html += `
-      <button 
-        type="button" 
-        class="page-btn ${i === trangHienTai ? 'active' : ''}" 
-        onclick="chuyenTrangSanPham(${i})"
-      >
-        ${i}
-      </button>
-    `;
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
   }
-
-  // Nút Sau
-  const coSau = trangHienTai < tongSoTrang;
-  html += `
-    <button 
-      type="button" 
-      class="page-btn ${!coSau ? 'disabled' : ''}" 
-      onclick="chuyenTrangSanPham(${trangHienTai + 1})"
-      ${!coSau ? 'disabled' : ''}
-    >
-      Sau <i class="fas fa-chevron-right"></i>
-    </button>
-  `;
-
-  html += `
-    <span style="font-size: 0.85rem; color: #64748b; margin-left: 10px;">
-      (Trang ${trangHienTai}/${tongSoTrang} • Tổng ${tongSoSP} máy)
-    </span>
-  `;
-
-  thanhPhanTrang.innerHTML = html;
+  wrapper.innerHTML = html;
 };
 
-/**
- * Nhảy tới trang sản phẩm chỉ định
- */
-const chuyenTrangSanPham = (soTrang) => {
-  trangHienTai = soTrang;
-  hienThiDanhSachSanPham();
-  $('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const changePage = (page) => {
+  currentPage = page;
+  renderProducts();
+  window.scrollTo({ top: 350, behavior: 'smooth' });
 };
-window.chuyenTrangSanPham = chuyenTrangSanPham;
 
-/**
- * Mở modal xem chi tiết sản phẩm (#product-detail-modal)
- * @param {string|number} sanPhamId - ID sản phẩm
- */
-const xemChiTietSanPham = (sanPhamId) => {
-  const sp = danhSachSanPham.find(item => String(item.id) === String(sanPhamId));
+// Modal xem chi tiết sản phẩm
+const openProductDetail = (productId) => {
+  const sp = products.find(p => String(p.id) === String(productId));
   if (!sp) return;
+  const cate = categories.find(c => String(c.id) === String(sp.cate_id || sp.category_id));
+  
+  $('detail-brand-badge').textContent = cate?.name || 'Gaming Phone';
+  $('detail-img').src = sp.image || DEFAULT_IMG;
+  $('detail-name').textContent = sp.name;
+  $('detail-price').textContent = formatMoney(sp.price);
+  $('detail-stock').textContent = sp.quantity > 0 ? `Còn lại trong kho: ${sp.quantity} máy` : 'Hết hàng';
+  $('detail-desc').textContent = sp.detail || 'Cấu hình gaming phone cực mạnh, màn hình siêu mượt.';
 
-  const modal = $('product-detail-modal');
-  if (!modal) return;
+  $('btn-detail-add-cart').onclick = () => { addToCart(sp.id); closeDetailModal(); };
+  $('btn-detail-buy-now').onclick = () => { closeDetailModal(); buyNow(sp.id); };
 
-  const maDanhMucSP = sp.cate_id || sp.category_id;
-  const danhMuc = danhSachDanhMuc.find(dm => String(dm.id) === String(maDanhMucSP));
-  const tenHang = danhMuc ? danhMuc.name : 'Gaming Phone';
-  const tonKho = Number(sp.quantity) || 0;
-
-  if ($('detail-brand-badge')) $('detail-brand-badge').textContent = tenHang;
-  if ($('detail-img')) $('detail-img').src = sp.image || ANH_MAC_DINH;
-  if ($('detail-name')) $('detail-name').textContent = sp.name;
-  if ($('detail-price')) $('detail-price').textContent = dinhDangTien(sp.price);
-  if ($('detail-stock')) $('detail-stock').textContent = tonKho > 0 ? `Còn hàng trong kho: ${tonKho} máy` : 'Tạm thời hết hàng';
-  if ($('detail-desc')) $('detail-desc').textContent = sp.detail || 'Cấu hình gaming phone mạnh mẽ, màn hình sắc nét, pin siêu trâu.';
-
-  // Gán sự kiện cho 2 nút trong modal
-  const btnAdd = $('btn-detail-add-cart');
-  const btnBuy = $('btn-detail-buy-now');
-
-  if (btnAdd) {
-    btnAdd.onclick = () => {
-      themVaoGioHang(sp.id);
-      dongModalChiTiet();
-    };
-  }
-
-  if (btnBuy) {
-    btnBuy.onclick = () => {
-      dongModalChiTiet();
-      muaNgay(sp.id);
-    };
-  }
-
-  modal.classList.add('open');
-};
-window.xemChiTietSanPham = xemChiTietSanPham;
-
-/**
- * Đóng modal xem chi tiết sản phẩm
- */
-const dongModalChiTiet = () => {
-  $('product-detail-modal')?.classList.remove('open');
-};
-window.dongModalChiTiet = dongModalChiTiet;
-
-/**
- * Lọc nhanh theo thương hiệu khi người dùng nhấp vào liên kết ở Footer
- * @param {string|number} cateId - ID thương hiệu
- */
-const locTheoThuongHieuFooter = (cateId) => {
-  chuyenTrangView('view-shop');
-  const selectBox = $('shop-filter-category');
-  if (selectBox) {
-    selectBox.value = cateId;
-    trangHienTai = 1;
-    hienThiDanhSachSanPham();
-  }
-};
-window.locTheoThuongHieuFooter = locTheoThuongHieuFooter;
-
-// ============================================================================
-// PHẦN 6: QUẢN LÝ GIỎ HÀNG (SHOPPING CART & LOCAL STORAGE)
-// ============================================================================
-
-/**
- * Lưu giỏ hàng vào localStorage và cập nhật số lượng trên icon Header
- */
-const luuGioHangVaoStorage = () => {
-  localStorage.setItem(KEY_GIO_HANG, JSON.stringify(gioHang));
-  capNhatSoLuongGioHangTrenHeader();
+  $('product-detail-modal')?.classList.add('open');
 };
 
-/**
- * Cập nhật số lượng hiển thị trên icon giỏ hàng ở thanh Header
- * Hỗ trợ đồng thời cả 2 ID: 'cart-count' và 'cart-badge-count'
- */
-const capNhatSoLuongGioHangTrenHeader = () => {
-  const tongSoLuong = gioHang.reduce((tong, sp) => tong + (Number(sp.quantity) || 0), 0);
+const closeDetailModal = () => $('product-detail-modal')?.classList.remove('open');
 
-  const huyHieu1 = $('cart-count');
-  const huyHieu2 = $('cart-badge-count');
+// ================= 5. QUẢN LÝ GIỎ HÀNG (SHOPPING CART) =================
+const saveCart = () => {
+  localStorage.setItem('smartstore_cart', JSON.stringify(cart));
+  updateCartBadge();
+};
 
-  if (huyHieu1) {
-    huyHieu1.textContent = tongSoLuong;
-    huyHieu1.style.display = tongSoLuong > 0 ? 'inline-flex' : 'none';
-  }
-  if (huyHieu2) {
-    huyHieu2.textContent = tongSoLuong;
-    huyHieu2.style.display = tongSoLuong > 0 ? 'inline-flex' : 'none';
+const updateCartBadge = () => {
+  const totalQty = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const badge = $('cart-count');
+  if (badge) {
+    badge.textContent = totalQty;
+    badge.style.display = totalQty > 0 ? 'inline-flex' : 'none';
   }
 };
 
-/**
- * Cập nhật tên tài khoản hiển thị trên nút Header
- */
-const capNhatTenTaiKhoanTrenHeader = () => {
-  const textTaiKhoan = $('nav-account-text');
-  if (!textTaiKhoan) return;
+const addToCart = (productId) => {
+  const sp = products.find(p => String(p.id) === String(productId));
+  if (!sp) return;
+  const stock = Number(sp.quantity) || 0;
+  if (stock <= 0) return showToast('Sản phẩm đã hết hàng!', 'warning');
 
-  if (nguoiDungHienTai) {
-    // Lấy từ đầu tiên hoặc họ tên đầy đủ
-    const tenRutGon = (nguoiDungHienTai.name || 'Bạn').split(' ').slice(-1)[0];
-    textTaiKhoan.textContent = tenRutGon;
+  const inCart = cart.find(item => String(item.id) === String(productId));
+  if (inCart) {
+    if (inCart.quantity >= stock) return showToast(`Kho chỉ còn ${stock} máy!`, 'warning');
+    inCart.quantity += 1;
   } else {
-    textTaiKhoan.textContent = 'Tài khoản';
+    cart.push({ id: sp.id, name: sp.name, price: Number(sp.price), image: sp.image || DEFAULT_IMG, quantity: 1, maxStock: stock });
   }
+  saveCart();
+  showToast(`Đã thêm "${sp.name}" vào giỏ hàng!`, 'success');
 };
 
-/**
- * Thêm sản phẩm vào giỏ hàng
- * @param {string|number} sanPhamId - ID sản phẩm
- */
-const themVaoGioHang = (sanPhamId) => {
-  const sp = danhSachSanPham.find(item => String(item.id) === String(sanPhamId));
-  if (!sp) {
-    hienThiThongBao('Không tìm thấy sản phẩm!', 'error');
-    return;
-  }
+const buyNow = (productId) => {
+  addToCart(productId);
+  switchView('view-cart');
+};
 
-  const tonKho = Number(sp.quantity) || 0;
-  if (tonKho <= 0) {
-    hienThiThongBao('Sản phẩm này tạm thời đã hết hàng!', 'warning');
-    return;
-  }
+const updateCartQty = (productId, newQty) => {
+  const item = cart.find(i => String(i.id) === String(productId));
+  if (!item) return;
+  const qty = parseInt(newQty, 10);
+  if (isNaN(qty) || qty <= 0) return removeFromCart(productId);
 
-  const monTrongGio = gioHang.find(item => String(item.id) === String(sanPhamId));
-
-  if (monTrongGio) {
-    if (monTrongGio.quantity >= tonKho) {
-      hienThiThongBao(`Kho chỉ còn ${tonKho} máy, không thể thêm thêm!`, 'warning');
-      return;
-    }
-    monTrongGio.quantity += 1;
+  const sp = products.find(p => String(p.id) === String(productId));
+  const maxStock = sp ? Number(sp.quantity) : 99;
+  if (qty > maxStock) {
+    showToast(`Kho chỉ còn tối đa ${maxStock} máy!`, 'warning');
+    item.quantity = maxStock;
   } else {
-    gioHang.push({
-      id: sp.id,
-      name: sp.name,
-      price: Number(sp.price) || 0,
-      image: sp.image || ANH_MAC_DINH,
-      quantity: 1,
-      maxQuantity: tonKho
-    });
+    item.quantity = qty;
   }
-
-  luuGioHangVaoStorage();
-  hienThiThongBao(`Đã thêm "${sp.name}" vào giỏ hàng!`, 'success');
+  saveCart();
+  renderCartTable();
 };
-window.themVaoGioHang = themVaoGioHang;
 
-/**
- * Mua ngay: Thêm vào giỏ và chuyển màn hình sang thanh toán
- * @param {string|number} sanPhamId - ID sản phẩm
- */
-const muaNgay = (sanPhamId) => {
-  themVaoGioHang(sanPhamId);
-  chuyenTrangView('view-cart');
+const removeFromCart = (productId) => {
+  const item = cart.find(i => String(i.id) === String(productId));
+  if (!item || !confirm(`Xóa "${item.name}" khỏi giỏ hàng?`)) return;
+  cart = cart.filter(i => String(i.id) !== String(productId));
+  saveCart();
+  renderCartTable();
+  showToast('Đã xóa món hàng khỏi giỏ.', 'info');
 };
-window.muaNgay = muaNgay;
 
-/**
- * Cập nhật số lượng món hàng trong bảng giỏ hàng
- */
-const capNhatSoLuong = (sanPhamId, soLuongMoi) => {
-  const mon = gioHang.find(item => String(item.id) === String(sanPhamId));
-  if (!mon) return;
-
-  const soLuong = parseInt(soLuongMoi, 10);
-  if (isNaN(soLuong) || soLuong <= 0) {
-    xoaKhoiGioHang(sanPhamId);
-    return;
-  }
-
-  const spGoc = danhSachSanPham.find(item => String(item.id) === String(sanPhamId));
-  const tonKho = spGoc ? (Number(spGoc.quantity) || 0) : 999;
-
-  if (soLuong > tonKho) {
-    hienThiThongBao(`Kho chỉ còn tối đa ${tonKho} sản phẩm!`, 'warning');
-    mon.quantity = tonKho;
-  } else {
-    mon.quantity = soLuong;
-  }
-
-  luuGioHangVaoStorage();
-  hienThiBangGioHang();
-};
-window.capNhatSoLuong = capNhatSoLuong;
-
-/**
- * Xóa một món hàng khỏi giỏ hàng
- */
-const xoaKhoiGioHang = (sanPhamId) => {
-  const mon = gioHang.find(item => String(item.id) === String(sanPhamId));
-  const tenMon = mon ? mon.name : 'sản phẩm';
-
-  const xacNhan = confirm(`Bạn có chắc muốn xóa "${tenMon}" khỏi giỏ hàng?`);
-  if (!xacNhan) return;
-
-  gioHang = gioHang.filter(item => String(item.id) !== String(sanPhamId));
-  luuGioHangVaoStorage();
-  hienThiBangGioHang();
-  hienThiThongBao(`Đã xóa "${tenMon}" khỏi giỏ hàng.`, 'info');
-};
-window.xoaKhoiGioHang = xoaKhoiGioHang;
-
-/**
- * Hiển thị bảng giỏ hàng trong #view-cart
- */
-const hienThiBangGioHang = () => {
+// Hiển thị bảng giỏ hàng và tính tiền
+const renderCartTable = () => {
   const tbody = $('cart-tbody');
-  const oTamTinh = $('cart-subtotal');
-  const oTongCong = $('cart-total');
-  const canhBao1 = $('cart-login-warning');
-  const canhBao2 = $('checkout-auth-alert');
-  const nutDatHang = $('btn-submit-order');
-
+  const btnSubmit = $('btn-submit-order');
   if (!tbody) return;
 
-  if (gioHang.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align: center; padding: 40px 20px;">
-          <i class="fas fa-cart-shopping" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
-          <p style="font-size: 1rem; color: #64748b; margin-bottom: 15px;">Giỏ hàng của bạn đang trống!</p>
-          <button type="button" class="btn-primary" onclick="chuyenTrangView('view-shop')">
-            <i class="fas fa-store"></i> Khám phá sản phẩm ngay
-          </button>
-        </td>
-      </tr>
-    `;
-    if (oTamTinh) oTamTinh.textContent = '0 đ';
-    if (oTongCong) oTongCong.textContent = '0 đ';
-    if (nutDatHang) nutDatHang.disabled = true;
+  if (!cart.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="cart-empty-text"><i class="fas fa-cart-shopping"></i> Giỏ hàng trống!</td></tr>`;
+    $('cart-subtotal').textContent = '0 đ';
+    $('cart-total').textContent = '0 đ';
+    if (btnSubmit) btnSubmit.disabled = true;
     return;
   }
 
-  let tongTien = 0;
-  const chuoiHtml = gioHang.map(mon => {
-    const gia = Number(mon.price) || 0;
-    const soLuong = Number(mon.quantity) || 1;
-    const thanhTien = gia * soLuong;
-    tongTien += thanhTien;
-
+  let total = 0;
+  tbody.innerHTML = cart.map(item => {
+    const subtotal = item.price * item.quantity;
+    total += subtotal;
     return `
       <tr>
         <td>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <img 
-              src="${lamSachHtml(mon.image || ANH_MAC_DINH)}" 
-              alt="${lamSachHtml(mon.name)}" 
-              style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
-              onerror="this.onerror=null; this.src='${ANH_MAC_DINH}';"
-            />
-            <div>
-              <strong style="display: block; font-size: 0.9rem; color: #1e293b;">${lamSachHtml(mon.name)}</strong>
-              <small style="color: #64748b;">Mã SP: #${mon.id}</small>
-            </div>
+          <div class="cart-item-info">
+            <img src="${item.image}" alt="${item.name}" />
+            <strong>${item.name}</strong>
           </div>
         </td>
-        <td style="font-weight: 600; color: #334155;">${dinhDangTien(gia)}</td>
+        <td>${formatMoney(item.price)}</td>
         <td>
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <button 
-              type="button" 
-              onclick="capNhatSoLuong('${mon.id}', ${soLuong - 1})"
-              style="width: 26px; height: 26px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; cursor: pointer;"
-            >-</button>
-            
-            <input 
-              type="number" 
-              value="${soLuong}" 
-              min="1" 
-              max="${mon.maxQuantity || 99}" 
-              onchange="capNhatSoLuong('${mon.id}', this.value)"
-              style="width: 42px; height: 26px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px;"
-            />
-
-            <button 
-              type="button" 
-              onclick="capNhatSoLuong('${mon.id}', ${soLuong + 1})"
-              style="width: 26px; height: 26px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; cursor: pointer;"
-            >+</button>
-          </div>
+          <input type="number" min="1" max="99" value="${item.quantity}" class="cart-qty-input" 
+            onchange="updateCartQty('${item.id}', this.value)" />
         </td>
-        <td style="font-weight: 700; color: #ef4444;">${dinhDangTien(thanhTien)}</td>
+        <td><strong>${formatMoney(subtotal)}</strong></td>
         <td>
-          <button 
-            type="button" 
-            onclick="xoaKhoiGioHang('${mon.id}')"
-            title="Xóa món này"
-            style="background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px;"
-          >
-            <i class="fas fa-trash-can hover-red"></i>
-          </button>
+          <button class="btn-del-cart" onclick="removeFromCart('${item.id}')"><i class="fas fa-trash"></i></button>
         </td>
       </tr>
     `;
   }).join('');
 
-  tbody.innerHTML = chuoiHtml;
+  $('cart-subtotal').textContent = formatMoney(total);
+  $('cart-total').textContent = formatMoney(total);
+  if (btnSubmit) btnSubmit.disabled = false;
 
-  if (oTamTinh) oTamTinh.textContent = dinhDangTien(tongTien);
-  if (oTongCong) oTongCong.textContent = dinhDangTien(tongTien);
-
-  // Kiểm tra đăng nhập
-  if (nguoiDungHienTai) {
-    if (canhBao1) canhBao1.classList.add('hidden');
-    if (canhBao2) canhBao2.classList.add('hidden');
-    if (nutDatHang) nutDatHang.disabled = false;
-
-    // Điền sẵn thông tin người nhận
-    const oTen = $('order-name');
-    const oSdt = $('order-phone');
-    const oDiaChi = $('order-address');
-
-    if (oTen && !oTen.value) oTen.value = nguoiDungHienTai.name || '';
-    if (oSdt && !oSdt.value) oSdt.value = nguoiDungHienTai.phone || '';
-    if (oDiaChi && !oDiaChi.value) oDiaChi.value = nguoiDungHienTai.address || '';
+  // Tự động điền thông tin người dùng nếu đã đăng nhập
+  if (currentUser) {
+    if ($('checkout-name')) $('checkout-name').value = currentUser.name || '';
+    if ($('checkout-phone')) $('checkout-phone').value = currentUser.phone || '';
+    if ($('checkout-address')) $('checkout-address').value = currentUser.address || '';
+    $('cart-login-warning')?.classList.add('hidden');
+    $('checkout-auth-alert')?.classList.add('hidden');
   } else {
-    if (canhBao1) canhBao1.classList.remove('hidden');
-    if (canhBao2) canhBao2.classList.remove('hidden');
-    if (nutDatHang) nutDatHang.disabled = true;
+    $('cart-login-warning')?.classList.remove('hidden');
+    $('checkout-auth-alert')?.classList.remove('hidden');
   }
 };
 
-// ============================================================================
-// PHẦN 7: XỬ LÝ ĐẶT HÀNG & MÀN HÌNH CẢM ƠN (CHECKOUT & THANK YOU)
-// ============================================================================
+// ================= 6. XỬ LÝ ĐẶT HÀNG & TRỪ TỒN KHO =================
+const handleCheckout = async (e) => {
+  e.preventDefault();
+  if (!cart.length) return showToast('Giỏ hàng đang trống!', 'warning');
 
-/**
- * Xử lý đặt hàng (#checkout-form)
- * Sinh mã đơn hàng ngẫu nhiên 11 ký tự dạng #XXXXXXXXXX
- */
-const xuLyDatHang = async (suKien) => {
-  suKien.preventDefault();
+  const customer_name = $('checkout-name')?.value.trim();
+  const customer_phone = $('checkout-phone')?.value.trim();
+  const shipping_address = $('checkout-address')?.value.trim();
+  const note = $('checkout-note')?.value.trim() || '';
 
-  if (!nguoiDungHienTai) {
-    hienThiThongBao('Vui lòng đăng nhập trước khi đặt hàng!', 'warning');
-    chuyenTrangView('view-account');
-    return;
+  if (!customer_name || !customer_phone || !shipping_address) {
+    return showToast('Vui lòng điền đầy đủ thông tin giao hàng!', 'warning');
   }
 
-  if (gioHang.length === 0) {
-    hienThiThongBao('Giỏ hàng đang trống!', 'warning');
-    return;
-  }
-
-  const name = ($('order-name')?.value || '').trim();
-  const phone = ($('order-phone')?.value || '').trim();
-  const address = ($('order-address')?.value || '').trim();
-
-  if (!name || !phone || !address) {
-    hienThiThongBao('Vui lòng điền đầy đủ tên, số điện thoại và địa chỉ nhận hàng!', 'warning');
-    return;
-  }
-
-  const nutNop = $('btn-submit-order');
-  if (nutNop) {
-    nutNop.disabled = true;
-    nutNop.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-  }
+  const submitBtn = $('btn-submit-order');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...'; }
 
   try {
-    const tongTien = gioHang.reduce((tong, sp) => tong + (sp.price * sp.quantity), 0);
-    const maDon = taoMaDonHang();
-
-    const donHangMoi = {
-      order_code: maDon,
-      user_id: nguoiDungHienTai.id,
-      customer_name: name,
-      customer_email: nguoiDungHienTai.email || '',
-      customer_phone: phone,
-      shipping_address: address,
-      items: gioHang.map(sp => ({
-        product_id: sp.id,
-        product_name: sp.name,
-        price: sp.price,
-        quantity: sp.quantity,
-        image: sp.image || ANH_MAC_DINH
-      })),
-      total_price: tongTien,
+    const total_price = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const newOrder = {
+      order_code: generateOrderCode(),
+      user_id: currentUser ? String(currentUser.id) : null,
+      customer_name,
+      customer_phone,
+      shipping_address,
+      note,
+      items: [...cart],
+      total_price,
       status: 'Đang xử lý',
       created_at: new Date().toISOString()
     };
 
-    // 1. Gửi đơn hàng lên server
-    const donDaTao = await goiApi(API_ORDERS, 'POST', donHangMoi);
+    // 1. Tạo đơn hàng mới trên API
+    const createdOrder = await api('orders', 'POST', newOrder);
 
-    // 2. Trừ số lượng tồn kho trên server
-    for (const mon of gioHang) {
-      const spTrongKho = danhSachSanPham.find(item => String(item.id) === String(mon.id));
-      if (spTrongKho) {
-        const tonConLai = Math.max(0, (Number(spTrongKho.quantity) || 0) - mon.quantity);
-        await goiApi(`${API_PRODUCTS}/${mon.id}`, 'PATCH', { quantity: tonConLai });
-        spTrongKho.quantity = tonConLai;
+    // 2. Tự động trừ số lượng tồn kho của từng sản phẩm trên server
+    await Promise.all(cart.map(async (item) => {
+      const sp = products.find(p => String(p.id) === String(item.id));
+      if (sp) {
+        const remainingStock = Math.max(0, (Number(sp.quantity) || 0) - item.quantity);
+        sp.quantity = remainingStock;
+        await api(`products/${sp.id}`, 'PATCH', { quantity: remainingStock });
       }
-    }
+    }));
 
-    // 3. Xóa giỏ hàng
-    gioHang = [];
-    luuGioHangVaoStorage();
+    // 3. Xóa giỏ hàng & chuyển sang trang cảm ơn
+    cart = [];
+    saveCart();
     $('checkout-form')?.reset();
+    showThankYouView(createdOrder);
+    showToast('Đặt hàng thành công!', 'success');
 
-    // 4. Chuyển sang màn hình Cảm Ơn
-    hienThiManHinhCamOn(donDaTao);
-    hienThiThongBao('Đặt hàng thành công!', 'success');
-
-  } catch (loi) {
-    console.error('Lỗi khi đặt hàng:', loi);
-    hienThiThongBao('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!', 'error');
+  } catch (err) {
+    console.error('Lỗi đặt hàng:', err);
+    showToast('Không thể tạo đơn hàng. Vui lòng thử lại!', 'error');
   } finally {
-    if (nutNop) {
-      nutNop.disabled = false;
-      nutNop.innerHTML = '<i class="fas fa-check-circle"></i> Đặt Hàng Ngay';
-    }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Đặt Hàng Ngay'; }
   }
 };
 
-/**
- * Hiển thị thông tin đơn hàng vừa đặt tại màn hình #view-thankyou
- */
-const hienThiManHinhCamOn = (donHang) => {
-  chuyenTrangView('view-thankyou');
+const showThankYouView = (order) => {
+  switchView('view-thankyou');
+  $('placed-order-id').textContent = order.order_code || order.id;
+  $('placed-order-name').textContent = order.customer_name;
+  $('placed-order-phone').textContent = order.customer_phone;
+  $('placed-order-address').textContent = order.shipping_address;
+  $('placed-order-total').textContent = formatMoney(order.total_price);
 
-  if ($('placed-order-id')) $('placed-order-id').textContent = donHang.order_code || donHang.id || '#SMARTSTORE';
-  if ($('placed-order-name')) $('placed-order-name').textContent = donHang.customer_name || '—';
-  if ($('placed-order-phone')) $('placed-order-phone').textContent = donHang.customer_phone || '—';
-  if ($('placed-order-address')) $('placed-order-address').textContent = donHang.shipping_address || '—';
-  if ($('placed-order-total')) $('placed-order-total').textContent = dinhDangTien(donHang.total_price);
+  $('placed-items-list').innerHTML = (order.items || []).map(item => `
+    <div class="placed-item-row">
+      <span>${item.name} <b>x${item.quantity}</b></span>
+      <strong>${formatMoney(item.price * item.quantity)}</strong>
+    </div>
+  `).join('');
+};
 
-  const danhSachMon = $('placed-items-list');
-  if (danhSachMon && Array.isArray(donHang.items)) {
-    danhSachMon.innerHTML = donHang.items.map(sp => `
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.9rem;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <img 
-            src="${lamSachHtml(sp.image || ANH_MAC_DINH)}" 
-            alt="${lamSachHtml(sp.product_name)}" 
-            style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;"
-            onerror="this.onerror=null; this.src='${ANH_MAC_DINH}';"
-          />
+// ================= 7. XEM LỊCH SỬ ĐƠN HÀNG CỦA USER =================
+const renderOrderHistory = async () => {
+  const container = $('orders-history-list');
+  const alertNotLogged = $('orders-not-logged');
+  if (!container) return;
+
+  if (!currentUser) {
+    alertNotLogged?.classList.remove('hidden');
+    container.innerHTML = '';
+    return;
+  }
+  alertNotLogged?.classList.add('hidden');
+  container.innerHTML = `<div class="loading-box"><i class="fas fa-spinner fa-spin"></i> Đang tải đơn hàng...</div>`;
+
+  try {
+    const list = await api(`orders?user_id=${currentUser.id}`);
+    const userOrders = (Array.isArray(list) ? list : []).reverse();
+
+    if (!userOrders.length) {
+      container.innerHTML = `<div class="empty-list-box"><p>Bạn chưa có đơn đặt hàng nào!</p></div>`;
+      return;
+    }
+
+    const badgeMap = {
+      'Đang xử lý': 'status-processing',
+      'Đang giao hàng': 'status-shipping',
+      'Đã giao hàng': 'status-delivered',
+      'Đã hủy': 'status-cancelled'
+    };
+
+    container.innerHTML = userOrders.map(order => `
+      <div class="order-card">
+        <div class="order-card-header">
           <div>
-            <strong>${lamSachHtml(sp.product_name)}</strong>
-            <div style="font-size: 0.8rem; color: #64748b;">x${sp.quantity}</div>
+            <span>Mã đơn:</span> <b class="order-code-text">${order.order_code || order.id}</b>
+            <small>(${new Date(order.created_at || order.created_date).toLocaleString('vi-VN')})</small>
           </div>
+          <span class="status-badge ${badgeMap[order.status] || 'status-processing'}">${order.status || 'Đang xử lý'}</span>
         </div>
-        <strong>${dinhDangTien(sp.price * sp.quantity)}</strong>
+        <div class="order-card-body">
+          ${(order.items || []).map(i => `<div>${i.name || i.product_name} (x${i.quantity}) - <b>${formatMoney((i.price || 0) * i.quantity)}</b></div>`).join('')}
+        </div>
+        <div class="order-card-footer">
+          Tổng tiền: <strong class="order-total-price">${formatMoney(order.total_price || order.total_amount)}</strong>
+        </div>
       </div>
     `).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="error-text">Lỗi khi tải lịch sử đơn hàng!</p>`;
   }
 };
 
-// ============================================================================
-// PHẦN 8: XEM LỊCH SỬ ĐƠN HÀNG (ORDER HISTORY)
-// ============================================================================
+// ================= 8. QUẢN LÝ TÀI KHOẢN & TỰ SỬA THÔNG TIN =================
+const renderAccountView = () => {
+  const loggedBox = $('account-logged-box');
+  const authWrapper = $('auth-forms-wrapper');
+  const navAdminBtn = $('nav-btn-admin');
+  const adminShortcut = $('admin-shortcut-card');
 
-/**
- * Hiển thị danh sách các đơn hàng đã mua (#view-orders)
- */
-const hienThiLichSuDonHang = async () => {
-  const canhBao = $('orders-not-logged');
-  const danhSachBox = $('orders-history-list');
-  if (!danhSachBox) return;
+  if (currentUser) {
+    loggedBox?.classList.remove('hidden');
+    authWrapper?.classList.add('hidden');
 
-  if (!nguoiDungHienTai) {
-    if (canhBao) canhBao.classList.remove('hidden');
-    danhSachBox.innerHTML = '';
-    return;
-  }
+    const isAdmin = currentUser.role === 'admin' || currentUser.email === 'admin@smartstore.vn';
+    $('account-user-name').textContent = currentUser.name || 'Người dùng';
+    $('account-user-email').textContent = currentUser.email || '';
+    $('profile-name-val').textContent = currentUser.name || '—';
+    $('profile-phone').textContent = currentUser.phone || '—';
+    $('profile-address').textContent = currentUser.address || '—';
+    $('profile-role').textContent = isAdmin ? 'Quản trị viên (Admin)' : 'Khách hàng';
 
-  if (canhBao) canhBao.classList.add('hidden');
+    // Điền sẵn form chỉnh sửa
+    if ($('edit-profile-name')) $('edit-profile-name').value = currentUser.name || '';
+    if ($('edit-profile-phone')) $('edit-profile-phone').value = currentUser.phone || '';
+    if ($('edit-profile-address')) $('edit-profile-address').value = currentUser.address || '';
 
-  danhSachBox.innerHTML = `
-    <div style="text-align: center; padding: 30px; color: #64748b;">
-      <i class="fas fa-spinner fa-spin" style="font-size: 1.8rem; color: #3b82f6;"></i>
-      <p style="margin-top: 8px;">Đang tải danh sách đơn hàng...</p>
-    </div>
-  `;
-
-  try {
-    const tatCaDon = await goiApi(`${API_ORDERS}?user_id=${nguoiDungHienTai.id}`);
-    const danhSachDon = (Array.isArray(tatCaDon) ? tatCaDon : []).reverse();
-
-    if (danhSachDon.length === 0) {
-      danhSachBox.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <i class="fas fa-receipt" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
-          <h3 style="font-size: 1.1rem; color: #334155; margin-bottom: 6px;">Bạn chưa có đơn đặt hàng nào!</h3>
-          <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 16px;">Hãy lựa chọn cho mình chiếc gaming phone ưng ý nhé.</p>
-          <button type="button" class="btn-primary" onclick="chuyenTrangView('view-shop')">
-            <i class="fas fa-bag-shopping"></i> Mua sắm ngay
-          </button>
-        </div>
-      `;
-      return;
-    }
-
-    const html = danhSachDon.map(don => {
-      let badgeClass = 'status-processing';
-      if (don.status === 'Đang giao hàng') badgeClass = 'status-shipping';
-      if (don.status === 'Đã giao hàng') badgeClass = 'status-delivered';
-      if (don.status === 'Đã hủy') badgeClass = 'status-cancelled';
-
-      const ngayTao = don.created_at || don.created_date;
-      const thoiGian = ngayTao ? new Date(ngayTao).toLocaleString('vi-VN') : 'Vừa xong';
-      const maDon = don.order_code || don.id || '#SMARTSTORE';
-      const sdt = don.customer_phone || don.phone || '—';
-      const diaChi = don.shipping_address || don.address || '—';
-      const tongTien = Number(don.total_price != null ? don.total_price : don.total_amount) || 0;
-
-      const monItems = Array.isArray(don.items) ? don.items.map(item => `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.88rem;">
-          <span style="color: #334155;">
-            <i class="fas fa-mobile-screen" style="color: #94a3b8; margin-right: 6px;"></i>
-            ${lamSachHtml(item.product_name || item.name || 'Điện thoại')} <strong>(x${item.quantity})</strong>
-          </span>
-          <span style="font-weight: 600;">${dinhDangTien(item.price * item.quantity)}</span>
-        </div>
-      `).join('') : '<p style="color: #94a3b8;">Không có chi tiết sản phẩm.</p>';
-
-      return `
-        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-            <div>
-              <span style="font-size: 0.85rem; color: #64748b;">Mã đơn:</span>
-              <strong style="color: #2563eb; font-size: 1rem; margin-left: 4px;">${lamSachHtml(maDon)}</strong>
-              <small style="color: #94a3b8; margin-left: 8px;">(${thoiGian})</small>
-            </div>
-            <span class="status-badge ${badgeClass}">${lamSachHtml(don.status || 'Đang xử lý')}</span>
-          </div>
-
-          <div style="background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #475569; margin-bottom: 10px;">
-            <strong>Địa chỉ:</strong> ${lamSachHtml(diaChi)} • <strong>SĐT:</strong> ${lamSachHtml(sdt)}
-          </div>
-
-          <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; margin-bottom: 10px;">
-            ${monItems}
-          </div>
-
-          <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-            <span style="font-size: 0.85rem; color: #64748b;">Tổng tiền:</span>
-            <strong style="font-size: 1.15rem; color: #ef4444;">${dinhDangTien(tongTien)}</strong>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    danhSachBox.innerHTML = html;
-
-  } catch (loi) {
-    console.error('Lỗi khi tải lịch sử đơn:', loi);
-    danhSachBox.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 20px;">Không thể tải lịch sử đơn hàng!</p>`;
-  }
-};
-
-// ============================================================================
-// PHẦN 9: QUẢN LÝ TÀI KHOẢN & TỰ SỬA THÔNG TIN CÁ NHÂN (PROFILE SELF-EDIT)
-// ============================================================================
-
-/**
- * Cập nhật giao diện trang tài khoản (#view-account)
- */
-const capNhatGiaoDienTaiKhoan = () => {
-  const hopDaDangNhap = $('account-logged-box');
-  const hopChuaDangNhap = $('auth-forms-wrapper');
-  const nutAdminHeader = $('nav-btn-admin');
-  const theShortcutAdmin = $('admin-shortcut-card');
-  if (!hopDaDangNhap || !hopChuaDangNhap) return;
-
-  if (nguoiDungHienTai) {
-    hopDaDangNhap.classList.remove('hidden');
-    hopChuaDangNhap.classList.add('hidden');
-
-    const laAdmin = nguoiDungHienTai.role === 'admin' || nguoiDungHienTai.email === 'admin@smartstore.vn';
-
-    if ($('account-user-name')) $('account-user-name').textContent = nguoiDungHienTai.name || 'Người dùng';
-    if ($('account-user-email')) $('account-user-email').textContent = nguoiDungHienTai.email || '';
-    if ($('profile-name-val')) $('profile-name-val').textContent = nguoiDungHienTai.name || '—';
-    if ($('profile-phone')) $('profile-phone').textContent = nguoiDungHienTai.phone || '—';
-    if ($('profile-address')) $('profile-address').textContent = nguoiDungHienTai.address || '—';
-    if ($('profile-role')) $('profile-role').textContent = laAdmin ? 'Quản trị viên (Admin)' : 'Khách hàng';
-
-    // Điền vào form sửa
-    if ($('edit-profile-name')) $('edit-profile-name').value = nguoiDungHienTai.name || '';
-    if ($('edit-profile-phone')) $('edit-profile-phone').value = nguoiDungHienTai.phone || '';
-    if ($('edit-profile-address')) $('edit-profile-address').value = nguoiDungHienTai.address || '';
-
-    // Kiểm tra và hiển thị lối tắt trang Quản trị dành cho Admin
-    if (laAdmin) {
-      localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
-      if (nutAdminHeader) nutAdminHeader.classList.remove('hidden');
-      if (theShortcutAdmin) theShortcutAdmin.classList.remove('hidden');
+    // Hiển thị nút vào trang Admin nếu có quyền
+    if (isAdmin) {
+      localStorage.setItem('smartstore_admin_logged', 'true');
+      navAdminBtn?.classList.remove('hidden');
+      adminShortcut?.classList.remove('hidden');
     } else {
-      if (nutAdminHeader) nutAdminHeader.classList.add('hidden');
-      if (theShortcutAdmin) theShortcutAdmin.classList.add('hidden');
+      navAdminBtn?.classList.add('hidden');
+      adminShortcut?.classList.add('hidden');
     }
   } else {
-    hopDaDangNhap.classList.add('hidden');
-    hopChuaDangNhap.classList.remove('hidden');
-    if (nutAdminHeader) nutAdminHeader.classList.add('hidden');
-    if (theShortcutAdmin) theShortcutAdmin.classList.add('hidden');
+    loggedBox?.classList.add('hidden');
+    authWrapper?.classList.remove('hidden');
+    navAdminBtn?.classList.add('hidden');
+    adminShortcut?.classList.add('hidden');
   }
 
-  capNhatTenTaiKhoanTrenHeader();
+  // Cập nhật tên hiển thị trên thanh Header
+  const navText = $('nav-account-text');
+  if (navText) navText.textContent = currentUser ? (currentUser.name || 'Bạn').split(' ').slice(-1)[0] : 'Tài khoản';
 };
 
-/**
- * Ẩn/hiện khung form chỉnh sửa thông tin cá nhân
- */
-const batTatKhungSuaThongTin = () => {
-  const khung = $('edit-profile-card');
-  if (!khung) return;
-  khung.classList.toggle('hidden');
-  if (!khung.classList.contains('hidden')) {
-    $('edit-profile-name')?.focus();
-  }
-};
+// Xử lý khi User lưu thông tin cá nhân mới
+const handleUpdateProfile = async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const name = $('edit-profile-name')?.value.trim();
+  const phone = $('edit-profile-phone')?.value.trim();
+  const address = $('edit-profile-address')?.value.trim();
 
-/**
- * Xử lý khi User lưu thông tin cá nhân mới (#edit-profile-form)
- */
-const xuLyCapNhatThongTinNguoiDung = async (suKien) => {
-  suKien.preventDefault();
-
-  if (!nguoiDungHienTai) {
-    hienThiThongBao('Bạn chưa đăng nhập!', 'warning');
-    return;
-  }
-
-  const name = ($('edit-profile-name')?.value || '').trim();
-  const phone = ($('edit-profile-phone')?.value || '').trim();
-  const address = ($('edit-profile-address')?.value || '').trim();
-
-  if (!name || !phone || !address) {
-    hienThiThongBao('Vui lòng điền đầy đủ họ tên, SĐT và địa chỉ!', 'warning');
-    return;
-  }
+  if (!name || !phone || !address) return showToast('Vui lòng điền đủ thông tin!', 'warning');
 
   try {
-    const daCapNhat = await goiApi(`${API_USERS}/${nguoiDungHienTai.id}`, 'PATCH', {
-      name,
-      phone,
-      address
-    });
-
-    nguoiDungHienTai = { ...nguoiDungHienTai, ...daCapNhat };
-    localStorage.setItem(KEY_NGUOI_DUNG, JSON.stringify(nguoiDungHienTai));
-
-    capNhatGiaoDienTaiKhoan();
+    const updated = await api(`users/${currentUser.id}`, 'PATCH', { name, phone, address });
+    currentUser = { ...currentUser, ...updated };
+    localStorage.setItem('smartstore_user', JSON.stringify(currentUser));
+    renderAccountView();
     $('edit-profile-card')?.classList.add('hidden');
-    hienThiThongBao('Cập nhật thông tin cá nhân thành công!', 'success');
-
-  } catch (loi) {
-    console.error('Lỗi khi cập nhật thông tin:', loi);
-    hienThiThongBao('Không thể cập nhật thông tin cá nhân lúc này!', 'error');
+    showToast('Cập nhật thông tin cá nhân thành công!', 'success');
+  } catch (err) {
+    showToast('Lỗi cập nhật thông tin cá nhân!', 'error');
   }
 };
 
-/**
- * Xử lý Đăng nhập tài khoản (#login-form)
- */
-const xuLyDangNhap = async (suKien) => {
-  suKien.preventDefault();
-
-  const email = ($('login-email')?.value || '').trim();
-  const password = ($('login-password')?.value || '').trim();
-
-  if (!email || !password) {
-    hienThiThongBao('Vui lòng nhập Email và Mật khẩu!', 'warning');
-    return;
-  }
+// Đăng nhập tài khoản
+const handleLogin = async (e) => {
+  e.preventDefault();
+  const email = $('login-email')?.value.trim();
+  const password = $('login-password')?.value.trim();
 
   try {
-    const timKiem = await goiApi(`${API_USERS}?email=${encodeURIComponent(email)}`);
-    const taiKhoan = Array.isArray(timKiem) ? timKiem[0] : null;
+    const users = await api(`users?email=${encodeURIComponent(email)}`);
+    const user = users?.[0];
 
-    if (!taiKhoan || taiKhoan.password !== password) {
-      hienThiThongBao('Email hoặc mật khẩu không chính xác!', 'error');
-      return;
+    if (!user || user.password !== password) {
+      return showToast('Sai email hoặc mật khẩu!', 'error');
     }
 
-    nguoiDungHienTai = taiKhoan;
-    localStorage.setItem(KEY_NGUOI_DUNG, JSON.stringify(nguoiDungHienTai));
+    currentUser = user;
+    localStorage.setItem('smartstore_user', JSON.stringify(user));
 
-    // Kiểm tra xem tài khoản đăng nhập có quyền Quản Trị Viên (Admin) không
-    const laAdmin = taiKhoan.role === 'admin' || taiKhoan.email === 'admin@smartstore.vn';
-
-    if (laAdmin) {
-      // 1. Lưu cờ phiên đăng nhập Quản trị viên vào localStorage để admin.html tự động mở dashboard
-      localStorage.setItem(KEY_ADMIN_LOGGED, 'true');
-
-      // 2. Cập nhật giao diện tài khoản
-      capNhatGiaoDienTaiKhoan();
-
-      // 3. Thông báo Toast nổi bật cho Admin biết hệ thống đang tự động điều hướng
-      hienThiThongBao('Đăng nhập Quản trị viên thành công! Đang chuyển sang Bảng Quản Trị...', 'success');
-
-      // 4. Tự động chuyển hướng sang trang admin.html sau 700ms
-      setTimeout(() => {
-        window.location.href = 'admin.html';
-      }, 700);
+    // NẾU LÀ ADMIN -> TỰ ĐỘNG CHUYỂN HƯỚNG SANG TRANG ADMIN.HTML
+    if (user.role === 'admin' || user.email === 'admin@smartstore.vn') {
+      localStorage.setItem('smartstore_admin_logged', 'true');
+      showToast('Đăng nhập Quản trị viên! Đang mở Admin Panel...', 'success');
+      setTimeout(() => window.location.href = 'admin.html', 700);
       return;
     }
 
     $('login-form')?.reset();
-    capNhatGiaoDienTaiKhoan();
-    hienThiThongBao(`Chào mừng ${taiKhoan.name || 'bạn'} đã đăng nhập!`, 'success');
-
-  } catch (loi) {
-    console.error('Lỗi đăng nhập:', loi);
-    hienThiThongBao('Không thể đăng nhập. Kiểm tra cổng server!', 'error');
+    renderAccountView();
+    showToast(`Chào mừng ${user.name} đã đăng nhập!`, 'success');
+  } catch (err) {
+    showToast('Lỗi đăng nhập. Vui lòng kiểm tra server cổng 3000!', 'error');
   }
 };
 
-/**
- * Xử lý Đăng ký tài khoản mới (#register-form)
- */
-const xuLyDangKy = async (suKien) => {
-  suKien.preventDefault();
+// Đăng ký tài khoản
+const handleRegister = async (e) => {
+  e.preventDefault();
+  const name = $('reg-name')?.value.trim();
+  const email = $('reg-email')?.value.trim();
+  const phone = $('reg-phone')?.value.trim();
+  const password = $('reg-password')?.value.trim();
+  const address = $('reg-address')?.value.trim();
 
-  const name = ($('reg-name')?.value || '').trim();
-  const email = ($('reg-email')?.value || '').trim();
-  const phone = ($('reg-phone')?.value || '').trim();
-  const password = ($('reg-password')?.value || '').trim();
-  const address = ($('reg-address')?.value || '').trim();
-
-  if (!name || !email || !phone || !password) {
-    hienThiThongBao('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!', 'warning');
-    return;
-  }
-
-  if (password.length < 6) {
-    hienThiThongBao('Mật khẩu cần tối thiểu 6 ký tự!', 'warning');
-    return;
-  }
+  if (password.length < 6) return showToast('Mật khẩu tối thiểu 6 ký tự!', 'warning');
 
   try {
-    const kiemTra = await goiApi(`${API_USERS}?email=${encodeURIComponent(email)}`);
-    if (Array.isArray(kiemTra) && kiemTra.length > 0) {
-      hienThiThongBao('Email này đã được đăng ký trước đó!', 'warning');
-      return;
+    const existing = await api(`users?email=${encodeURIComponent(email)}`);
+    if (existing?.length) return showToast('Email này đã được đăng ký!', 'warning');
+
+    const newUser = await api('users', 'POST', { name, email, phone, password, address, role: 'customer' });
+    currentUser = newUser;
+    localStorage.setItem('smartstore_user', JSON.stringify(newUser));
+    $('register-form')?.reset();
+    renderAccountView();
+    showToast('Đăng ký tài khoản thành công!', 'success');
+  } catch (err) {
+    showToast('Lỗi khi đăng ký tài khoản!', 'error');
+  }
+};
+
+// Đổi mật khẩu
+const handleChangePassword = async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const oldPass = $('old-pass')?.value.trim();
+  const newPass = $('new-pass')?.value.trim();
+  const confirmPass = $('confirm-new-pass')?.value.trim();
+
+  if (oldPass !== currentUser.password) return showToast('Mật khẩu hiện tại không đúng!', 'error');
+  if (newPass.length < 6) return showToast('Mật khẩu mới tối thiểu 6 ký tự!', 'warning');
+  if (newPass !== confirmPass) return showToast('Xác nhận mật khẩu không khớp!', 'warning');
+
+  try {
+    await api(`users/${currentUser.id}`, 'PATCH', { password: newPass });
+    currentUser.password = newPass;
+    localStorage.setItem('smartstore_user', JSON.stringify(currentUser));
+    $('change-password-form')?.reset();
+    showToast('Đổi mật khẩu thành công!', 'success');
+  } catch (err) {
+    showToast('Không thể đổi mật khẩu!', 'error');
+  }
+};
+
+// Đăng xuất
+const handleLogout = () => {
+  if (!confirm('Bạn có chắc muốn đăng xuất?')) return;
+  currentUser = null;
+  localStorage.removeItem('smartstore_user');
+  localStorage.removeItem('smartstore_admin_logged');
+  renderAccountView();
+  showToast('Đã đăng xuất tài khoản.', 'info');
+};
+
+// ================= 9. KHỞI TẠO VÀ GẮN SỰ KIỆN (INITIALIZATION) =================
+const initApp = async () => {
+  updateCartBadge();
+  renderAccountView();
+
+  try {
+    const [fetchedProducts, fetchedCategories] = await Promise.all([
+      api('products'),
+      api('categories')
+    ]);
+    products = fetchedProducts || [];
+    categories = fetchedCategories || [];
+
+    // Nạp danh mục vào bộ lọc
+    const filterCate = $('shop-filter-category');
+    if (filterCate) {
+      filterCate.innerHTML = '<option value="">Tất cả thương hiệu</option>' +
+        categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     }
 
-    const userMoi = {
-      name,
-      email,
-      phone,
-      password,
-      address,
-      role: 'customer'
-    };
-
-    const userDaTao = await goiApi(API_USERS, 'POST', userMoi);
-    nguoiDungHienTai = userDaTao;
-    localStorage.setItem(KEY_NGUOI_DUNG, JSON.stringify(nguoiDungHienTai));
-
-    $('register-form')?.reset();
-    capNhatGiaoDienTaiKhoan();
-    hienThiThongBao('Đăng ký tài khoản mới thành công!', 'success');
-
-  } catch (loi) {
-    console.error('Lỗi đăng ký:', loi);
-    hienThiThongBao('Có lỗi xảy ra khi đăng ký tài khoản!', 'error');
+    renderProducts();
+  } catch (err) {
+    console.error('Lỗi tải dữ liệu:', err);
+    showToast('Không thể kết nối máy chủ cổng 3000!', 'error');
   }
 };
-
-/**
- * Xử lý đổi mật khẩu (#change-password-form)
- */
-const xuLyDoiMatKhau = async (suKien) => {
-  suKien.preventDefault();
-
-  if (!nguoiDungHienTai) return;
-
-  const passCu = ($('old-pass')?.value || '').trim();
-  const passMoi = ($('new-pass')?.value || '').trim();
-  const xacNhan = ($('confirm-new-pass')?.value || '').trim();
-
-  if (passCu !== nguoiDungHienTai.password) {
-    hienThiThongBao('Mật khẩu hiện tại không đúng!', 'error');
-    return;
-  }
-
-  if (passMoi.length < 6) {
-    hienThiThongBao('Mật khẩu mới phải có ít nhất 6 ký tự!', 'warning');
-    return;
-  }
-
-  if (passMoi !== xacNhan) {
-    hienThiThongBao('Xác nhận mật khẩu mới không khớp!', 'warning');
-    return;
-  }
-
-  try {
-    await goiApi(`${API_USERS}/${nguoiDungHienTai.id}`, 'PATCH', { password: passMoi });
-    nguoiDungHienTai.password = passMoi;
-    localStorage.setItem(KEY_NGUOI_DUNG, JSON.stringify(nguoiDungHienTai));
-
-    $('change-password-form')?.reset();
-    hienThiThongBao('Đổi mật khẩu thành công!', 'success');
-
-  } catch (loi) {
-    console.error('Lỗi đổi mật khẩu:', loi);
-    hienThiThongBao('Không thể đổi mật khẩu lúc này!', 'error');
-  }
-};
-
-/**
- * Xử lý đăng xuất
- */
-const xuLyDangXuat = () => {
-  const xacNhan = confirm('Bạn có chắc muốn đăng xuất không?');
-  if (!xacNhan) return;
-
-  nguoiDungHienTai = null;
-  localStorage.removeItem(KEY_NGUOI_DUNG);
-  localStorage.removeItem(KEY_ADMIN_LOGGED); // Xóa đồng thời cờ phiên quản trị
-  capNhatGiaoDienTaiKhoan();
-  hienThiThongBao('Đã đăng xuất tài khoản.', 'info');
-};
-
-// ============================================================================
-// PHẦN 10: GẮN SỰ KIỆN KHỞI CHẠY (EVENT LISTENERS - PHÒNG THỦ KÉP)
-// ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Tải ứng dụng ban đầu
-  khoiTaoUngDung();
+  initApp();
 
-  // 2. BẮT SỰ KIỆN CHUYỂN TAB TRÊN HEADER (HỖ TRỢ CẢ DATA-VIEW LẪN ID)
-  // Duyệt qua tất cả các nút nav-item và gắn sự kiện click dựa trên data-view
+  // Bắt sự kiện chuyển tab trên Header
   $$('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const viewMucTieu = btn.getAttribute('data-view');
-      // Chỉ ngăn chặn hành vi mặc định khi là nút chuyển tab SPA nội bộ (có data-view)
-      if (viewMucTieu) {
+      const targetView = btn.dataset.view;
+      if (targetView) {
         e.preventDefault();
-        chuyenTrangView(viewMucTieu);
+        switchView(targetView);
       }
     });
   });
 
-  // Gắn sự kiện theo ID bổ trợ để bảo đảm 100% không bao giờ trượt
-  $('nav-btn-shop')?.addEventListener('click', () => chuyenTrangView('view-shop'));
-  $('nav-btn-cart')?.addEventListener('click', () => chuyenTrangView('view-cart'));
-  $('nav-btn-orders')?.addEventListener('click', () => chuyenTrangView('view-orders'));
-  $('nav-btn-account')?.addEventListener('click', () => chuyenTrangView('view-account'));
+  // Logo và nút quay về cửa hàng
+  $('logo-home')?.addEventListener('click', () => switchView('view-shop'));
+  $('btn-back-to-shop')?.addEventListener('click', () => switchView('view-shop'));
+  $('btn-view-order-history')?.addEventListener('click', () => switchView('view-orders'));
+  $('btn-account-view-orders')?.addEventListener('click', () => switchView('view-orders'));
+  $('btn-orders-go-login')?.addEventListener('click', () => switchView('view-account'));
 
-  // Bấm vào Logo hoặc tên thương hiệu để quay về Cửa hàng
-  $('logo-home')?.addEventListener('click', () => chuyenTrangView('view-shop'));
-  $('.brand-logo')?.addEventListener('click', () => chuyenTrangView('view-shop'));
+  // Bộ lọc sản phẩm
+  $('shop-search')?.addEventListener('input', () => { currentPage = 1; renderProducts(); });
+  $('shop-filter-category')?.addEventListener('change', () => { currentPage = 1; renderProducts(); });
+  $('shop-filter-price')?.addEventListener('change', () => { currentPage = 1; renderProducts(); });
 
-  // 3. Các nút điều hướng nhanh khác
-  $('btn-back-to-shop')?.addEventListener('click', () => chuyenTrangView('view-shop'));
-  $('btn-view-order-history')?.addEventListener('click', () => chuyenTrangView('view-orders'));
-  $('btn-account-view-orders')?.addEventListener('click', () => chuyenTrangView('view-orders'));
-  $('btn-orders-go-login')?.addEventListener('click', () => chuyenTrangView('view-account'));
+  // Modal chi tiết sản phẩm
+  $('btn-close-detail-modal')?.addEventListener('click', closeDetailModal);
+  $('product-detail-modal')?.addEventListener('click', (e) => { if (e.target.id === 'product-detail-modal') closeDetailModal(); });
 
-  // 4. Modal xem chi tiết sản phẩm
-  $('btn-close-detail-modal')?.addEventListener('click', dongModalChiTiet);
-  $('product-detail-modal')?.addEventListener('click', function (e) {
-    if (e.target === this) dongModalChiTiet();
-  });
+  // Form đặt hàng
+  $('checkout-form')?.addEventListener('submit', handleCheckout);
 
-  // 5. Bộ lọc sản phẩm
-  $('shop-search')?.addEventListener('input', () => {
-    trangHienTai = 1;
-    hienThiDanhSachSanPham();
-  });
-
-  $('shop-filter-category')?.addEventListener('change', () => {
-    trangHienTai = 1;
-    hienThiDanhSachSanPham();
-  });
-
-  $('shop-filter-price')?.addEventListener('change', () => {
-    trangHienTai = 1;
-    hienThiDanhSachSanPham();
-  });
-
-  // 6. Form đặt hàng
-  $('checkout-form')?.addEventListener('submit', xuLyDatHang);
-
-  // 7. Chuyển đổi tab Đăng nhập / Đăng ký
+  // Tab Đăng nhập / Đăng ký
   $('tab-btn-login')?.addEventListener('click', () => {
-    $('tab-btn-login')?.classList.add('active');
-    $('tab-btn-register')?.classList.remove('active');
-    $('login-form')?.classList.remove('hidden');
-    $('register-form')?.classList.add('hidden');
+    $('tab-btn-login').classList.add('active');
+    $('tab-btn-register').classList.remove('active');
+    $('login-form').classList.remove('hidden');
+    $('register-form').classList.add('hidden');
   });
-
   $('tab-btn-register')?.addEventListener('click', () => {
-    $('tab-btn-register')?.classList.add('active');
-    $('tab-btn-login')?.classList.remove('active');
-    $('register-form')?.classList.remove('hidden');
-    $('login-form')?.classList.add('hidden');
+    $('tab-btn-register').classList.add('active');
+    $('tab-btn-login').classList.remove('active');
+    $('register-form').classList.remove('hidden');
+    $('login-form').classList.add('hidden');
   });
 
-  // 8. Chức năng User tự sửa thông tin cá nhân
-  $('btn-toggle-edit-profile')?.addEventListener('click', batTatKhungSuaThongTin);
-  $('btn-cancel-edit-profile')?.addEventListener('click', batTatKhungSuaThongTin);
-  $('edit-profile-form')?.addEventListener('submit', xuLyCapNhatThongTinNguoiDung);
+  // Các form tài khoản
+  $('login-form')?.addEventListener('submit', handleLogin);
+  $('register-form')?.addEventListener('submit', handleRegister);
+  $('change-password-form')?.addEventListener('submit', handleChangePassword);
+  $('btn-logout')?.addEventListener('click', handleLogout);
 
-  // 9. Form Đăng nhập, Đăng ký, Đổi mật khẩu, Đăng xuất
-  $('login-form')?.addEventListener('submit', xuLyDangNhap);
-  $('register-form')?.addEventListener('submit', xuLyDangKy);
-  $('change-password-form')?.addEventListener('submit', xuLyDoiMatKhau);
-  $('btn-logout')?.addEventListener('click', xuLyDangXuat);
+  // Chỉnh sửa thông tin cá nhân
+  const toggleEdit = () => $('edit-profile-card')?.classList.toggle('hidden');
+  $('btn-toggle-edit-profile')?.addEventListener('click', toggleEdit);
+  $('btn-cancel-edit-profile')?.addEventListener('click', toggleEdit);
+  $('edit-profile-form')?.addEventListener('submit', handleUpdateProfile);
 });
+
+// Cho phép gọi trực tiếp từ HTML onclick
+window.openProductDetail = openProductDetail;
+window.addToCart = addToCart;
+window.buyNow = buyNow;
+window.updateCartQty = updateCartQty;
+window.removeFromCart = removeFromCart;
+window.changePage = changePage;
+window.switchView = switchView;
