@@ -202,6 +202,7 @@
                 <th>Số điện thoại</th>
                 <th>Vai trò</th>
                 <th>Địa chỉ</th>
+                <th style="width: 100px;">Hành động</th>
               </tr>
             </thead>
             <tbody id="admin-user-tbody">
@@ -306,6 +307,58 @@
       <div class="modal-footer" style="margin-top: 20px;">
         <button type="button" class="btn-secondary" id="btn-close-order-detail">Đóng Cửa Sổ</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL CHỈNH SỬA THÔNG TIN KHÁCH HÀNG (ADMIN) ================= -->
+  <div id="user-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="user-modal-title" class="modal-title">Chỉnh Sửa Thông Tin Khách Hàng</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-user-modal">&times;</button>
+      </div>
+
+      <form id="user-form">
+        <input type="hidden" id="form-user-id" />
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-name">Họ và tên *</label>
+          <input type="text" id="form-user-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-email">Email *</label>
+          <input type="email" id="form-user-email" class="form-input" placeholder="user@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-phone">Số điện thoại *</label>
+          <input type="tel" id="form-user-phone" class="form-input" placeholder="0988888888" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-role">Vai trò tài khoản *</label>
+          <select id="form-user-role" class="form-input" required>
+            <option value="user">Khách hàng (User)</option>
+            <option value="admin">Quản trị viên (Admin)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-address">Địa chỉ liên hệ</label>
+          <input type="text" id="form-user-address" class="form-input" placeholder="Ví dụ: Cầu Giấy, Hà Nội" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="form-user-password">Mật khẩu mới (Tùy chọn)</label>
+          <input type="password" id="form-user-password" class="form-input" placeholder="Để trống nếu giữ nguyên mật khẩu cũ" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-user-modal">Hủy</button>
+          <button type="submit" class="btn-primary" id="btn-submit-user">Lưu Thay Đổi</button>
+        </div>
+      </form>
     </div>
   </div>
 

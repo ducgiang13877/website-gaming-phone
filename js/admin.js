@@ -544,13 +544,15 @@ const deleteOrder = async (orderId) => {
   }
 };
 
-// ================= 8. QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG =================
+// ================= 8. QUẢN LÝ TÀI KHOẢN KHÁCH HÀNG (CRUD & PHÂN QUYỀN) =================
+
+// Hiển thị bảng danh sách khách hàng kèm nút Chỉnh sửa
 const renderUsersTable = () => {
   const tbody = $('admin-user-tbody');
   if (!tbody) return;
 
   if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Chưa có tài khoản nào!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Chưa có tài khoản nào!</td></tr>`;
     return;
   }
 
@@ -566,8 +568,74 @@ const renderUsersTable = () => {
         </span>
       </td>
       <td style="font-size: 13px; color: #64748b;">${u.address || '—'}</td>
+      <td>
+        <button type="button" class="btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="editUser('${u.id}')" title="Chỉnh sửa thông tin">
+          <i class="fas fa-pen-to-square"></i> Sửa
+        </button>
+      </td>
     </tr>
   `).join('');
+};
+
+// Mở modal chỉnh sửa thông tin khách hàng
+const openUserModal = (userId) => {
+  const user = users.find(u => String(u.id) === String(userId));
+  if (!user) return showToast('Không tìm thấy tài khoản người dùng!', 'error');
+
+  const modal = $('user-modal');
+  const title = $('user-modal-title');
+  if (title) title.textContent = `Chỉnh Sửa Khách Hàng (#${user.id})`;
+
+  $('form-user-id').value = user.id;
+  $('form-user-name').value = user.name || '';
+  $('form-user-email').value = user.email || '';
+  $('form-user-phone').value = user.phone || '';
+  $('form-user-role').value = user.role || 'user';
+  $('form-user-address').value = user.address || '';
+  if ($('form-user-password')) $('form-user-password').value = '';
+
+  modal?.classList.add('open');
+};
+
+// Xử lý nộp form lưu thông tin khách hàng
+const handleSaveUser = async (e) => {
+  e.preventDefault();
+
+  const id = $('form-user-id')?.value;
+  const name = $('form-user-name')?.value.trim();
+  const email = $('form-user-email')?.value.trim();
+  const phone = $('form-user-phone')?.value.trim();
+  const role = $('form-user-role')?.value || 'user';
+  const address = $('form-user-address')?.value.trim();
+  const newPass = $('form-user-password')?.value.trim();
+
+  if (!name || !email || !phone) {
+    return showToast('Vui lòng nhập đầy đủ họ tên, email và số điện thoại!', 'warning');
+  }
+
+  const payload = { name, email, phone, role, address };
+  if (newPass) payload.password = newPass;
+
+  try {
+    const updated = await api(`users/${id}`, 'PATCH', payload);
+    const idx = users.findIndex(u => String(u.id) === String(id));
+    if (idx !== -1) users[idx] = { ...users[idx], ...updated };
+
+    // Nếu sửa tài khoản của chính admin đang đăng nhập -> đồng bộ lại localStorage
+    const currentAdmin = JSON.parse(localStorage.getItem('smartstore_user') || '{}');
+    if (String(currentAdmin.id) === String(id)) {
+      localStorage.setItem('smartstore_user', JSON.stringify({ ...currentAdmin, ...updated }));
+      if ($('admin-logged-name')) {
+        $('admin-logged-name').textContent = updated.name ? `${updated.name} (Admin)` : 'Quản Trị Viên';
+      }
+    }
+
+    $('user-modal')?.classList.remove('open');
+    renderUsersTable();
+    showToast(`Đã cập nhật thông tin khách hàng "${name}" thành công!`, 'success');
+  } catch (err) {
+    showToast('Lỗi khi cập nhật thông tin khách hàng!', 'error');
+  }
 };
 
 // ================= 9. ĐIỀU HƯỚNG TAB QUẢN TRỊ & ĐĂNG NHẬP / ĐĂNG XUẤT =================
@@ -625,6 +693,7 @@ window.deleteCategory = window.xoaDanhMuc = deleteCategory;
 window.updateOrderStatus = window.doiTrangThaiDonHang = updateOrderStatus;
 window.viewOrderDetail = window.xemChiTietDonHangAdmin = viewOrderDetail;
 window.deleteOrder = window.xoaDonHangAdmin = deleteOrder;
+window.editUser = window.suaKhachHang = openUserModal;
 
 // ================= 11. KHỞI CHẠY SỰ KIỆN KHI TRANG TẢI XONG =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -653,10 +722,13 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn-cancel-category-modal')?.addEventListener('click', () => $('category-modal')?.classList.remove('open'));
   $('btn-close-order-modal')?.addEventListener('click', () => $('admin-order-modal')?.classList.remove('open'));
   $('btn-close-order-detail')?.addEventListener('click', () => $('admin-order-modal')?.classList.remove('open'));
+  $('btn-close-user-modal')?.addEventListener('click', () => $('user-modal')?.classList.remove('open'));
+  $('btn-cancel-user-modal')?.addEventListener('click', () => $('user-modal')?.classList.remove('open'));
 
   // Sự kiện nộp form
   $('product-form')?.addEventListener('submit', handleSaveProduct);
   $('category-form')?.addEventListener('submit', handleSaveCategory);
+  $('user-form')?.addEventListener('submit', handleSaveUser);
 
   // Tải ảnh từ máy tính (FileReader)
   $('form-product-file')?.addEventListener('change', handleImageUpload);
