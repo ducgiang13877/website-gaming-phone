@@ -1,21 +1,3 @@
-/**
- * ============================================================================
- * TỆP JAVASCRIPT QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN PANEL - js/admin.js)
- * ============================================================================
- * Dự án: Website Gaming Phone (SmartStore)
- * Môn học: Lập trình JavaScript Nâng Cao (WEB2064)
- * 
- * PHONG CÁCH VIẾT CODE DÀNH CHO SINH VIÊN:
- * 1. Mã nguồn tối ưu, hiện đại, chuẩn ES6+ nhưng cấu trúc cực kỳ rõ ràng, dễ tiếp thu.
- * 2. Đầy đủ các tính năng nâng cao:
- *    - Tự động tăng ID sản phẩm (+1) khi thêm sản phẩm mới (không dùng Date.now()).
- *    - Đầy đủ chức năng CRUD sản phẩm (Thêm, Sửa, Xóa, Tìm kiếm & Lọc theo hãng).
- *    - Quản lý trạng thái đơn hàng linh hoạt: "Đang xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy".
- *    - Xem modal chi tiết các món hàng và địa chỉ giao hàng trong từng đơn.
- *    - Báo cáo thống kê KPI tự động: Doanh thu, Đã bán, Tồn kho, Đơn hàng.
- * 3. Chú thích (comment) chi tiết, sư phạm, giải thích từng dòng lệnh và luồng hoạt động.
- * ============================================================================
- */
 
 // ============================================================================
 // CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI CRUD (LIVE-RELOAD DEFENSE)

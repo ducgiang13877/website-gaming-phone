@@ -6,11 +6,6 @@
       "parent_id": "0"
     },
     {
-      "id": "2",
-      "name": "Samsung",
-      "parent_id": "0"
-    },
-    {
       "id": "3",
       "name": "Xiaomi",
       "parent_id": "0"
@@ -30,15 +25,6 @@
       "quantity": 25,
       "detail": "Khung viền Titan siêu nhẹ, chip Apple A17 Pro mạnh mẽ, camera zoom tiềm vọng 5x.",
       "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/thumbnail.webp"
-    },
-    {
-      "id": "2",
-      "name": "iPhone 15 Pro 128GB",
-      "cate_id": "1",
-      "price": 25490000,
-      "quantity": 20,
-      "detail": "Màn hình 120Hz ProMotion siêu mượt, Action Button tiện dụng, cổng sạc Type-C tốc độ cao.",
-      "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/thumbnail.webp"
     },
     {
       "id": "3",
@@ -251,7 +237,7 @@
       "address": "Cầu Giấy, Hà Nội",
       "total_amount": 29990000,
       "created_date": "2026-10-10",
-      "status": "Đang xử lý"
+      "status": "Đã hủy"
     },
     {
       "id": "2",

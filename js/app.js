@@ -1,20 +1,3 @@
-/**
- * ============================================================================
- * TỆP JAVASCRIPT GIAO DIỆN NGƯỜI DÙNG (USER CLIENT - js/app.js)
- * ============================================================================
- * Dự án: Website Gaming Phone (SmartStore)
- * Môn học: Lập trình JavaScript Nâng Cao (WEB2064)
- * 
- * ĐẶC ĐIỂM THIẾT KẾ & CÔNG NGHỆ:
- * 1. Phong cách code sư phạm, mạch lạc, dễ tiếp thu cho sinh viên.
- * 2. Cú pháp ES6+ chuẩn mực: async/await, arrow function, template strings, destructuring.
- * 3. Các hàm mảng có sẵn: filter, map, reduce, find, some, slice.
- * 4. Định dạng tiền tệ Intl.NumberFormat, lưu trữ phiên với localStorage.
- * 5. Bắt sự kiện linh hoạt (hỗ trợ cả data-view và ID), phòng thủ kép 100% không bao giờ bị liệt nút bấm.
- * 6. Modal xem chi tiết sản phẩm và phân trang 8 sản phẩm / trang mượt mà.
- * ============================================================================
- */
-
 // ============================================================================
 // CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI ĐẶT HÀNG / GỬI API
 // ============================================================================
