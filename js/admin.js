@@ -1,60 +1,24 @@
 
-// ============================================================================
-// CƠ CHẾ PHÒNG THỦ CHỐNG TỰ ĐỘNG RELOAD TRANG KHI CRUD (LIVE-RELOAD DEFENSE)
-// ============================================================================
-// Khi lập trình viên chạy dự án bằng tiện ích mở rộng Live Server (VS Code) hoặc nodemon,
-// mỗi khi JSON-Server thực hiện ghi dữ liệu mới (POST, PUT, PATCH, DELETE) vào file db.json,
-// tiện ích Live Server sẽ phát hiện file db.json thay đổi và gửi lệnh WebSocket 'reload'
-// ép trình duyệt phải tải lại trang.
-// Đoạn mã thông minh dưới đây chặn bắt lệnh reload này khi vừa có thao tác CRUD,
-// giúp toàn bộ việc Thêm, Sửa, Xóa diễn ra mượt mà 100% trong trang (Single Page App).
-(function() {
-  const GocWebSocket = window.WebSocket;
-  if (!GocWebSocket) return;
-
-  window.WebSocket = function(...args) {
-    const ws = new GocWebSocket(...args);
-    const url = args[0] ? String(args[0]) : '';
-
-    // Kiểm tra xem WebSocket này có thuộc về Live Server / Hot Reload không
-    const laDevServer = url.includes('/ws') || url.includes('127.0.0.1') || url.includes('localhost');
-
-    if (laDevServer) {
-      let hamOnMessageGoc = null;
-
-      Object.defineProperty(ws, 'onmessage', {
-        set(fn) {
-          hamOnMessageGoc = fn;
-        },
-        get() {
-          return hamOnMessageGoc;
-        }
-      });
-
-      ws.addEventListener('message', (suKien) => {
-        // Khi nhận tín hiệu 'reload' từ Live Server
-        if (suKien.data === 'reload') {
-          const thoiGianApiGanNhat = window.__lastApiCallTime || 0;
-          const khoangCach = Date.now() - thoiGianApiGanNhat;
-
-          // Nếu vừa có thao tác CRUD trong vòng 4 giây gần đây, chặn ngay lệnh reload
-          if (khoangCach < 4000) {
-            console.log('🛡️ [SmartStore Admin] Đã chặn Live Server tự động reload trang sau thao tác CRUD!');
-            return; // Hủy lệnh reload
-          }
-        }
-
-        if (typeof hamOnMessageGoc === 'function') {
-          hamOnMessageGoc.call(ws, suKien);
-        }
-      });
-    }
-
-    return ws;
-  };
-
-  window.WebSocket.prototype = GocWebSocket.prototype;
-})();
+/**
+ * ============================================================================
+ * TỆP JAVASCRIPT QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN PANEL - js/admin.js)
+ * ============================================================================
+ * Dự án: Website Gaming Phone (SmartStore)
+ * Môn học: Lập trình JavaScript Nâng Cao (WEB2064)
+ * 
+ * PHONG CÁCH VIẾT CODE DÀNH CHO SINH VIÊN:
+ * 1. Mã nguồn tối ưu, hiện đại, chuẩn ES6+ nhưng cấu trúc cực kỳ rõ ràng, dễ tiếp thu.
+ * 2. Cơ chế CRUD Single Page Application (SPA):
+ *    - Toàn bộ thao tác Thêm, Sửa, Xóa, Đổi trạng thái đều cập nhật trực tiếp trên DOM.
+ *    - Tuyệt đối không reload lại trang trình duyệt, giữ nguyên trạng thái tab và vị trí cuộn.
+ * 3. Đầy đủ các tính năng nâng cao:
+ *    - Tự động tăng ID sản phẩm (+1) khi thêm sản phẩm mới (không dùng Date.now()).
+ *    - Đầy đủ chức năng CRUD sản phẩm & danh mục.
+ *    - Quản lý trạng thái đơn hàng linh hoạt: "Đang xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy".
+ *    - Báo cáo thống kê KPI tự động: Doanh thu, Đã bán, Tồn kho, Đơn hàng.
+ * 4. Chú thích (comment) chi tiết, sư phạm, giải thích từng dòng lệnh và luồng hoạt động.
+ * ============================================================================
+ */
 
 // ============================================================================
 // PHẦN 1: CẤU HÌNH HỆ THỐNG VÀ ĐƯỜNG DẪN API (REST ENDPOINTS)
@@ -122,15 +86,11 @@ const $$ = (selector) => document.querySelectorAll(selector);
  * @returns {Promise<any>}
  */
 const goiApi = async (url, phuongThuc = 'GET', duLieu = null) => {
-  // Ghi nhận thời gian gửi yêu cầu CRUD (POST, PUT, PATCH, DELETE) để chống tự động reload trang
-  if (phuongThuc !== 'GET') {
-    window.__lastApiCallTime = Date.now();
-  }
-
   const cauHinh = {
     method: phuongThuc,
     headers: { 'Content-Type': 'application/json' }
   };
+
   if (duLieu !== null) {
     cauHinh.body = JSON.stringify(duLieu);
   }
