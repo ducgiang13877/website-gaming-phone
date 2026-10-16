@@ -1,5 +1,6 @@
 node_modules/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.log
 .DS_Store

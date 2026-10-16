@@ -58,8 +58,8 @@
 
         <div style="display: flex; align-items: center; gap: 14px;">
           <span id="admin-logged-name" style="font-size: 14px; font-weight: 600; color: #ffffff;">Admin</span>
-          <a href="index.html" class="nav-item" style="color: #ffffff; background: rgba(255,255,255,0.15);" target="_blank">
-            <i class="fas fa-eye"></i> Xem Shop
+          <a href="index.html" class="nav-item btn-view-shop-header" id="btn-admin-view-shop" title="Xem giao diện Cửa Hàng (Shop)">
+            <i class="fas fa-store"></i> <span>Xem Cửa Hàng (Shop)</span>
           </a>
           <button class="nav-item" id="btn-admin-logout" style="color: #ffffff; background: var(--accent);">
             <i class="fas fa-power-off"></i> Đăng xuất
@@ -72,10 +72,10 @@
       <div class="admin-header-bar">
         <h2 class="admin-title"><i class="fas fa-chart-line"></i> Báo Cáo & Quản Trị Hệ Thống</h2>
         <div>
-          <button class="btn-primary" id="btn-admin-add-product">
+          <button type="button" class="btn-primary" id="btn-admin-add-product">
             <i class="fas fa-plus"></i> Thêm sản phẩm mới
           </button>
-          <button class="btn-secondary" id="btn-admin-add-category" style="margin-left: 8px;">
+          <button type="button" class="btn-secondary" id="btn-admin-add-category" style="margin-left: 8px;">
             <i class="fas fa-folder-plus"></i> Thêm danh mục
           </button>
         </div>
@@ -115,14 +115,20 @@
 
       <!-- Thanh chọn bảng dữ liệu -->
       <div class="admin-nav-tabs">
-        <button class="admin-tab-btn active" data-subtab="admin-tab-products">Quản lý Sản phẩm</button>
-        <button class="admin-tab-btn" data-subtab="admin-tab-categories">Quản lý Danh mục</button>
-        <button class="admin-tab-btn" data-subtab="admin-tab-orders">Quản lý Đơn hàng</button>
-        <button class="admin-tab-btn" data-subtab="admin-tab-users">Quản lý Khách hàng</button>
+        <button type="button" class="admin-tab-btn active" data-subtab="admin-tab-products">Quản lý Sản phẩm</button>
+        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-categories">Quản lý Danh mục</button>
+        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-orders">Quản lý Đơn hàng</button>
+        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-users">Quản lý Khách hàng</button>
       </div>
 
       <!-- Bảng 1: Quản lý Sản phẩm -->
       <div id="admin-tab-products" class="admin-subpanel" style="display: block;">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input type="text" id="admin-search-product" class="search-input" placeholder="Tìm sản phẩm theo tên..." style="max-width: 280px;" />
+          <select id="admin-filter-category" class="select-box" style="max-width: 200px;">
+            <option value="">Tất cả thương hiệu</option>
+          </select>
+        </div>
         <div class="admin-table-box">
           <table class="admin-table">
             <thead>
@@ -168,12 +174,13 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Mã ĐH</th>
+                <th style="width: 110px;">Mã ĐH</th>
                 <th>Khách hàng</th>
                 <th>Số điện thoại</th>
                 <th>Tổng tiền</th>
                 <th>Ngày đặt</th>
-                <th>Trạng thái</th>
+                <th style="width: 170px;">Trạng thái</th>
+                <th style="width: 130px;">Hành động</th>
               </tr>
             </thead>
             <tbody id="admin-order-tbody">
@@ -211,7 +218,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="product-modal-title" class="modal-title">Thêm Sản Phẩm Mới</h3>
-        <button class="btn-close-modal" id="btn-close-product-modal">&times;</button>
+        <button type="button" class="btn-close-modal" id="btn-close-product-modal">&times;</button>
       </div>
 
       <form id="product-form">
@@ -267,7 +274,7 @@
     <div class="modal-box" style="max-width: 400px;">
       <div class="modal-header">
         <h3 id="category-modal-title" class="modal-title">Thêm Danh Mục Mới</h3>
-        <button class="btn-close-modal" id="btn-close-category-modal">&times;</button>
+        <button type="button" class="btn-close-modal" id="btn-close-category-modal">&times;</button>
       </div>
 
       <form id="category-form">
@@ -283,6 +290,22 @@
           <button type="submit" class="btn-primary">Lưu danh mục</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL XEM CHI TIẾT ĐƠN HÀNG (ADMIN) ================= -->
+  <div id="admin-order-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="admin-order-modal-title" class="modal-title">Chi Tiết Đơn Hàng</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-order-modal">&times;</button>
+      </div>
+      <div id="admin-order-detail-content" style="margin-top: 15px;">
+        <!-- Dữ liệu chi tiết đơn hàng đổ từ JavaScript -->
+      </div>
+      <div class="modal-footer" style="margin-top: 20px;">
+        <button type="button" class="btn-secondary" id="btn-close-order-detail">Đóng Cửa Sổ</button>
+      </div>
     </div>
   </div>
 
