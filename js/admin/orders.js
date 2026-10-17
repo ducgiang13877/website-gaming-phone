@@ -23,6 +23,15 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
 
   if (trangThaiCu === trangThaiMoi) return;
 
+  // 🛡️ BẢO VỆ TRẠNG THÁI BẤT BIẾN (IMMUTABLE TERMINAL STATE CHUẨN TMĐT):
+  // Khi đơn đã "delivered", tiền COD đã thu, hóa đơn tài chính đã chốt, hàng đã xuất kho.
+  // Nghiêm cấm đổi ngược trạng thái để chống thất thoát tài chính và sai lệch tồn kho.
+  if (trangThaiCu === 'delivered') {
+    hienThongBao('An ninh: Đơn hàng đã GIAO THÀNH CÔNG và đóng sổ tài chính. Không thể thay đổi trạng thái!', 'error');
+    if (selectEl) selectEl.value = 'delivered';
+    return;
+  }
+
   // 🛡️ FINITE STATE MACHINE (FSM): Cảnh báo nếu chuyển đổi từ trạng thái kết thúc (cancelled)
   if (trangThaiCu === 'cancelled' && !confirm('Đơn hàng này đã bị HỦY trước đó. Bạn có chắc chắn muốn kích hoạt lại đơn hàng và trừ lại tồn kho không?')) {
     if (selectEl) selectEl.value = trangThaiCu;
@@ -139,12 +148,18 @@ function renderBangDonHang() {
         <td style="font-weight:800; color:var(--accent);">${dinhDangTien(d.totalAmount)}</td>
         <td>${d.paymentMethod}</td>
         <td>
-          <select class="order-status-select status-${d.status}" onchange="doiTrangThaiDonHangTrucTiep('${d.id}', this.value, this)" title="Bấm để đổi trực tiếp trạng thái đơn">
-            <option value="processing" ${d.status === 'processing' ? 'selected' : ''}>Chờ xử lý</option>
-            <option value="shipping" ${d.status === 'shipping' ? 'selected' : ''}>Đang giao</option>
-            <option value="delivered" ${d.status === 'delivered' ? 'selected' : ''}>Đã giao</option>
-            <option value="cancelled" ${d.status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
-          </select>
+          ${d.status === 'delivered' ? `
+            <span class="badge status-delivered" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-weight:700; border-radius:20px; background:#dcfce7; color:#15803d; border:1px solid #86efac;" title="Đơn hàng đã giao thành công và đóng sổ (Bất biến theo chuẩn TMĐT)">
+              <i class="fa-solid fa-circle-check"></i> Đã giao
+            </span>
+          ` : `
+            <select class="order-status-select status-${d.status}" onchange="doiTrangThaiDonHangTrucTiep('${d.id}', this.value, this)" title="Bấm để đổi trực tiếp trạng thái đơn">
+              <option value="processing" ${d.status === 'processing' ? 'selected' : ''}>Chờ xử lý</option>
+              <option value="shipping" ${d.status === 'shipping' ? 'selected' : ''}>Đang giao</option>
+              <option value="delivered">Đã giao</option>
+              <option value="cancelled" ${d.status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
+            </select>
+          `}
         </td>
         <td style="text-align:center;">
           <button class="btn-primary btn-sm" onclick="moXemDonHang('${d.orderCode}')" title="Xem chi tiết đơn"><i class="fa-solid fa-eye"></i> Xem</button>
@@ -197,7 +212,47 @@ function moXemDonHang(maDon) {
   }
 
   const selectStatus = document.getElementById('order-status-update-select');
-  if (selectStatus) selectStatus.value = d.status;
+  const btnSaveStatus = document.getElementById('btn-save-order-status');
+
+  // Gỡ bỏ thông báo khóa bất biến cũ nếu có
+  const oldNote = document.getElementById('order-delivered-immutable-note');
+  if (oldNote) oldNote.remove();
+
+  if (d.status === 'delivered') {
+    if (selectStatus) {
+      selectStatus.value = 'delivered';
+      selectStatus.disabled = true;
+      selectStatus.style.opacity = '0.65';
+      selectStatus.style.cursor = 'not-allowed';
+    }
+    if (btnSaveStatus) {
+      btnSaveStatus.disabled = true;
+      btnSaveStatus.style.opacity = '0.5';
+      btnSaveStatus.style.cursor = 'not-allowed';
+      btnSaveStatus.title = 'Đơn hàng đã giao thành công và đóng sổ tài chính. Không thể sửa!';
+    }
+    if (body) {
+      body.insertAdjacentHTML('beforeend', `
+        <div id="order-delivered-immutable-note" style="margin-top:14px; padding:12px 14px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; border-radius:8px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-shield-halved" style="font-size:16px; color:#15803d;"></i>
+          <span><strong>BẢO VỆ CHUẨN TMĐT:</strong> Đơn hàng đã giao nhận thành công và đóng sổ giao dịch. Trạng thái đã được <u>khóa bất biến</u> nhằm bảo toàn đối soát COD và tính toàn vẹn tồn kho!</span>
+        </div>
+      `);
+    }
+  } else {
+    if (selectStatus) {
+      selectStatus.value = d.status;
+      selectStatus.disabled = false;
+      selectStatus.style.opacity = '1';
+      selectStatus.style.cursor = 'pointer';
+    }
+    if (btnSaveStatus) {
+      btnSaveStatus.disabled = false;
+      btnSaveStatus.style.opacity = '1';
+      btnSaveStatus.style.cursor = 'pointer';
+      btnSaveStatus.title = 'Lưu trạng thái mới';
+    }
+  }
 
   moModal('order-detail-modal');
 }
@@ -212,6 +267,13 @@ async function capNhatTrangThaiDon() {
   const trangThaiCu = donHangDangXem.status;
 
   if (trangThaiCu === trangThaiMoi) {
+    dongModal('order-detail-modal');
+    return;
+  }
+
+  // 🛡️ BẢO VỆ TRẠNG THÁI BẤT BIẾN (IMMUTABLE TERMINAL STATE CHUẨN TMĐT):
+  if (trangThaiCu === 'delivered') {
+    hienThongBao('An ninh: Đơn hàng đã GIAO THÀNH CÔNG và đóng sổ tài chính. Không thể thay đổi trạng thái!', 'error');
     dongModal('order-detail-modal');
     return;
   }
