@@ -107,11 +107,11 @@ async function xuLyDangKy(ten, email, sdt, diaChi, matKhau) {
       // Trường hợp B: Sai mật khẩu -> Kích hoạt cơ chế Smart Identity Resolution
       pendingSmartUser = userDaCo;
       const box = document.getElementById('smart-identity-box');
-      const nameEl = document.getElementById('smart-identity-name');
+      const nameEl = document.getElementById('smart-user-name') || document.getElementById('smart-identity-name');
       const passInput = document.getElementById('smart-login-password');
 
-      if (box && nameEl) {
-        nameEl.textContent = userDaCo.fullName || userDaCo.name || 'Quý khách';
+      if (box) {
+        if (nameEl) nameEl.textContent = userDaCo.fullName || userDaCo.name || 'Quý khách';
         box.style.display = 'block';
         if (passInput) {
           passInput.value = '';
@@ -208,13 +208,27 @@ async function hienThiThongTinCaNhan() {
     return;
   }
 
-  document.getElementById('profile-name').textContent = nguoiDungHienTai.fullName || nguoiDungHienTai.name || 'Chưa cập nhật';
-  document.getElementById('profile-email').textContent = nguoiDungHienTai.email || 'Chưa cập nhật';
-  document.getElementById('profile-phone').textContent = nguoiDungHienTai.phone || 'Chưa cập nhật';
-  document.getElementById('profile-address').textContent = nguoiDungHienTai.address || 'Chưa cập nhật';
+  const u = nguoiDungHienTai;
+  const displayName = document.getElementById('profile-display-name');
+  if (displayName) displayName.textContent = u.fullName || u.name || 'Khách Hàng';
+
+  const nameInput = document.getElementById('profile-name');
+  if (nameInput) nameInput.value = u.fullName || u.name || '';
+
+  const emailInput = document.getElementById('profile-email');
+  if (emailInput) emailInput.value = u.email || '';
+
+  const phoneInput = document.getElementById('profile-phone');
+  if (phoneInput) phoneInput.value = u.phone || '';
+
+  const addrInput = document.getElementById('profile-address');
+  if (addrInput) addrInput.value = u.address || '';
+
+  const passInput = document.getElementById('profile-password');
+  if (passInput) passInput.value = '';
 
   // Tải danh sách đơn hàng của riêng người dùng này
-  const tbody = document.getElementById('profile-orders-tbody');
+  const tbody = document.getElementById('user-orders-tbody') || document.getElementById('profile-orders-tbody');
   if (!tbody) return;
 
   try {
@@ -222,40 +236,51 @@ async function hienThiThongTinCaNhan() {
     const allOrders = await res.json();
 
     const donCuaToi = allOrders.filter(d => 
-      (d.userId && String(d.userId) === String(nguoiDungHienTai.id)) ||
-      (d.customerPhone && d.customerPhone === nguoiDungHienTai.phone) ||
-      (d.customerEmail && d.customerEmail === nguoiDungHienTai.email)
+      (d.userId && String(d.userId) === String(u.id)) ||
+      (d.customerPhone && d.customerPhone === u.phone) ||
+      (d.customerEmail && d.customerEmail === u.email)
     );
 
     if (donCuaToi.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Bạn chưa có đơn hàng nào tại SmartStore.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">Bạn chưa có đơn hàng nào tại SmartStore.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = donCuaToi.map(d => `
+    tbody.innerHTML = donCuaToi.reverse().map(d => `
       <tr>
         <td><strong>${d.orderCode}</strong></td>
         <td>${new Date(d.createdAt).toLocaleDateString('vi-VN')}</td>
         <td style="font-weight:700; color:var(--accent);">${dinhDangTien(d.totalAmount)}</td>
-        <td><span class="badge status-${d.status}">${d.status === 'processing' ? 'Chờ xử lý' : (d.status === 'shipping' ? 'Đang giao' : (d.status === 'delivered' ? 'Đã giao' : 'Đã hủy'))}</span></td>
+        <td>${d.paymentMethod || 'COD'}</td>
+        <td>
+          <span class="badge status-${d.status}">
+            ${d.status === 'processing' ? 'Chờ xử lý' : (d.status === 'shipping' ? 'Đang giao' : (d.status === 'delivered' ? 'Đã giao' : 'Đã hủy'))}
+          </span>
+        </td>
         <td style="text-align:center;">
-          <button class="btn-primary btn-sm" onclick="traCuuTheoMa('${d.orderCode}')">
-            <i class="fa-solid fa-eye"></i> Xem
+          <button class="btn-primary btn-sm" onclick="traCuuTheoMa('${d.orderCode}')" title="Tra cứu tiến độ">
+            <i class="fa-solid fa-truck-fast"></i> Xem
           </button>
         </td>
       </tr>
     `).join('');
   } catch (loi) {
-    console.error(loi);
+    console.error('Lỗi tải đơn hàng cá nhân:', loi);
   }
 }
 
 async function luuSuaThongTinCaNhan() {
   if (!nguoiDungHienTai) return;
 
-  const tenMoi = document.getElementById('edit-profile-name').value.trim();
-  const sdtMoi = document.getElementById('edit-profile-phone').value.trim();
-  const diaChiMoi = document.getElementById('edit-profile-address').value.trim();
+  const nameEl = document.getElementById('profile-name') || document.getElementById('edit-profile-name');
+  const phoneEl = document.getElementById('profile-phone') || document.getElementById('edit-profile-phone');
+  const addrEl = document.getElementById('profile-address') || document.getElementById('edit-profile-address');
+  const passEl = document.getElementById('profile-password');
+
+  const tenMoi = nameEl ? nameEl.value.trim() : '';
+  const sdtMoi = phoneEl ? phoneEl.value.trim() : '';
+  const diaChiMoi = addrEl ? addrEl.value.trim() : '';
+  const passMoi = passEl ? passEl.value.trim() : '';
 
   if (!tenMoi || !sdtMoi) {
     hienThongBao('Vui lòng điền Họ tên và SĐT!', 'warning');
@@ -263,23 +288,25 @@ async function luuSuaThongTinCaNhan() {
   }
 
   try {
+    const payload = {
+      fullName: tenMoi,
+      name: tenMoi,
+      phone: sdtMoi,
+      address: diaChiMoi
+    };
+    if (passMoi) payload.password = passMoi;
+
     const res = await fetch(`${API_URL}/users/${nguoiDungHienTai.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fullName: tenMoi,
-        name: tenMoi,
-        phone: sdtMoi,
-        address: diaChiMoi
-      })
+      body: JSON.stringify(payload)
     });
     const userCapNhat = await res.json();
 
     nguoiDungHienTai = userCapNhat;
     localStorage.setItem('smartstore_user', JSON.stringify(userCapNhat));
     capNhatNguoiDungHeader();
-    hienThongBao('Đã cập nhật thông tin cá nhân!', 'success');
-    dongModal('profile-edit-modal');
+    hienThongBao('Đã cập nhật thông tin cá nhân thành công!', 'success');
     hienThiThongTinCaNhan();
   } catch (loi) {
     console.error(loi);

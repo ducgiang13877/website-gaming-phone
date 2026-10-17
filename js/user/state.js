@@ -70,19 +70,19 @@ function hienThongBao(noiDung, loai = 'info') {
   }
 
   const toast = document.createElement('div');
-  toast.className = `toast toast-${loai}`;
+  toast.className = `toast-notice toast-${loai}`;
 
   let iconClass = 'fa-circle-info';
   if (loai === 'success') iconClass = 'fa-circle-check';
-  if (loai === 'error') iconClass = 'fa-circle-exclamation';
-  if (loai === 'warning') iconClass = 'fa-triangle-exclamation';
+  if (loai === 'error') iconClass = 'fa-triangle-exclamation';
+  if (loai === 'warning') iconClass = 'fa-circle-exclamation';
 
   toast.innerHTML = `
     <i class="fa-solid ${iconClass}"></i>
     <div class="toast-message">${noiDung}</div>
   `;
 
-  hopChua.appendChild(toast);
+  document.body.appendChild(toast);
 
   // Kích hoạt animation hiện ra
   setTimeout(() => toast.classList.add('show'), 10);
@@ -90,7 +90,7 @@ function hienThongBao(noiDung, loai = 'info') {
   // Tự động mờ dần và gỡ bỏ khỏi DOM sau 3200ms
   setTimeout(() => {
     toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
+    setTimeout(() => toast.remove(), 350);
   }, 3200);
 }
 
@@ -188,11 +188,25 @@ async function taiDuLieu() {
     dsDanhMuc = await resDM.json();
     dsSanPham = await resSP.json();
 
-    // Điền danh mục vào dropdown bộ lọc trang Cửa Hàng
+    // Điền danh mục vào dropdown bộ lọc trang Cửa Hàng nếu có
     const selectHang = document.getElementById('filter-brand-select');
     if (selectHang) {
       selectHang.innerHTML = '<option value="all">Tất cả thương hiệu</option>' +
         dsDanhMuc.map(dm => `<option value="${dm.id}">${dm.name}</option>`).join('');
+    }
+
+    // Render danh sách thương hiệu dạng Pill Button (#shop-brand-pills)
+    const pillsBox = document.getElementById('shop-brand-pills');
+    if (pillsBox) {
+      pillsBox.innerHTML = `
+        <button class="brand-pill-btn ${boLoc.hang === 'all' ? 'active' : ''}" onclick="window.shopModule.setBrand('all')">
+          <i class="fa-solid fa-shapes"></i> Tất Cả
+        </button>
+      ` + dsDanhMuc.map(dm => `
+        <button class="brand-pill-btn ${boLoc.hang == dm.id ? 'active' : ''}" onclick="window.shopModule.setBrand('${dm.id}')">
+          <i class="${dm.icon || 'fa-solid fa-mobile-screen'}"></i> ${dm.name}
+        </button>
+      `).join('');
     }
 
     // Cập nhật trạng thái hiển thị ban đầu

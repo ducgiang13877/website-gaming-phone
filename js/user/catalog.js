@@ -52,8 +52,8 @@ function taoTheSanPhamHTML(sp) {
         <!-- Cụm Specs Chips rút gọn -->
         <div class="card-specs-chips">
           ${thongSo.ram ? `<span class="spec-chip"><i class="fa-solid fa-microchip"></i> ${thongSo.ram}</span>` : ''}
-          ${thongSo.pin ? `<span class="spec-chip"><i class="fa-solid fa-battery-three-quarters"></i> ${thongSo.pin}</span>` : ''}
-          ${thongSo.chip ? `<span class="spec-chip"><i class="fa-solid fa-bolt"></i> ${thongSo.chip.split(' ')[0]}</span>` : ''}
+          ${(thongSo.battery || thongSo.pin) ? `<span class="spec-chip"><i class="fa-solid fa-battery-three-quarters"></i> ${(thongSo.battery || thongSo.pin).split(',')[0]}</span>` : ''}
+          ${(thongSo.cpu || thongSo.chip) ? `<span class="spec-chip"><i class="fa-solid fa-bolt"></i> ${(thongSo.cpu || thongSo.chip).split(' ')[0]}</span>` : ''}
         </div>
 
         <div class="card-price-row">
@@ -103,7 +103,7 @@ function taoTheSanPhamHTML(sp) {
  */
 function hienThiTrangChu() {
   // 1. Top 8 sản phẩm mới nhất
-  const gridMoiNhat = document.getElementById('home-latest-grid');
+  const gridMoiNhat = document.getElementById('home-featured-products') || document.getElementById('home-latest-grid');
   if (gridMoiNhat) {
     const spMoiNhat = dsSanPham.slice(0, 8);
     gridMoiNhat.innerHTML = spMoiNhat.map(sp => taoTheSanPhamHTML(sp)).join('');
@@ -117,9 +117,9 @@ function hienThiTrangChu() {
  * 🎯 Mục đích: Khởi tạo đồng hồ đếm ngược Flash Sale thời gian thực
  */
 function khoiTaoDemNguocFlashSale() {
-  const boxGio = document.getElementById('flash-sale-hours');
-  const boxPhut = document.getElementById('flash-sale-minutes');
-  const boxGiay = document.getElementById('flash-sale-seconds');
+  const boxGio = document.getElementById('flash-timer-hours') || document.getElementById('flash-sale-hours');
+  const boxPhut = document.getElementById('flash-timer-minutes') || document.getElementById('flash-sale-minutes');
+  const boxGiay = document.getElementById('flash-timer-seconds') || document.getElementById('flash-sale-seconds');
   if (!boxGio || !boxPhut || !boxGiay) return;
 
   let thoiGianConLai = 4 * 3600 + 45 * 60 + 20; // 4 giờ 45 phút 20 giây
@@ -141,7 +141,7 @@ function khoiTaoDemNguocFlashSale() {
 }
 
 function hienThiFlashSale() {
-  const gridFlashSale = document.getElementById('home-flash-sale-grid');
+  const gridFlashSale = document.getElementById('home-flash-sale-products') || document.getElementById('home-flash-sale-grid');
   if (!gridFlashSale) return;
 
   const spSale = dsSanPham.filter(sp => sp.originalPrice && sp.originalPrice > sp.price).slice(0, 4);
@@ -155,7 +155,7 @@ function moXemNhanh(idSP) {
   const sp = dsSanPham.find(item => item.id == idSP);
   if (!sp) return;
 
-  const modalBody = document.getElementById('quickview-modal-body');
+  const modalBody = document.getElementById('quick-view-body') || document.getElementById('quickview-modal-body');
   if (!modalBody) return;
 
   const hang = dsDanhMuc.find(h => h.id == (sp.categoryId || sp.cate_id));
@@ -178,17 +178,18 @@ function moXemNhanh(idSP) {
 
         <div style="background: var(--bg); padding: 12px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.7; margin-bottom: 16px;">
           <div><strong>Màn hình:</strong> ${thongSo.screen || 'AMOLED 120Hz'}</div>
-          <div><strong>Vi xử lý:</strong> ${thongSo.chip || 'Snapdragon 8 Gen 3'}</div>
+          <div><strong>Vi xử lý:</strong> ${thongSo.cpu || thongSo.chip || 'Snapdragon 8 Elite'}</div>
           <div><strong>RAM / ROM:</strong> ${thongSo.ram || '12GB'} / ${thongSo.rom || '256GB'}</div>
-          <div><strong>Pin & Sạc:</strong> ${thongSo.pin || '5000mAh'} • ${thongSo.charge || '65W'}</div>
+          <div><strong>Camera:</strong> ${thongSo.rear_camera || thongSo.camSau || '50MP OIS'}</div>
+          <div><strong>Pin & Sạc:</strong> ${thongSo.battery || thongSo.pin || '5000mAh'}</div>
           <div><strong>Trạng thái:</strong> <span style="color: ${tonKho > 0 ? 'var(--success)' : 'var(--accent)'}; font-weight: 700;">${tonKho > 0 ? `Còn sẵn ${tonKho} máy` : 'Tạm hết hàng'}</span></div>
         </div>
 
         <div style="display: flex; gap: 10px;">
-          <button class="btn-primary" onclick="themVaoGio('${sp.id}'); dongModal('quickview-modal');" ${tonKho <= 0 ? 'disabled style="opacity: 0.5;"' : ''}>
+          <button class="btn-primary" onclick="themVaoGio('${sp.id}'); dongModal('quick-view-modal'); dongModal('quickview-modal');" ${tonKho <= 0 ? 'disabled style="opacity: 0.5;"' : ''}>
             <i class="fa-solid fa-cart-plus"></i> Thêm Vào Giỏ
           </button>
-          <button class="btn-secondary" onclick="dongModal('quickview-modal'); chuyenTrang('detail', { id: '${sp.id}' });">
+          <button class="btn-secondary" onclick="dongModal('quick-view-modal'); dongModal('quickview-modal'); chuyenTrang('detail', { id: '${sp.id}' });">
             Chi Tiết Đầy Đủ
           </button>
         </div>
@@ -196,6 +197,7 @@ function moXemNhanh(idSP) {
     </div>
   `;
 
+  moModal('quick-view-modal');
   moModal('quickview-modal');
 }
 
@@ -257,8 +259,8 @@ function hienThiCuaHang() {
   else if (boLoc.sapXep === 'sold-desc') ketQua.sort((a, b) => (b.sold || 0) - (a.sold || 0));
 
   // Cập nhật số lượng tìm thấy
-  const countEl = document.getElementById('shop-total-count');
-  if (countEl) countEl.textContent = ketQua.length;
+  const countEl = document.getElementById('shop-result-count') || document.getElementById('shop-total-count');
+  if (countEl) countEl.innerHTML = `Đang hiển thị <strong>${ketQua.length}</strong> sản phẩm`;
 
   // 6. Phân trang 8 sản phẩm / trang
   const tongSoTrang = Math.ceil(ketQua.length / SO_SP_MOI_TRANG) || 1;
@@ -309,7 +311,15 @@ function hienThiCuaHang() {
 function locTheoHang(maHang) {
   boLoc.hang = maHang;
   boLoc.trang = 1;
+
+  const pills = document.querySelectorAll('#shop-brand-pills .brand-pill-btn');
+  pills.forEach(btn => {
+    const isAct = (maHang === 'all' && btn.textContent.includes('Tất Cả')) || (btn.getAttribute('onclick')?.includes(`'${maHang}'`));
+    btn.classList.toggle('active', !!isAct);
+  });
+
   chuyenTrang('shop');
+  hienThiCuaHang();
 }
 
 function locTheoNhuCau(nhuCau) {
@@ -394,22 +404,22 @@ function hienThiChiTiet(idSP) {
 
         <div class="detail-price-box">
           <div class="detail-current-price">${dinhDangTien(sp.price)}</div>
-          ${sp.originalPrice ? `
+          ${sp.originalPrice && sp.originalPrice > sp.price ? `
             <div class="detail-original-price">${dinhDangTien(sp.originalPrice)}</div>
           ` : ''}
         </div>
 
         <p style="font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 18px;">
-          ${sp.detail || sp.description || 'Sản phẩm chính hãng, đầy đủ phụ kiện, bảo hành 12 tháng tại các trung tâm bảo hành toàn quốc.'}
+          ${sp.detail || sp.description || 'Sản phẩm chính hãng, đầy đủ phụ kiện, bảo hành 12 tháng 1 đổi 1 tại các trung tâm bảo hành toàn quốc.'}
         </p>
 
         <!-- Bộ chọn số lượng -->
         <div class="detail-qty-control">
           <span>Số lượng:</span>
           <div class="qty-btn-group">
-            <button onclick="tangGiamSoLuongChiTiet(-1)">-</button>
+            <button type="button" onclick="tangGiamSoLuongChiTiet(-1)">-</button>
             <input type="number" id="detail-qty-input" value="1" min="1" max="${tonKho}" readonly>
-            <button onclick="tangGiamSoLuongChiTiet(1)">+</button>
+            <button type="button" onclick="tangGiamSoLuongChiTiet(1)">+</button>
           </div>
         </div>
 
@@ -426,29 +436,33 @@ function hienThiChiTiet(idSP) {
             <span>${dangSoSanh ? 'Đang So Sánh' : 'So Sánh Máy'}</span>
           </button>
         </div>
+
+        <!-- BẢNG 10 THÔNG SỐ KỸ THUẬT CHUẨN THẾ GIỚI DI ĐỘNG -->
+        <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 22px;">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 12px; color: var(--text);">
+            <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Thông Số Kỹ Thuật Chi Tiết (10 Tiêu Chí)
+          </h3>
+          <table class="specs-table">
+            <tbody>
+              <tr><td class="spec-name">1. Màn hình</td><td class="spec-val"><strong>${ts.screen || 'AMOLED 120Hz'}</strong></td></tr>
+              <tr><td class="spec-name">2. Vi xử lý (CPU)</td><td class="spec-val"><strong>${ts.cpu || ts.chip || 'Snapdragon 8 Elite'}</strong></td></tr>
+              <tr><td class="spec-name">3. Đồ họa (GPU)</td><td class="spec-val">${ts.gpu || 'Adreno GPU'}</td></tr>
+              <tr><td class="spec-name">4. RAM</td><td class="spec-val"><strong>${ts.ram || '12GB LPDDR5X'}</strong></td></tr>
+              <tr><td class="spec-name">5. Bộ nhớ trong (ROM)</td><td class="spec-val"><strong>${ts.rom || '256GB UFS 4.0'}</strong></td></tr>
+              <tr><td class="spec-name">6. Camera sau</td><td class="spec-val">${ts.rear_camera || ts.camSau || '50MP + 50MP + 64MP OIS'}</td></tr>
+              <tr><td class="spec-name">7. Camera trước</td><td class="spec-val">${ts.front_camera || ts.camTruoc || '32MP HDR'}</td></tr>
+              <tr><td class="spec-name">8. Pin & Sạc</td><td class="spec-val"><strong>${ts.battery || (ts.pin ? `${ts.pin} - ${ts.charge || ''}` : '5500mAh 65W')}</strong></td></tr>
+              <tr><td class="spec-name">9. Hệ điều hành</td><td class="spec-val">${ts.os || 'Android 14'}</td></tr>
+              <tr><td class="spec-name">10. Tính năng đặc biệt</td><td class="spec-val">${ts.special || 'Tản nhiệt buồng hơi, Nút trigger Gaming, Kháng nước IP68'}</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
   }
 
-  // Bảng 10 thông số kỹ thuật chuẩn
-  const specsTbody = document.getElementById('detail-specs-tbody');
-  if (specsTbody) {
-    specsTbody.innerHTML = `
-      <tr><td>1. Kích thước & Màn hình</td><td><strong>${ts.screen || 'AMOLED 120Hz'}</strong></td></tr>
-      <tr><td>2. Vi xử lý (Chipset CPU)</td><td><strong>${ts.chip || 'Snapdragon 8 Gen 3'}</strong></td></tr>
-      <tr><td>3. Dung lượng RAM</td><td><strong>${ts.ram || '12GB LPDDR5X'}</strong></td></tr>
-      <tr><td>4. Bộ nhớ trong (ROM)</td><td><strong>${ts.rom || '256GB UFS 4.0'}</strong></td></tr>
-      <tr><td>5. Cụm Camera sau</td><td>${ts.camSau || '50MP + 50MP + 64MP OIS'}</td></tr>
-      <tr><td>6. Camera trước (Selfie)</td><td>${ts.camTruoc || '32MP HDR'}</td></tr>
-      <tr><td>7. Dung lượng Pin</td><td><strong>${ts.pin || '5500mAh'}</strong></td></tr>
-      <tr><td>8. Công nghệ Sạc nhanh</td><td>${ts.charge || '65W Siêu Nhanh'}</td></tr>
-      <tr><td>9. Hệ điều hành</td><td>${ts.os || 'Android 14'}</td></tr>
-      <tr><td>10. Tính năng đặc biệt</td><td>${ts.special || 'Vapor Chamber tản nhiệt, Nút trigger Gaming, Kháng nước IP68'}</td></tr>
-    `;
-  }
-
   // Render sản phẩm cùng thương hiệu
-  const relatedGrid = document.getElementById('detail-related-grid');
+  const relatedGrid = document.getElementById('detail-related-products') || document.getElementById('detail-related-grid');
   if (relatedGrid) {
     const spLienQuan = dsSanPham
       .filter(p => (p.categoryId || p.cate_id) == (sp.categoryId || sp.cate_id) && p.id != sp.id)
@@ -593,32 +607,32 @@ function hienThiSoSanh() {
             ${dsMay.map(p => `<td>${p.specs?.screen || '-'}</td>`).join('')}
           </tr>
           <tr>
-            <td><strong>2. Vi xử lý (Chipset)</strong></td>
-            ${dsMay.map(p => `<td><strong>${p.specs?.chip || '-'}</strong></td>`).join('')}
+            <td><strong>2. Vi xử lý (CPU)</strong></td>
+            ${dsMay.map(p => `<td><strong>${p.specs?.cpu || p.specs?.chip || '-'}</strong></td>`).join('')}
           </tr>
           <tr>
-            <td><strong>3. RAM</strong></td>
-            ${dsMay.map(p => `<td>${p.specs?.ram || '-'}</td>`).join('')}
+            <td><strong>3. Đồ họa (GPU)</strong></td>
+            ${dsMay.map(p => `<td>${p.specs?.gpu || '-'}</td>`).join('')}
           </tr>
           <tr>
-            <td><strong>4. Bộ nhớ trong (ROM)</strong></td>
-            ${dsMay.map(p => `<td>${p.specs?.rom || '-'}</td>`).join('')}
+            <td><strong>4. RAM</strong></td>
+            ${dsMay.map(p => `<td><strong>${p.specs?.ram || '-'}</strong></td>`).join('')}
           </tr>
           <tr>
-            <td><strong>5. Camera sau</strong></td>
-            ${dsMay.map(p => `<td>${p.specs?.camSau || '-'}</td>`).join('')}
+            <td><strong>5. Bộ nhớ trong (ROM)</strong></td>
+            ${dsMay.map(p => `<td><strong>${p.specs?.rom || '-'}</strong></td>`).join('')}
           </tr>
           <tr>
-            <td><strong>6. Camera trước</strong></td>
-            ${dsMay.map(p => `<td>${p.specs?.camTruoc || '-'}</td>`).join('')}
+            <td><strong>6. Cụm Camera sau</strong></td>
+            ${dsMay.map(p => `<td>${p.specs?.rear_camera || p.specs?.camSau || '-'}</td>`).join('')}
           </tr>
           <tr>
-            <td><strong>7. Dung lượng Pin</strong></td>
-            ${dsMay.map(p => `<td><strong>${p.specs?.pin || '-'}</strong></td>`).join('')}
+            <td><strong>7. Camera trước</strong></td>
+            ${dsMay.map(p => `<td>${p.specs?.front_camera || p.specs?.camTruoc || '-'}</td>`).join('')}
           </tr>
           <tr>
-            <td><strong>8. Công nghệ Sạc</strong></td>
-            ${dsMay.map(p => `<td>${p.specs?.charge || '-'}</td>`).join('')}
+            <td><strong>8. Dung lượng Pin & Sạc</strong></td>
+            ${dsMay.map(p => `<td><strong>${p.specs?.battery || (p.specs?.pin ? `${p.specs?.pin} - ${p.specs?.charge || ''}` : '-')}</strong></td>`).join('')}
           </tr>
           <tr>
             <td><strong>9. Hệ điều hành</strong></td>

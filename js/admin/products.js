@@ -69,7 +69,7 @@ function renderBangSanPham() {
   }).join('');
 
   // Render các nút chuyển trang
-  const paginBox = document.getElementById('admin-product-pagination');
+  const paginBox = document.getElementById('admin-products-pagination') || document.getElementById('admin-product-pagination');
   if (paginBox) {
     if (tongSoTrang <= 1) {
       paginBox.innerHTML = '';
@@ -91,8 +91,10 @@ function chuyenTrangSanPhamAdmin(p) {
 function moThemSanPham() {
   document.getElementById('product-form').reset();
   document.getElementById('prod-id').value = '';
-  document.getElementById('prod-image-preview').style.display = 'none';
-  document.getElementById('product-modal-title').textContent = 'Thêm Mới Điện Thoại Thông Minh';
+  const preview = document.getElementById('prod-image-preview');
+  if (preview) preview.style.display = 'none';
+  const modalTitle = document.getElementById('product-modal-title');
+  if (modalTitle) modalTitle.textContent = 'Thêm Mới Điện Thoại Thông Minh';
   moModal('product-modal');
 }
 
@@ -100,39 +102,62 @@ function moSuaSanPham(idSP) {
   const sp = dsSanPham.find(item => item.id == idSP);
   if (!sp) return;
 
-  document.getElementById('prod-id').value = sp.id;
-  document.getElementById('prod-name').value = sp.name;
-  document.getElementById('prod-category').value = sp.categoryId || sp.cate_id || '';
-  document.getElementById('prod-price').value = sp.price;
-  document.getElementById('prod-original-price').value = sp.originalPrice || '';
-  const tonKho = (sp.stock !== undefined && sp.stock !== null) ? Number(sp.stock) : (Number(sp.quantity) || 15);
-  document.getElementById('prod-stock').value = tonKho;
-  document.getElementById('prod-sold').value = sp.sold || 0;
-  document.getElementById('prod-image-url').value = sp.image || '';
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
 
-  // Điền 10 thông số kỹ thuật
+  setVal('prod-id', sp.id);
+  setVal('prod-name', sp.name);
+  setVal('prod-category', sp.categoryId || sp.cate_id || '');
+  setVal('prod-price', sp.price);
+  setVal('prod-original-price', sp.originalPrice || '');
+  const tonKho = (sp.stock !== undefined && sp.stock !== null) ? Number(sp.stock) : (Number(sp.quantity) || 15);
+  setVal('prod-stock', tonKho);
+  setVal('prod-sold', sp.sold || 0);
+  setVal('prod-image-url', sp.image || '');
+
+  // Điền mô tả
+  setVal('prod-desc', sp.detail || sp.description || '');
+  setVal('prod-detail', sp.detail || sp.description || '');
+
+  // Điền 10 thông số kỹ thuật chuẩn
   const ts = sp.specs || {};
-  document.getElementById('prod-spec-screen').value = ts.screen || '';
-  document.getElementById('prod-spec-chip').value = ts.chip || '';
-  document.getElementById('prod-spec-ram').value = ts.ram || '';
-  document.getElementById('prod-spec-rom').value = ts.rom || '';
-  document.getElementById('prod-spec-camsau').value = ts.camSau || '';
-  document.getElementById('prod-spec-camtruoc').value = ts.camTruoc || '';
-  document.getElementById('prod-spec-pin').value = ts.pin || '';
-  document.getElementById('prod-spec-charge').value = ts.charge || '';
-  document.getElementById('prod-spec-os').value = ts.os || '';
-  document.getElementById('prod-spec-special').value = ts.special || '';
-  document.getElementById('prod-detail').value = sp.detail || sp.description || '';
+  setVal('spec-screen', ts.screen || '');
+  setVal('spec-cpu', ts.cpu || ts.chip || '');
+  setVal('spec-gpu', ts.gpu || '');
+  setVal('spec-ram', ts.ram || '');
+  setVal('spec-rom', ts.rom || '');
+  setVal('spec-rear-cam', ts.rear_camera || ts.camSau || '');
+  setVal('spec-front-cam', ts.front_camera || ts.camTruoc || '');
+  setVal('spec-battery', ts.battery || ts.pin || '');
+  setVal('spec-os', ts.os || '');
+  setVal('spec-special', ts.special || '');
+
+  // Hỗ trợ fallback IDs cũ nếu có
+  setVal('prod-spec-screen', ts.screen || '');
+  setVal('prod-spec-chip', ts.cpu || ts.chip || '');
+  setVal('prod-spec-ram', ts.ram || '');
+  setVal('prod-spec-rom', ts.rom || '');
+  setVal('prod-spec-camsau', ts.rear_camera || ts.camSau || '');
+  setVal('prod-spec-camtruoc', ts.front_camera || ts.camTruoc || '');
+  setVal('prod-spec-pin', ts.battery || ts.pin || '');
+  setVal('prod-spec-charge', ts.charge || '');
+  setVal('prod-spec-os', ts.os || '');
+  setVal('prod-spec-special', ts.special || '');
 
   const preview = document.getElementById('prod-image-preview');
-  if (sp.image) {
-    preview.src = sp.image;
-    preview.style.display = 'block';
-  } else {
-    preview.style.display = 'none';
+  if (preview) {
+    if (sp.image) {
+      preview.src = sp.image;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
   }
 
-  document.getElementById('product-modal-title').textContent = `Chỉnh Sửa Điện Thoại #${sp.id}`;
+  const modalTitle = document.getElementById('product-modal-title');
+  if (modalTitle) modalTitle.textContent = `Chỉnh Sửa Điện Thoại #${sp.id}`;
   moModal('product-modal');
 }
 
@@ -141,14 +166,19 @@ function moSuaSanPham(idSP) {
  * ⚙️ Hàm có sẵn: FileReader, fetch, Date.now
  */
 async function luuSanPham() {
-  const id = document.getElementById('prod-id').value;
-  const ten = document.getElementById('prod-name').value.trim();
-  const dm = document.getElementById('prod-category').value;
-  const gia = Number(document.getElementById('prod-price').value);
-  const giaGoc = Number(document.getElementById('prod-original-price').value) || null;
-  const kho = Number(document.getElementById('prod-stock').value);
-  const daBan = Number(document.getElementById('prod-sold').value) || 0;
-  let anh = document.getElementById('prod-image-url').value.trim();
+  const getVal = (id1, id2) => {
+    const el = document.getElementById(id1) || (id2 ? document.getElementById(id2) : null);
+    return el ? el.value.trim() : '';
+  };
+
+  const id = getVal('prod-id');
+  const ten = getVal('prod-name');
+  const dm = getVal('prod-category');
+  const gia = Number(getVal('prod-price'));
+  const giaGoc = Number(getVal('prod-original-price')) || null;
+  const kho = Number(getVal('prod-stock')) || 0;
+  const daBan = Number(getVal('prod-sold')) || 0;
+  let anh = getVal('prod-image-url');
 
   const fileInput = document.getElementById('prod-image-file');
   if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -164,6 +194,18 @@ async function luuSanPham() {
     return;
   }
 
+  const moTa = getVal('prod-desc', 'prod-detail');
+  const screenVal = getVal('spec-screen', 'prod-spec-screen');
+  const cpuVal = getVal('spec-cpu', 'prod-spec-chip');
+  const gpuVal = getVal('spec-gpu', 'prod-spec-gpu');
+  const ramVal = getVal('spec-ram', 'prod-spec-ram');
+  const romVal = getVal('spec-rom', 'prod-spec-rom');
+  const rearCamVal = getVal('spec-rear-cam', 'prod-spec-camsau');
+  const frontCamVal = getVal('spec-front-cam', 'prod-spec-camtruoc');
+  const batteryVal = getVal('spec-battery', 'prod-spec-pin');
+  const osVal = getVal('spec-os', 'prod-spec-os');
+  const specialVal = getVal('spec-special', 'prod-spec-special');
+
   const payload = {
     name: ten,
     categoryId: Number(dm),
@@ -174,19 +216,23 @@ async function luuSanPham() {
     quantity: kho,
     sold: daBan,
     image: anh || 'https://picsum.photos/300/300',
-    detail: document.getElementById('prod-detail').value.trim(),
-    description: document.getElementById('prod-detail').value.trim(),
+    detail: moTa,
+    description: moTa,
     specs: {
-      screen: document.getElementById('prod-spec-screen').value.trim(),
-      chip: document.getElementById('prod-spec-chip').value.trim(),
-      ram: document.getElementById('prod-spec-ram').value.trim(),
-      rom: document.getElementById('prod-spec-rom').value.trim(),
-      camSau: document.getElementById('prod-spec-camsau').value.trim(),
-      camTruoc: document.getElementById('prod-spec-camtruoc').value.trim(),
-      pin: document.getElementById('prod-spec-pin').value.trim(),
-      charge: document.getElementById('prod-spec-charge').value.trim(),
-      os: document.getElementById('prod-spec-os').value.trim(),
-      special: document.getElementById('prod-spec-special').value.trim()
+      screen: screenVal,
+      cpu: cpuVal,
+      chip: cpuVal,
+      gpu: gpuVal,
+      ram: ramVal,
+      rom: romVal,
+      rear_camera: rearCamVal,
+      camSau: rearCamVal,
+      front_camera: frontCamVal,
+      camTruoc: frontCamVal,
+      battery: batteryVal,
+      pin: batteryVal,
+      os: osVal,
+      special: specialVal
     }
   };
 

@@ -13,7 +13,10 @@
 
 window.appNav = {
   goTo: chuyenTrang,
-  updateHeader: capNhatNguoiDungHeader
+  updateHeader: capNhatNguoiDungHeader,
+  closeModal: dongModal,
+  openModal: moModal,
+  filterBrand: locTheoHang
 };
 
 window.cartModule = {
@@ -50,7 +53,8 @@ window.authModule = {
   },
   login: xuLyDangNhap,
   register: xuLyDangKy,
-  logout: dangXuat
+  logout: dangXuat,
+  saveProfile: luuSuaThongTinCaNhan
 };
 
 window.compareModule = {
@@ -61,9 +65,12 @@ window.compareModule = {
 
 window.shopModule = {
   filterByBrand: locTheoHang,
+  setBrand: locTheoHang,
   filterByDemand: locTheoNhuCau,
+  setDemand: locTheoNhuCau,
   changePage: chuyenTrangCuaHang,
-  resetFilters: datLaiBoLoc
+  resetFilters: datLaiBoLoc,
+  scrollToCompare: cuonDenBangSoSanh
 };
 
 // ============================================================================
