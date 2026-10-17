@@ -209,6 +209,17 @@ async function taiDuLieu() {
       `).join('');
     }
 
+    // Render dải 8 thương hiệu ở Trang Chủ (#home-category-pills)
+    const homePills = document.getElementById('home-category-pills');
+    if (homePills && dsDanhMuc.length > 0) {
+      homePills.innerHTML = dsDanhMuc.map(hang => `
+        <button class="brand-pill-btn" onclick="locTheoHang('${hang.id}')" title="Xem sản phẩm ${hang.name}">
+          <i class="${hang.icon || 'fa-solid fa-mobile-screen'}"></i>
+          <span>${hang.name}</span>
+        </button>
+      `).join('');
+    }
+
     // Cập nhật trạng thái hiển thị ban đầu
     capNhatBadge();
     capNhatNguoiDungHeader();

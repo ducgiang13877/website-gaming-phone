@@ -98,19 +98,42 @@ function taoTheSanPhamHTML(sp) {
 }
 
 /**
- * 🎯 Mục đích: Render dữ liệu trang chủ (Flash Sale & Top 8 Sản Phẩm Mới Nhất)
- * ⚙️ Hàm có sẵn: Array.prototype.slice, Array.prototype.map, Array.prototype.join
+ * 🎯 Mục đích: Render dữ liệu trang chủ (8 Thương Hiệu, 4 Siêu Phẩm Gaming, Flash Sale & Top 8 Bán Chạy)
+ * ⚙️ Hàm có sẵn: Array.prototype.slice, Array.prototype.map, Array.prototype.join, Array.prototype.filter
  */
 function hienThiTrangChu() {
-  // 1. Top 8 sản phẩm mới nhất
+  // 1. Dải 8 Thương Hiệu Hàng Đầu (Home Category Pills)
+  const homePills = document.getElementById('home-category-pills');
+  if (homePills && dsDanhMuc && dsDanhMuc.length > 0) {
+    homePills.innerHTML = dsDanhMuc.map(hang => `
+      <button class="brand-pill-btn" onclick="locTheoHang('${hang.id}')" title="Xem sản phẩm ${hang.name}">
+        <i class="${hang.icon || 'fa-solid fa-mobile-screen'}"></i>
+        <span>${hang.name}</span>
+      </button>
+    `).join('');
+  }
+
+  // 2. Siêu phẩm Chiến Binh Gaming Phone (Top 4 Gaming Phone: ROG & RedMagic)
+  const gridGaming = document.getElementById('home-gaming-products');
+  if (gridGaming && dsSanPham && dsSanPham.length > 0) {
+    const spGaming = dsSanPham
+      .filter(sp => (sp.categoryId == '7' || sp.categoryId == '8' || sp.cate_id == '7' || sp.cate_id == '8' || (sp.brand && (sp.brand.includes('ROG') || sp.brand.includes('RedMagic')))))
+      .slice(0, 4);
+    gridGaming.innerHTML = spGaming.map(sp => taoTheSanPhamHTML(sp)).join('');
+  }
+
+  // 3. Top 8 điện thoại bán chạy nhất / mới nhất
   const gridMoiNhat = document.getElementById('home-featured-products') || document.getElementById('home-latest-grid');
-  if (gridMoiNhat) {
+  if (gridMoiNhat && dsSanPham && dsSanPham.length > 0) {
     const spMoiNhat = dsSanPham.slice(0, 8);
     gridMoiNhat.innerHTML = spMoiNhat.map(sp => taoTheSanPhamHTML(sp)).join('');
   }
 
-  // 2. Sản phẩm Flash Sale
+  // 4. Sản phẩm Flash Sale
   hienThiFlashSale();
+
+  // 5. Cập nhật icon so sánh trên các thẻ card
+  capNhatNutSoSanhCard();
 }
 
 /**
