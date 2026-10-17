@@ -672,6 +672,10 @@ function cuonDenBangSoSanh() {
 }
 
 function xoaSachSoSanh() {
+  if (dsSoSanh.length === 0) return;
+  if (!confirm('XÁC NHẬN XÓA SO SÁNH:\nBạn có chắc chắn muốn xóa toàn bộ sản phẩm khỏi bảng so sánh không?')) {
+    return;
+  }
   dsSoSanh = [];
   sessionStorage.removeItem('smartstore_compare');
   capNhatBadge();

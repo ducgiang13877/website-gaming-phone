@@ -54,7 +54,8 @@ window.authModule = {
   login: xuLyDangNhap,
   register: xuLyDangKy,
   logout: dangXuat,
-  saveProfile: luuSuaThongTinCaNhan
+  saveProfile: luuSuaThongTinCaNhan,
+  cancelOrder: huyDonHangKhach
 };
 
 window.compareModule = {

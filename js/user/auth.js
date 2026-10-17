@@ -258,9 +258,16 @@ async function hienThiThongTinCaNhan() {
           </span>
         </td>
         <td style="text-align:center;">
-          <button class="btn-primary btn-sm" onclick="traCuuTheoMa('${d.orderCode}')" title="Tra cứu tiến độ">
-            <i class="fa-solid fa-truck-fast"></i> Xem
-          </button>
+          <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+            <button class="btn-primary btn-sm" onclick="traCuuTheoMa('${d.orderCode}')" title="Tra cứu tiến độ">
+              <i class="fa-solid fa-truck-fast"></i> Xem
+            </button>
+            ${d.status === 'processing' ? `
+              <button class="btn-danger btn-sm" onclick="huyDonHangKhach('${d.id}', '${d.orderCode}')" title="Hủy đơn hàng này">
+                <i class="fa-solid fa-ban"></i> Hủy
+              </button>
+            ` : ''}
+          </div>
         </td>
       </tr>
     `).join('');
@@ -311,5 +318,50 @@ async function luuSuaThongTinCaNhan() {
   } catch (loi) {
     console.error(loi);
     hienThongBao('Lỗi cập nhật hồ sơ!', 'error');
+  }
+}
+
+/**
+ * 🎯 Mục đích: Khách hàng tự hủy đơn hàng khi đơn còn ở trạng thái "Chờ xử lý" (processing)
+ * 📦 Đồng bộ tồn kho: Hoàn trả số lượng máy về kho và tăng tính chủ động cho người mua
+ * 🔔 Xác nhận: Bắt buộc có thông báo xác nhận trước khi hủy
+ */
+async function huyDonHangKhach(idDon, maDon) {
+  if (!confirm(`XÁC NHẬN HỦY ĐƠN HÀNG #${maDon}:\n\nBạn có chắc chắn muốn hủy đơn hàng này không?\nToàn bộ sản phẩm sẽ được hoàn trả về tồn kho của hệ thống.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/orders/${idDon}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    const donCapNhat = await res.json();
+
+    // Hoàn trả tồn kho cho các sản phẩm trong đơn
+    if (donCapNhat.items && donCapNhat.items.length > 0) {
+      const restorePromises = donCapNhat.items.map(async item => {
+        const resSp = await fetch(`${API_URL}/products/${item.id}`);
+        if (resSp.ok) {
+          const sp = await resSp.json();
+          const khoMoi = (Number(sp.stock) || 0) + (Number(item.quantity) || 0);
+          const daBanMoi = Math.max(0, (Number(sp.sold) || 0) - (Number(item.quantity) || 0));
+          return fetch(`${API_URL}/products/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: khoMoi, quantity: khoMoi, sold: daBanMoi })
+          });
+        }
+      });
+      await Promise.all(restorePromises);
+    }
+
+    hienThongBao(`Đã hủy đơn hàng #${maDon} thành công. Tồn kho đã được hoàn trả!`, 'info');
+    hienThiThongTinCaNhan();
+    taiDuLieu();
+  } catch (loi) {
+    console.error(loi);
+    hienThongBao('Lỗi khi hủy đơn hàng!', 'error');
   }
 }

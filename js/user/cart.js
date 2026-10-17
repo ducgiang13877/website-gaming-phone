@@ -78,10 +78,15 @@ function doiSoLuongGioHang(idSP, soThayDoi) {
  * ⚙️ Hàm có sẵn: Array.prototype.filter
  */
 function xoaKhoiGio(idSP) {
+  const mon = gioHang.find(item => item.id == idSP);
+  const tenMon = mon ? mon.name : 'sản phẩm này';
+  if (!confirm(`XÁC NHẬN XÓA SẢN PHẨM:\nBạn có chắc chắn muốn xóa "${tenMon}" khỏi giỏ hàng không?`)) {
+    return;
+  }
   gioHang = gioHang.filter(item => item.id != idSP);
   luuGioHang();
   hienThiGioHang();
-  hienThongBao('Đã xóa sản phẩm khỏi giỏ hàng', 'info');
+  hienThongBao(`Đã xóa "${tenMon}" khỏi giỏ hàng`, 'info');
 }
 
 /**
@@ -89,7 +94,7 @@ function xoaKhoiGio(idSP) {
  */
 function xoaSachGioHang() {
   if (gioHang.length === 0) return;
-  if (confirm('Bạn có chắc chắn muốn xóa hết sản phẩm trong giỏ hàng không?')) {
+  if (confirm('XÁC NHẬN LÀM TRỐNG GIỎ HÀNG:\nBạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng không?')) {
     gioHang = [];
     luuGioHang();
     hienThiGioHang();

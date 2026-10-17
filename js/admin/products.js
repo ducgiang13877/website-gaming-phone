@@ -278,7 +278,7 @@ async function luuSanPham() {
 // ============================================================================
 
 /**
- * 🎯 Mục đích: Mở modal xác nhận xóa an toàn và chặn xóa Quản trị viên
+ * 🎯 Mục đích: Mở modal xác nhận xóa an toàn và chặn xóa Quản trị viên / Đơn hàng đã giao
  */
 function xacNhanXoa(loai, id, ten) {
   // Lớp phòng thủ số 1: Chặn xóa tài khoản Admin
@@ -290,10 +290,21 @@ function xacNhanXoa(loai, id, ten) {
     }
   }
 
+  // Lớp phòng thủ số 1: Chặn xóa đơn hàng đã giao thành công
+  if (loai === 'order') {
+    const donCanXoa = dsDonHang.find(d => d.id == id);
+    if (donCanXoa && donCanXoa.status === 'delivered') {
+      hienThongBao('An ninh: Đơn hàng đã giao thành công và chốt sổ tài chính. Không thể xóa để bảo toàn đối soát!', 'error');
+      return;
+    }
+  }
+
   mucCanXoa = { loai, id, ten };
   const msgEl = document.getElementById('confirm-modal-message');
   if (msgEl) {
-    msgEl.innerHTML = `Bạn có chắc muốn xóa <strong>${ten}</strong> (#${id})? Thao tác này không thể hoàn tác!`;
+    const loaiTenMap = { product: 'sản phẩm', customer: 'tài khoản khách hàng', order: 'đơn hàng' };
+    const loaiTen = loaiTenMap[loai] || 'mục';
+    msgEl.innerHTML = `Bạn có chắc chắn muốn xóa ${loaiTen} <strong>${ten}</strong> (#${id}) khỏi cơ sở dữ liệu không?<br><span style="color:var(--accent); font-size:12px; margin-top:6px; display:inline-block;">⚠️ Thao tác này hoàn toàn không thể hoàn tác!</span>`;
   }
   moModal('confirm-modal');
 }
@@ -315,19 +326,33 @@ async function thucHienXoa() {
     }
   }
 
+  if (loai === 'order') {
+    const donCanXoa = dsDonHang.find(d => d.id == id);
+    if (donCanXoa && donCanXoa.status === 'delivered') {
+      hienThongBao('An ninh: Nghiêm cấm xóa đơn hàng đã giao thành công!', 'error');
+      dongModal('confirm-modal');
+      return;
+    }
+  }
+
   try {
-    const endpoint = loai === 'product' ? 'products' : 'users';
+    const endpoint = loai === 'product' ? 'products' : (loai === 'order' ? 'orders' : 'users');
     await fetch(`${API_URL}/${endpoint}/${id}`, { method: 'DELETE' });
 
     if (loai === 'product') {
       dsSanPham = dsSanPham.filter(p => p.id != id);
-      hienThongBao('Đã xóa sản phẩm thành công', 'info');
+      hienThongBao('Đã xóa sản phẩm khỏi cơ sở dữ liệu', 'info');
       tinhToanKPI();
       renderBangSanPham();
-    } else {
+    } else if (loai === 'customer') {
       dsKhachHang = dsKhachHang.filter(c => c.id != id);
-      hienThongBao('Đã xóa khách hàng thành công', 'info');
+      hienThongBao('Đã xóa tài khoản khách hàng thành công', 'info');
       renderBangKhachHang();
+    } else if (loai === 'order') {
+      dsDonHang = dsDonHang.filter(d => d.id != id);
+      hienThongBao('Đã xóa đơn hàng thành công khỏi hệ thống', 'info');
+      tinhToanKPI();
+      renderBangDonHang();
     }
 
     dongModal('confirm-modal');

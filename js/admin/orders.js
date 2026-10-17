@@ -32,8 +32,26 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
     return;
   }
 
-  // 🛡️ FINITE STATE MACHINE (FSM): Cảnh báo nếu chuyển đổi từ trạng thái kết thúc (cancelled)
-  if (trangThaiCu === 'cancelled' && !confirm('Đơn hàng này đã bị HỦY trước đó. Bạn có chắc chắn muốn kích hoạt lại đơn hàng và trừ lại tồn kho không?')) {
+  const tenTrangThaiMap = {
+    processing: 'Chờ xử lý',
+    shipping: 'Đang giao hàng',
+    delivered: 'Đã giao thành công (Chốt sổ tài chính & Bất biến)',
+    cancelled: 'Đã hủy đơn (Tự động hoàn trả tồn kho)'
+  };
+
+  // 🔔 THÔNG BÁO XÁC NHẬN BẮT BUỘC TRƯỚC KHI ĐỔI TRẠNG THÁI ĐƠN HÀNG
+  let xacNhanMsg = `XÁC NHẬN THAY ĐỔI TRẠNG THÁI ĐƠN HÀNG #${donCu.orderCode}:\n\n` +
+    `Bạn có chắc chắn muốn chuyển từ "${tenTrangThaiMap[trangThaiCu] || trangThaiCu}" sang "${tenTrangThaiMap[trangThaiMoi] || trangThaiMoi}" không?`;
+
+  if (trangThaiMoi === 'delivered') {
+    xacNhanMsg += `\n\n⚠️ LƯU Ý BẢO VỆ CHUẨN TMĐT: Sau khi chuyển sang "Đã giao thành công", đơn hàng sẽ bị KHÓA BẤT BIẾN nhằm bảo toàn đối soát tài chính COD và số liệu tồn kho. Bạn sẽ KHÔNG THỂ thay đổi lại trạng thái sau này!`;
+  } else if (trangThaiMoi === 'cancelled') {
+    xacNhanMsg += `\n\n📦 ĐỒNG BỘ KHO: Hệ thống sẽ tự động hoàn trả toàn bộ số lượng sản phẩm trong đơn hàng về lại kho hàng.`;
+  } else if (trangThaiCu === 'cancelled' && trangThaiMoi !== 'cancelled') {
+    xacNhanMsg += `\n\n📦 ĐỒNG BỘ KHO: Đơn này đã hủy trước đó. Việc kích hoạt lại sẽ trừ lại số lượng tồn kho tương ứng.`;
+  }
+
+  if (!confirm(xacNhanMsg)) {
     if (selectEl) selectEl.value = trangThaiCu;
     return;
   }
@@ -98,15 +116,16 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
       selectEl.className = `order-status-select status-${trangThaiMoi}`;
     }
 
-    const tenTrangThaiMap = {
+    const tenNganMap = {
       processing: 'Chờ xử lý',
       shipping: 'Đang giao',
       delivered: 'Đã giao',
       cancelled: 'Đã hủy'
     };
 
-    hienThongBao(`Đã đổi đơn #${donCapNhat.orderCode} sang "${tenTrangThaiMap[trangThaiMoi] || trangThaiMoi}"`, 'success');
+    hienThongBao(`Đã đổi đơn #${donCapNhat.orderCode} sang "${tenNganMap[trangThaiMoi] || trangThaiMoi}"`, 'success');
     tinhToanKPI();
+    renderBangDonHang();
   } catch (loi) {
     console.error(loi);
     hienThongBao('Lỗi cập nhật trạng thái đơn hàng!', 'error');
@@ -162,7 +181,12 @@ function renderBangDonHang() {
           `}
         </td>
         <td style="text-align:center;">
-          <button class="btn-primary btn-sm" onclick="moXemDonHang('${d.orderCode}')" title="Xem chi tiết đơn"><i class="fa-solid fa-eye"></i> Xem</button>
+          <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+            <button class="btn-primary btn-sm" onclick="moXemDonHang('${d.orderCode}')" title="Xem chi tiết đơn"><i class="fa-solid fa-eye"></i> Xem</button>
+            ${d.status !== 'delivered' ? `
+              <button class="btn-danger btn-sm" onclick="xacNhanXoa('order', '${d.id}', '${d.orderCode}')" title="Xóa đơn hàng"><i class="fa-solid fa-trash-can"></i></button>
+            ` : ''}
+          </div>
         </td>
       </tr>
     `;
@@ -278,8 +302,26 @@ async function capNhatTrangThaiDon() {
     return;
   }
 
-  // 🛡️ FINITE STATE MACHINE (FSM): Cảnh báo nếu chuyển đổi từ trạng thái kết thúc (cancelled)
-  if (trangThaiCu === 'cancelled' && !confirm('Đơn hàng này đã bị HỦY trước đó. Bạn có chắc chắn muốn kích hoạt lại đơn hàng và trừ lại tồn kho không?')) {
+  const tenTrangThaiMap = {
+    processing: 'Chờ xử lý',
+    shipping: 'Đang giao hàng',
+    delivered: 'Đã giao thành công (Chốt sổ tài chính & Bất biến)',
+    cancelled: 'Đã hủy đơn (Tự động hoàn trả tồn kho)'
+  };
+
+  // 🔔 THÔNG BÁO XÁC NHẬN BẮT BUỘC TRƯỚC KHI ĐỔI TRẠNG THÁI ĐƠN HÀNG
+  let xacNhanMsg = `XÁC NHẬN THAY ĐỔI TRẠNG THÁI ĐƠN HÀNG #${donHangDangXem.orderCode}:\n\n` +
+    `Bạn có chắc chắn muốn cập nhật trạng thái từ "${tenTrangThaiMap[trangThaiCu] || trangThaiCu}" sang "${tenTrangThaiMap[trangThaiMoi] || trangThaiMoi}" không?`;
+
+  if (trangThaiMoi === 'delivered') {
+    xacNhanMsg += `\n\n⚠️ LƯU Ý BẢO VỆ CHUẨN TMĐT: Sau khi chuyển sang "Đã giao thành công", đơn hàng sẽ bị KHÓA BẤT BIẾN nhằm bảo toàn đối soát tài chính COD và số liệu tồn kho. Bạn sẽ KHÔNG THỂ thay đổi lại trạng thái sau này!`;
+  } else if (trangThaiMoi === 'cancelled') {
+    xacNhanMsg += `\n\n📦 ĐỒNG BỘ KHO: Hệ thống sẽ tự động hoàn trả toàn bộ số lượng sản phẩm trong đơn hàng về lại kho hàng.`;
+  } else if (trangThaiCu === 'cancelled' && trangThaiMoi !== 'cancelled') {
+    xacNhanMsg += `\n\n📦 ĐỒNG BỘ KHO: Đơn này đã hủy trước đó. Việc kích hoạt lại sẽ trừ lại số lượng tồn kho tương ứng.`;
+  }
+
+  if (!confirm(xacNhanMsg)) {
     selectStatus.value = trangThaiCu;
     return;
   }
