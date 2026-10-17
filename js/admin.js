@@ -1,37 +1,65 @@
 /**
  * ============================================================================
- * DỰ ÁN: WEBSITE BÁN ĐIỆN THOẠI & GAMING PHONE (SMARTSTORE)
- * TỆP: js/admin.js (LOGIC QUẢN TRỊ ADMIN DỄ HIỂU - CHUẨN ES6 DÀNH CHO SINH VIÊN)
+ * DỰ ÁN: WEBSITE BÁN ĐIỆN THOẠI THÔNG MINH & GAMING PHONE (SMARTSTORE)
+ * TỆP: js/admin.js (LOGIC TRANG QUẢN TRỊ ADMIN DASHBOARD - CHUẨN ES6+ DỄ BẢO VỆ)
  * Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
+ * Sinh viên thực hiện: Lương Văn Dũng
+ * 
+ * 📑 MỤC LỤC KIẾN TRÚC & LUỒNG NGHIỆP VỤ QUẢN TRỊ (DEFENSE ROADMAP):
+ * ----------------------------------------------------------------------------
+ * PHẦN 1: CẤU HÌNH HẰNG SỐ & QUẢN LÝ STATE QUẢN TRỊ (CONFIG & STATE)
+ * PHẦN 2: CÁC TIỆN ÍCH DÙNG CHUNG (UTILITIES & MODALS)
+ * PHẦN 3: BẢO MẬT & PHÂN QUYỀN ĐĂNG NHẬP ADMIN (RBAC & AUTH GUARD)
+ * PHẦN 4: KẾT NỐI API & BỘ TÍNH TOÁN 4 CHỈ SỐ KPI (ANALYTICS & KPI METRICS)
+ * PHẦN 5: QUẢN LÝ SẢN PHẨM (PRODUCT CRUD & FILEREADER BASE64)
+ * PHẦN 6: QUẢN LÝ KHÁCH HÀNG (CUSTOMER CRUD & AUTO +1 ID & ADMIN SHIELD)
+ * PHẦN 7: XÓA DỮ LIỆU AN TOÀN 2 LỚP BẢO VỆ (CONFIRM DELETE & ADMIN PROTECTION)
+ * PHẦN 8: QUẢN LÝ ĐƠN HÀNG (ORDERS DISPATCH & INLINE STATUS UPDATE)
+ * PHẦN 9: GẮN SỰ KIỆN GIAO DIỆN & EXPORT MODULE (EVENT LISTENERS & INIT)
  * ============================================================================
  */
 
 // ============================================================================
-// PHẦN 1: CẤU HÌNH API & BIẾN DỮ LIỆU BẢNG QUẢN TRỊ
+// PHẦN 1: CẤU HÌNH HẰNG SỐ & QUẢN LÝ STATE QUẢN TRỊ (CONFIG & STATE)
 // ============================================================================
+
+/**
+ * 🎯 Cấu hình URL gốc API và số sản phẩm trên mỗi trang phân trang quản trị
+ */
 const API_URL = 'http://localhost:3000';
 const SO_SP_MOI_TRANG = 8;
 
-let adminUser = JSON.parse(localStorage.getItem('smartstore_user')) || null;
-let dsSanPham = [];
-let dsDanhMuc = [];
-let dsKhachHang = [];
-let dsDonHang = [];
+/**
+ * 🎯 Quản lý trạng thái Dashboard lưu trong bộ nhớ
+ */
+let adminUser = JSON.parse(localStorage.getItem('smartstore_user')) || null; // Thông tin tài khoản admin đăng nhập
+let dsSanPham = []; // Danh sách toàn bộ sản phẩm
+let dsDanhMuc = []; // Danh mục 8 thương hiệu
+let dsKhachHang = []; // Danh sách toàn bộ tài khoản users
+let dsDonHang = []; // Danh sách toàn bộ đơn hàng
 
-let tabHienTai = sessionStorage.getItem('smartstore_admin_tab') || 'products';
-let trangSanPham = 1;
-let mucCanXoa = null;     // { loai: 'product'|'customer', id: 1, ten: '...' }
-let donHangDangXem = null; // Đơn hàng đang mở xem trong modal
+let tabHienTai = sessionStorage.getItem('smartstore_admin_tab') || 'products'; // Tab đang mở (products / customers / orders)
+let trangSanPham = 1; // Trang hiện tại của bảng sản phẩm
+let mucCanXoa = null; // Đối tượng tạm thời cần xóa: { loai: 'product'|'customer', id: '1', ten: '...' }
+let donHangDangXem = null; // Đơn hàng đang được mở xem trong Modal chi tiết
 
 // ============================================================================
-// PHẦN 2: CÁC HÀM TIỆN ÍCH DỄ DÙNG
+// PHẦN 2: CÁC TIỆN ÍCH DÙNG CHUNG (UTILITIES & MODALS)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Định dạng tiền tệ VND chuẩn (Ví dụ: 25000000 -> 25.000.000 đ)
+ * ⚙️ Hàm có sẵn: Number.prototype.toLocaleString('vi-VN')
+ */
 function dinhDangTien(soTien) {
   if (!soTien || isNaN(soTien)) return '0 đ';
   return Number(soTien).toLocaleString('vi-VN') + ' đ';
 }
 
+/**
+ * 🎯 Mục đích: Hiển thị thông báo Toast góc trên bên phải màn hình
+ * ⚙️ Hàm có sẵn: DOM classList.add/remove, setTimeout
+ */
 function hienThongBao(noiDung, loai = 'success') {
   const toast = document.getElementById('toast-container');
   const msg = document.getElementById('toast-message');
@@ -43,36 +71,46 @@ function hienThongBao(noiDung, loai = 'success') {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-function dongModal(idModal) {
-  const modal = document.getElementById(idModal);
-  if (modal) modal.classList.remove('open');
-}
-
+/**
+ * 🎯 Mục đích: Đóng/Mở các Modal form (Sản phẩm, Khách hàng, Đơn hàng, Xác nhận xóa)
+ */
 function moModal(idModal) {
   const modal = document.getElementById(idModal);
   if (modal) modal.classList.add('open');
 }
 
+function dongModal(idModal) {
+  const modal = document.getElementById(idModal);
+  if (modal) modal.classList.remove('open');
+}
+
 // ============================================================================
-// PHẦN 3: KIỂM TRA PHÂN QUYỀN ĐĂNG NHẬP ADMIN
+// PHẦN 3: BẢO MẬT & PHÂN QUYỀN ĐĂNG NHẬP ADMIN (RBAC & AUTH GUARD)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Kiểm tra phân quyền truy cập trang Admin (Auth Guard)
+ * 🔄 Luồng chạy: Kiểm tra localStorage('smartstore_user') -> Nếu chưa đăng nhập hoặc role !== 'admin' thì chỉ hiện form đăng nhập, ẩn toàn bộ dashboard quản trị.
+ */
 function kiemTraDangNhapAdmin() {
   const manHinhLogin = document.getElementById('admin-login-screen');
   const manHinhDash = document.getElementById('admin-dashboard-screen');
 
   if (!adminUser || adminUser.role !== 'admin') {
-    // Nếu chưa đăng nhập hoặc không phải admin -> Hiện form đăng nhập
     if (manHinhLogin) manHinhLogin.style.display = 'flex';
     if (manHinhDash) manHinhDash.style.display = 'none';
   } else {
-    // Đã đăng nhập admin -> Mở trang dashboard
     if (manHinhLogin) manHinhLogin.style.display = 'none';
     if (manHinhDash) manHinhDash.style.display = 'block';
     taiDuLieuAdmin();
   }
 }
 
+/**
+ * 🎯 Mục đích: Xử lý đăng nhập Quản trị viên an toàn
+ * ⚙️ Hàm có sẵn: fetch, Array.prototype.find, localStorage.setItem
+ * 🔄 Luồng chạy: Tải danh sách users -> Tìm user có email khớp, mật khẩu đúng và role === 'admin' -> Lưu localStorage -> Mở Dashboard.
+ */
 async function dangNhapAdmin(email, matKhau) {
   try {
     const emailChuan = (email || '').trim().toLowerCase();
@@ -98,7 +136,7 @@ async function dangNhapAdmin(email, matKhau) {
     kiemTraDangNhapAdmin();
   } catch (loi) {
     console.error(loi);
-    hienThongBao('Lỗi kết nối json-server!', 'error');
+    hienThongBao('Lỗi kết nối máy chủ json-server!', 'error');
   }
 }
 
@@ -110,9 +148,13 @@ function dangXuatAdmin() {
 }
 
 // ============================================================================
-// PHẦN 4: TẢI DỮ LIỆU TỪ MÁY CHỦ & TÍNH TOÁN 4 CHỈ SỐ KPI
+// PHẦN 4: KẾT NỐI API & BỘ TÍNH TOÁN 4 CHỈ SỐ KPI (ANALYTICS & KPI METRICS)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Tải toàn bộ 4 bảng dữ liệu (categories, products, users, orders) từ API bằng Promise.all
+ * ⚙️ Hàm có sẵn: Promise.all, fetch, async/await
+ */
 async function taiDuLieuAdmin() {
   try {
     const [resHang, resSP, resUsers, resDon] = await Promise.all([
@@ -126,6 +168,7 @@ async function taiDuLieuAdmin() {
     const dataSP = await resSP.json();
     dsSanPham = dataSP.map(sp => ({
       ...sp,
+      id: String(sp.id),
       categoryId: sp.categoryId || sp.cate_id || '1',
       cate_id: sp.cate_id || sp.categoryId || '1',
       stock: (sp.stock !== undefined && sp.stock !== null) ? Number(sp.stock) : (Number(sp.quantity) || 15),
@@ -135,13 +178,8 @@ async function taiDuLieuAdmin() {
     dsKhachHang = await resUsers.json();
     dsDonHang = await resDon.json();
 
-    // Điền danh mục vào dropdown
     dienDropdownDanhMuc();
-
-    // Tính toán 4 chỉ số KPI tự động
     tinhToanKPI();
-
-    // Mở tab đang lưu
     chuyenTabAdmin(tabHienTai);
   } catch (loi) {
     console.error('Lỗi tải dữ liệu admin:', loi);
@@ -150,7 +188,6 @@ async function taiDuLieuAdmin() {
 }
 
 function dienDropdownDanhMuc() {
-  // Dropdown lọc hãng tại toolbar
   const filterCat = document.getElementById('admin-filter-category');
   if (filterCat) {
     filterCat.innerHTML = `
@@ -159,29 +196,31 @@ function dienDropdownDanhMuc() {
     `;
   }
 
-  // Dropdown chọn hãng trong modal sản phẩm
   const modalCat = document.getElementById('prod-category');
   if (modalCat) {
     modalCat.innerHTML = dsDanhMuc.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
   }
 }
 
+/**
+ * 🎯 Mục đích: Engine tính toán tự động 4 chỉ số KPI kinh doanh & cảnh báo tồn kho thấp
+ * ⚙️ Hàm có sẵn: Array.prototype.reduce, Array.prototype.filter
+ * 🔄 Luồng chạy:
+ *   1. Doanh thu = Tổng totalAmount của các đơn không bị hủy (status !== 'cancelled')
+ *   2. Tổng máy đã bán = Tổng trường sold của toàn bộ sản phẩm
+ *   3. Tổng máy tồn kho = Tổng trường stock của toàn bộ sản phẩm
+ *   4. Tổng đơn hàng = Độ dài danh sách dsDonHang.length
+ *   5. Cảnh báo các mẫu máy có tồn kho <= 5 máy.
+ */
 function tinhToanKPI() {
-  // 1. Doanh thu: tính tổng tiền các đơn không bị hủy
   const doanhThu = dsDonHang
     .filter(d => d.status !== 'cancelled')
     .reduce((tong, d) => tong + (d.totalAmount || 0), 0);
 
-  // 2. Tổng số máy đã bán
   const tongDaBan = dsSanPham.reduce((tong, sp) => tong + (sp.sold || 0), 0);
-
-  // 3. Tổng số máy còn tồn kho
   const tongTonKho = dsSanPham.reduce((tong, sp) => tong + (sp.stock || 0), 0);
-
-  // 4. Tổng số đơn hàng
   const tongDon = dsDonHang.length;
 
-  // Cảnh báo tồn kho thấp (các máy stock <= 5)
   const soMaySapHet = dsSanPham.filter(sp => (sp.stock || 0) <= 5).length;
   const alertStockEl = document.getElementById('stat-stock-alert');
   if (alertStockEl) {
@@ -200,31 +239,34 @@ function tinhToanKPI() {
   document.getElementById('stat-order-count').textContent = `${tongDon} đơn`;
 }
 
+/**
+ * 🎯 Mục đích: Chuyển đổi giữa 3 tab quản lý (products, customers, orders)
+ */
 function chuyenTabAdmin(tenTab) {
   tabHienTai = tenTab;
   sessionStorage.setItem('smartstore_admin_tab', tenTab);
 
-  // Ẩn tất cả các tab
   document.querySelectorAll('.admin-tab-content').forEach(p => p.style.display = 'none');
-  // Hiện tab mục tiêu
   const target = document.getElementById(`admin-panel-${tenTab}`);
   if (target) target.style.display = 'block';
 
-  // Active nút menu
   document.querySelectorAll('.main-nav button[data-admin-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-admin-tab') === tenTab);
   });
 
-  // Render dữ liệu tab
   if (tenTab === 'products') renderBangSanPham();
   else if (tenTab === 'customers') renderBangKhachHang();
   else if (tenTab === 'orders') renderBangDonHang();
 }
 
 // ============================================================================
-// PHẦN 5: QUẢN LÝ SẢN PHẨM (CRUD + 1 ID + FILEREADER ĐỌC ẢNH)
+// PHẦN 5: QUẢN LÝ SẢN PHẨM (PRODUCT CRUD & FILEREADER BASE64)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Render bảng danh sách sản phẩm với phân trang 8 sản phẩm và bộ lọc thương hiệu/tìm kiếm
+ * ⚙️ Hàm có sẵn: Array.prototype.filter, Array.prototype.slice, Math.ceil
+ */
 function renderBangSanPham() {
   const tbody = document.getElementById('admin-products-tbody');
   const paginBox = document.getElementById('admin-products-pagination');
@@ -233,7 +275,6 @@ function renderBangSanPham() {
   const tuKhoa = (document.getElementById('admin-search-product')?.value || '').toLowerCase().trim();
   const hangDaChon = document.getElementById('admin-filter-category')?.value || 'all';
 
-  // Lọc sản phẩm
   let ketQua = [...dsSanPham];
   if (hangDaChon !== 'all') {
     ketQua = ketQua.filter(sp => sp.categoryId == hangDaChon);
@@ -242,7 +283,6 @@ function renderBangSanPham() {
     ketQua = ketQua.filter(sp => sp.name.toLowerCase().includes(tuKhoa));
   }
 
-  // Phân trang 8 sản phẩm
   const tongTrang = Math.ceil(ketQua.length / SO_SP_MOI_TRANG) || 1;
   if (trangSanPham > tongTrang) trangSanPham = 1;
   const batDau = (trangSanPham - 1) * SO_SP_MOI_TRANG;
@@ -285,7 +325,6 @@ function renderBangSanPham() {
     `;
   }).join('');
 
-  // Nút số trang
   if (paginBox) {
     if (tongTrang <= 1) {
       paginBox.innerHTML = '';
@@ -325,7 +364,6 @@ function moSuaSanPham(idSP) {
   document.getElementById('prod-image-url').value = sp.image;
   document.getElementById('prod-desc').value = sp.description || '';
 
-  // 10 thông số kỹ thuật
   const ts = sp.specs || {};
   document.getElementById('spec-screen').value = ts.screen || '';
   document.getElementById('spec-cpu').value = ts.cpu || '';
@@ -343,6 +381,10 @@ function moSuaSanPham(idSP) {
   moModal('product-modal');
 }
 
+/**
+ * 🎯 Mục đích: Lưu sản phẩm (Thêm mới với POST + ID tăng dần hoặc Cập nhật với PATCH)
+ * ⚙️ Hàm có sẵn: fetch (POST, PATCH), Array.prototype.reduce, Math.max
+ */
 async function luuSanPham() {
   const id = document.getElementById('prod-id').value;
   const ten = document.getElementById('prod-name').value.trim();
@@ -439,9 +481,12 @@ async function luuSanPham() {
 }
 
 // ============================================================================
-// PHẦN 6: QUẢN LÝ KHÁCH HÀNG (CRUD USERS)
+// PHẦN 6: QUẢN LÝ KHÁCH HÀNG (CUSTOMER CRUD & AUTO +1 ID & ADMIN SHIELD)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Hiển thị bảng khách hàng kèm Badge vai trò và kiểm soát nút Xóa Admin
+ */
 function renderBangKhachHang() {
   const tbody = document.getElementById('admin-customers-tbody');
   if (!tbody) return;
@@ -487,9 +532,8 @@ function renderBangKhachHang() {
 function moThemKhachHang() {
   document.getElementById('customer-form').reset();
   document.getElementById('cust-id').value = '';
-  document.getElementById('customer-modal-title').textContent = 'Thêm Khách Hàng Mới';
+  document.getElementById('customer-modal-title').textContent = 'Thêm Khách Hàng Mới (+1 ID Tự Động)';
 
-  // Mở khóa chọn vai trò cho tài khoản mới
   const roleSelect = document.getElementById('cust-role');
   if (roleSelect) {
     roleSelect.disabled = false;
@@ -501,6 +545,9 @@ function moThemKhachHang() {
   moModal('customer-modal');
 }
 
+/**
+ * 🎯 Mục đích: Mở modal sửa thông tin tài khoản kèm nguyên tắc bảo vệ quyền Quản trị viên
+ */
 function moSuaKhachHang(idUser) {
   const c = dsKhachHang.find(item => item.id == idUser);
   if (!c) return;
@@ -516,8 +563,7 @@ function moSuaKhachHang(idUser) {
   const roleSelect = document.getElementById('cust-role');
   const hint = document.getElementById('cust-role-hint');
 
-  // NGUYÊN TẮC BẢO MẬT: Nếu tài khoản đang sửa là Admin (dù là chính mình hay Admin khác)
-  // thì KHÔNG được phép thay đổi vai trò (khóa trường chọn vai trò)
+  // NGUYÊN TẮC BẢO MẬT: Khóa trường chọn vai trò nếu tài khoản đang sửa là Admin
   if (c.role === 'admin') {
     if (roleSelect) {
       roleSelect.value = 'admin';
@@ -535,6 +581,9 @@ function moSuaKhachHang(idUser) {
   moModal('customer-modal');
 }
 
+/**
+ * 🎯 Mục đích: Lưu khách hàng (Thêm mới ID tăng dần hoặc Cập nhật)
+ */
 async function luuKhachHang() {
   const id = document.getElementById('cust-id').value;
   const ten = document.getElementById('cust-name').value.trim();
@@ -555,7 +604,7 @@ async function luuKhachHang() {
       const userCu = dsKhachHang.find(c => c.id == id);
       let vaiTroThucTe = vaiTroChon;
 
-      // NGUYÊN TẮC BẢO MẬT: Tài khoản vốn dĩ là Admin thì bắt buộc giữ nguyên vai trò Admin
+      // Bảo vệ vai trò Admin không bị thay đổi
       if (userCu && userCu.role === 'admin') {
         vaiTroThucTe = 'admin';
         if (vaiTroChon !== 'admin') {
@@ -581,7 +630,6 @@ async function luuKhachHang() {
       const viTri = dsKhachHang.findIndex(c => c.id == id);
       if (viTri > -1) dsKhachHang[viTri] = userCapNhat;
 
-      // Nếu đang sửa chính tài khoản Admin hiện tại, cập nhật lại thông tin trong LocalStorage
       if (adminUser && adminUser.id == id) {
         adminUser = userCapNhat;
         localStorage.setItem('smartstore_user', JSON.stringify(adminUser));
@@ -589,7 +637,7 @@ async function luuKhachHang() {
 
       hienThongBao('Cập nhật thông tin tài khoản thành công!', 'success');
     } else {
-      // 2. Thêm khách hàng mới
+      // 2. Thêm khách hàng mới với ID tự động tăng (+1 ID)
       const maxId = dsKhachHang.reduce((max, c) => Math.max(max, Number(c.id) || 0), 0);
       const userMoi = {
         id: String(maxId + 1),
@@ -610,7 +658,7 @@ async function luuKhachHang() {
       const userDaTao = await res.json();
       dsKhachHang.push(userDaTao);
 
-      hienThongBao('Đã thêm khách hàng mới thành công!', 'success');
+      hienThongBao(`Đã thêm khách hàng mới #${userDaTao.id} thành công!`, 'success');
     }
 
     dongModal('customer-modal');
@@ -622,11 +670,13 @@ async function luuKhachHang() {
 }
 
 // ============================================================================
-// PHẦN 7: XÓA DỮ LIỆU AN TOÀN (CONFIRM DELETE & ADMIN PROTECTION)
+// PHẦN 7: XÓA DỮ LIỆU AN TOÀN 2 LỚP BẢO VỆ (CONFIRM DELETE & ADMIN PROTECTION)
 // ============================================================================
 
+/**
+ * 🎯 Mục đích: Mở modal xác nhận xóa (Lớp phòng thủ an ninh số 1)
+ */
 function xacNhanXoa(loai, id, ten) {
-  // NGUYÊN TẮC BẢO MẬT: Chặn tuyệt đối xóa tài khoản Quản trị viên
   if (loai === 'customer') {
     const userCanXoa = dsKhachHang.find(u => u.id == id);
     if (userCanXoa && userCanXoa.role === 'admin') {
@@ -643,6 +693,9 @@ function xacNhanXoa(loai, id, ten) {
   moModal('confirm-modal');
 }
 
+/**
+ * 🎯 Mục đích: Thực hiện lệnh xóa dữ liệu qua HTTP DELETE (Lớp phòng thủ an ninh số 2)
+ */
 async function thucHienXoa() {
   if (!mucCanXoa) return;
   const { loai, id } = mucCanXoa;
@@ -680,11 +733,12 @@ async function thucHienXoa() {
 }
 
 // ============================================================================
-// PHẦN 8: QUẢN LÝ ĐƠN HÀNG (ORDERS & STATUS UPDATE)
+// PHẦN 8: QUẢN LÝ ĐƠN HÀNG (ORDERS DISPATCH & INLINE STATUS UPDATE)
 // ============================================================================
 
 /**
- * Đổi trạng thái đơn hàng trực tiếp ngay trên từng dòng của bảng (Fast Inline Action)
+ * 🎯 Mục đích: Đổi trạng thái đơn hàng trực tiếp ngay trên từng dòng của bảng (Fast Inline Action)
+ * ⚙️ Hàm có sẵn: fetch (PATCH), Array.prototype.findIndex
  */
 async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
   try {
@@ -695,11 +749,9 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
     });
     const donCapNhat = await res.json();
 
-    // Cập nhật mảng dsDonHang trong bộ nhớ
     const viTri = dsDonHang.findIndex(d => d.id == idDon);
     if (viTri > -1) dsDonHang[viTri] = donCapNhat;
 
-    // Cập nhật class màu sắc cho thẻ select ngay lập tức
     if (selectEl) {
       selectEl.className = `order-status-select status-${trangThaiMoi}`;
     }
@@ -719,6 +771,9 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
   }
 }
 
+/**
+ * 🎯 Mục đích: Render bảng đơn hàng kèm bộ lọc trạng thái và tìm kiếm mã đơn/SĐT
+ */
 function renderBangDonHang() {
   const tbody = document.getElementById('admin-orders-tbody');
   if (!tbody) return;
@@ -738,7 +793,7 @@ function renderBangDonHang() {
     );
   }
 
-  // Đơn mới nhất lên đầu
+  // Sắp xếp đơn mới nhất lên đầu
   ketQua.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   tbody.innerHTML = ketQua.map(d => {
@@ -766,6 +821,9 @@ function renderBangDonHang() {
   }).join('');
 }
 
+/**
+ * 🎯 Mục đích: Mở modal xem chi tiết từng món hàng trong đơn và cập nhật trạng thái đơn
+ */
 function moXemDonHang(maDon) {
   const d = dsDonHang.find(item => item.orderCode === maDon);
   if (!d) return;
@@ -777,34 +835,44 @@ function moXemDonHang(maDon) {
   if (body) {
     body.innerHTML = `
       <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:14px; font-size:13px; line-height:1.7;">
-        <div><strong>Khách hàng:</strong> ${d.customerName} (${d.customerPhone})</div>
+        <div><strong>Khách hàng:</strong> ${d.customerName} - <strong>SĐT:</strong> ${d.customerPhone}</div>
         <div><strong>Địa chỉ:</strong> ${d.customerAddress}</div>
-        <div><strong>Phương thức:</strong> ${d.paymentMethod}</div>
-        ${d.note ? `<div><strong>Ghi chú:</strong> ${d.note}</div>` : ''}
+        <div><strong>Thanh toán:</strong> ${d.paymentMethod}</div>
+        <div><strong>Tổng giá trị đơn:</strong> <strong style="color:var(--accent); font-size:15px;">${dinhDangTien(d.totalAmount)}</strong></div>
       </div>
-      <h4 style="font-size:13px; margin-bottom:8px;">Các món đặt mua:</h4>
-      <div style="max-height:180px; overflow-y:auto;">
-        ${d.items.map(i => `
-          <div style="display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed #e2e8f0; padding:6px 0;">
-            <span>${i.name} (x${i.quantity})</span>
-            <strong>${dinhDangTien(i.price * i.quantity)}</strong>
-          </div>
-        `).join('')}
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:15px; font-weight:800; border-top:1px solid #e2e8f0; padding-top:8px;">
-        <span>Tổng thanh toán:</span>
-        <span style="color:var(--accent);">${dinhDangTien(d.totalAmount)}</span>
-      </div>
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th>Món hàng</th>
+            <th>Đơn giá</th>
+            <th>Số lượng</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(d.items || []).map(i => `
+            <tr>
+              <td>${i.name}</td>
+              <td>${dinhDangTien(i.price)}</td>
+              <td>${i.quantity}</td>
+              <td><strong>${dinhDangTien(i.price * i.quantity)}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     `;
   }
 
-  document.getElementById('order-status-update-select').value = d.status || 'processing';
+  const selectStatus = document.getElementById('order-status-update-select');
+  if (selectStatus) selectStatus.value = d.status;
+
   moModal('order-detail-modal');
 }
 
 async function capNhatTrangThaiDon() {
   if (!donHangDangXem) return;
-  const trangThaiMoi = document.getElementById('order-status-update-select').value;
+  const selectStatus = document.getElementById('order-status-update-select');
+  const trangThaiMoi = selectStatus.value;
 
   try {
     const res = await fetch(`${API_URL}/orders/${donHangDangXem.id}`, {
@@ -828,9 +896,12 @@ async function capNhatTrangThaiDon() {
 }
 
 // ============================================================================
-// PHẦN 9: GẮN SỰ KIỆN GIAO DIỆN & EXPORT GLOBAL
+// PHẦN 9: GẮN SỰ KIỆN GIAO DIỆN & EXPORT MODULE (EVENT LISTENERS & INIT)
 // ============================================================================
 
+/**
+ * 🎯 Export các hàm điều khiển bảng quản trị ra window.adminCtrl để HTML onclick gọi an toàn
+ */
 window.adminCtrl = {
   closeModal: dongModal,
   setProductPage: chuyenTrangSanPhamAdmin,
@@ -847,6 +918,9 @@ window.adminCtrl = {
   inlineUpdateOrderStatus: doiTrangThaiDonHangTrucTiep
 };
 
+/**
+ * 🎯 Gắn sự kiện khi DOM tải xong
+ */
 document.addEventListener('DOMContentLoaded', () => {
   kiemTraDangNhapAdmin();
 
@@ -877,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-open-add-product')?.addEventListener('click', moThemSanPham);
 
-  // Đọc file ảnh từ máy sang Base64 bằng FileReader
+  // Đọc file ảnh từ máy sang chuỗi Base64 bằng FileReader
   document.getElementById('prod-image-file')?.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
