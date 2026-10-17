@@ -231,10 +231,34 @@ function tinhToanKPI() {
 }
 
 function chuyenTabAdmin(tabId) {
+  if (!tabId) return;
+
+  // 1. Cập nhật trạng thái active trên các nút điều hướng tab
   document.querySelectorAll('.main-nav button[data-admin-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-admin-tab') === tabId);
   });
-  document.querySelectorAll('.admin-tab-panel').forEach(panel => {
-    panel.classList.toggle('active', panel.id === `tab-${tabId}`);
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
   });
+
+  // 2. Ẩn tất cả các panel tab và chỉ hiển thị panel được chọn
+  document.querySelectorAll('.admin-tab-content, .admin-tab-panel').forEach(panel => {
+    panel.style.display = 'none';
+    panel.classList.remove('active');
+  });
+
+  const targetPanel = document.getElementById(`admin-panel-${tabId}`) || document.getElementById(`tab-${tabId}`);
+  if (targetPanel) {
+    targetPanel.style.display = 'block';
+    targetPanel.classList.add('active');
+  }
+
+  // 3. Kích hoạt render lại dữ liệu mới nhất tương ứng với tab được chọn
+  if (tabId === 'products') {
+    if (typeof renderBangSanPham === 'function') renderBangSanPham();
+  } else if (tabId === 'customers') {
+    if (typeof renderBangKhachHang === 'function') renderBangKhachHang();
+  } else if (tabId === 'orders') {
+    if (typeof renderBangDonHang === 'function') renderBangDonHang();
+  }
 }

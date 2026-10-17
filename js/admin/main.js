@@ -13,6 +13,8 @@
 
 window.adminCtrl = {
   closeModal: dongModal,
+  switchTab: chuyenTabAdmin,
+  chuyenTab: chuyenTabAdmin,
   setProductPage: chuyenTrangSanPhamAdmin,
   openAddProduct: moThemSanPham,
   openEditProduct: moSuaSanPham,

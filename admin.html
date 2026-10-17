@@ -65,13 +65,13 @@
 
         <!-- Điều Hướng Các Tab Admin -->
         <nav class="main-nav">
-          <button class="nav-item active" data-admin-tab="products" id="tab-btn-products">
+          <button class="nav-item active" data-admin-tab="products" id="tab-btn-products" onclick="window.adminCtrl.switchTab('products')">
             <i class="fa-solid fa-boxes-stacked"></i> Quản Lý Sản Phẩm
           </button>
-          <button class="nav-item" data-admin-tab="customers" id="tab-btn-customers">
+          <button class="nav-item" data-admin-tab="customers" id="tab-btn-customers" onclick="window.adminCtrl.switchTab('customers')">
             <i class="fa-solid fa-users"></i> Quản Lý Khách Hàng
           </button>
-          <button class="nav-item" data-admin-tab="orders" id="tab-btn-orders">
+          <button class="nav-item" data-admin-tab="orders" id="tab-btn-orders" onclick="window.adminCtrl.switchTab('orders')">
             <i class="fa-solid fa-clipboard-list"></i> Quản Lý Đơn Hàng
           </button>
         </nav>
