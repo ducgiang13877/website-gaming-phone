@@ -1074,17 +1074,6 @@
       "address": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
       "role": "user",
       "createdAt": "2026-10-15T08:00:00.000Z"
-    },
-    {
-      "id": "4",
-      "name": "Lương Văn Dũng",
-      "fullName": "Lương Văn Dũng",
-      "email": "dungls2k7@gmail.com",
-      "password": "123456",
-      "phone": "0987654321",
-      "address": "Lạng Sơn",
-      "role": "user",
-      "createdAt": "2026-10-16T05:21:52.843Z"
     }
   ],
   "orders": [
@@ -1107,13 +1096,13 @@
         }
       ],
       "totalAmount": null,
-      "status": "cancelled",
+      "status": "processing",
       "createdAt": "2026-10-16T04:17:36.508Z",
       "id": "SxUrL5TMjlE"
     },
     {
       "orderCode": "#DH162161625",
-      "userId": "4",
+      "userId": null,
       "customerName": "Lương Văn Dũng",
       "customerPhone": "0987654321",
       "customerEmail": "dungls2k7@gmail.com",
@@ -1130,7 +1119,7 @@
         }
       ],
       "totalAmount": 74970000,
-      "status": "processing",
+      "status": "delivered",
       "createdAt": "2026-10-16T14:49:21.625Z",
       "id": "YpnvFcMQiyk"
     }
