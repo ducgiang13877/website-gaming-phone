@@ -1,583 +1,1040 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartStore - Cửa Hàng Điện Thoại Thông Minh</title>
-
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="styles/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStore - Thế Giới Điện Thoại Thông Minh & Gaming Phone</title>
+  <!-- Google Fonts & FontAwesome 6 Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Stylesheet chính -->
+  <link rel="stylesheet" href="styles/style.css">
 </head>
-
 <body>
 
-  <!-- ================= HEADER VÀ THANH ĐIỀU HƯỚNG CHÍNH ================= -->
+  <!-- ==========================================================================
+       1. THANH HEADER ĐIỀU HƯỚNG CHÍNH (NAVIGATION BAR)
+       ========================================================================== -->
   <header class="site-header">
     <div class="header-inner">
-      <div class="brand-logo" id="logo-home">
-        <i class="fas fa-mobile-screen-button"></i> SmartStore
+      <!-- Logo Thương Hiệu -->
+      <div class="brand-logo" onclick="window.appNav.goTo('home')">
+        <i class="fa-solid fa-bolt-lightning"></i>
+        <span>Smart<span style="color: var(--text);">Store</span></span>
+        <span class="logo-tag">PRO GAMING</span>
       </div>
 
-      <nav class="main-nav">
-        <button class="nav-item active" id="nav-btn-shop" data-view="view-shop">
-          <i class="fas fa-store"></i> Cửa hàng
+      <!-- Menu Điều Hướng SPA (Chỉ chứa các trang chính) -->
+      <nav class="main-nav" id="main-nav-links">
+        <button class="nav-item active" data-view="home">
+          <i class="fa-solid fa-house"></i> Trang Chủ
         </button>
-        <button class="nav-item" id="nav-btn-cart" data-view="view-cart">
-          <i class="fas fa-cart-shopping"></i> Giỏ hàng 
-          <span class="cart-badge" id="cart-count">0</span>
+        <button class="nav-item" data-view="shop">
+          <i class="fa-solid fa-mobile-screen-button"></i> Cửa Hàng
         </button>
-        <button class="nav-item" id="nav-btn-orders" data-view="view-orders">
-          <i class="fas fa-clock-rotate-left"></i> Đơn hàng
+        <button class="nav-item" data-view="about">
+          <i class="fa-solid fa-circle-info"></i> Giới Thiệu
         </button>
-        <!-- Nút tài khoản: hiển thị tên khi đã đăng nhập -->
-        <button class="nav-item" id="nav-btn-account" data-view="view-account">
-          <i class="fas fa-user"></i> <span id="nav-account-text">Tài khoản</span>
+        <button class="nav-item" data-view="contact">
+          <i class="fa-solid fa-headset"></i> Liên Hệ
         </button>
-        <!-- Nút chuyển sang trang Quản trị (Chỉ hiển thị cho tài khoản có quyền Admin) -->
-        <a href="admin.html" class="nav-item nav-admin-btn hidden" id="nav-btn-admin" title="Truy cập Bảng Quản Trị Hệ Thống">
-          <i class="fas fa-shield-halved"></i> <span>Trang Quản Trị</span>
-        </a>
       </nav>
+
+      <!-- Khu Vực Tiện Ích Góc Phải: Giỏ Hàng & Tài Khoản -->
+      <div class="header-user-actions" id="header-right-actions">
+        <!-- Nút Giỏ Hàng Chuyên Biệt Nổi Bật Chuẩn UI/UX -->
+        <button class="header-cart-btn" id="nav-cart-btn" onclick="window.appNav.goTo('cart')" title="Xem giỏ hàng của bạn">
+          <div class="cart-icon-wrapper">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-badge" id="cart-badge-count">0</span>
+          </div>
+          <span class="cart-label-text">Giỏ Hàng</span>
+        </button>
+
+        <!-- Khu Vực Trạng Thái Tài Khoản (Render Động) -->
+        <div id="user-nav-status">
+          <button class="btn-primary btn-sm" onclick="window.appNav.goTo('auth')">
+            <i class="fa-solid fa-user"></i> Đăng Nhập
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- ================= CONTAINER NỘI DUNG CHÍNH (USER VIEW) ================= -->
+  <!-- ==========================================================================
+       2. KHUNG NỘI DUNG SPA CHÍNH (12 PHÂN VÙNG GIAO DIỆN)
+       ========================================================================== -->
   <main class="app-container">
 
-    <!-- ================= 1. TRANG CỬA HÀNG ================= -->
-    <section id="view-shop" class="view-panel active">
+    <!-- ------------------------------------------------------------------------
+         VIEW 1: TRANG CHỦ (HOME VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-home" class="view-panel active">
+      <!-- Banner Hero Công Nghệ (Split 3D Cyber Hero) -->
       <div class="hero-banner">
-        <div class="hero-text">
-          <h1>Điện Thoại Chính Hãng • Ưu Đãi Đỉnh Cao</h1>
-          <p>Trải nghiệm công nghệ AI với iPhone 15 Series, Galaxy S24 Ultra, Xiaomi 14 Ultra, OPPO Find N3</p>
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i class="fa-solid fa-microchip"></i> ĐỈNH CAO CÔNG NGHỆ & GAMING 2026
+          </div>
+          <h1 class="hero-title">Bứt Phá Giới Hạn & <span>Smartphone 5G</span></h1>
+          <p class="hero-desc">
+            Trải nghiệm hiệu năng quái vật từ 8 thương hiệu hàng đầu thế giới: Apple, Samsung Galaxy AI, Xiaomi Leica, ASUS ROG Gaming, RedMagic... Cam kết 100% chính hãng, bảo hành 12 tháng 1 đổi 1!
+          </p>
+          <div class="hero-spec-chips-row">
+            <div class="hero-chip-pill"><i class="fa-solid fa-microchip"></i> Snapdragon 8 Elite (3nm)</div>
+            <div class="hero-chip-pill"><i class="fa-solid fa-gauge-high"></i> Màn hình 165Hz AMOLED</div>
+            <div class="hero-chip-pill"><i class="fa-solid fa-bolt"></i> Sạc Siêu Tốc 120W</div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-primary" onclick="window.appNav.goTo('shop')">
+              <i class="fa-solid fa-bag-shopping"></i> Khám Phá Cửa Hàng
+            </button>
+            <button class="btn-secondary" onclick="window.appNav.goTo('compare')">
+              <i class="fa-solid fa-sliders"></i> So Sánh 10 Cấu Hình
+            </button>
+          </div>
+        </div>
+        <div class="hero-visual-showcase">
+          <div class="hero-glow-disc"></div>
+          <img src="https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/r/o/rog-8-pro.png" alt="Gaming Phone Flagship" class="hero-mockup-img" onerror="this.onerror=null; this.src='https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max.png';">
         </div>
       </div>
 
-      <!-- Thanh bộ lọc: Tìm kiếm, Thương hiệu, Khoảng giá -->
-      <div class="filter-bar">
-        <input type="text" id="shop-search" class="search-input" placeholder="Tìm theo tên điện thoại..." />
-        
-        <select id="shop-filter-category" class="select-box">
-          <option value="">Tất cả thương hiệu</option>
-          <!-- Tự động đổ từ API categories -->
-        </select>
-
-        <select id="shop-filter-price" class="select-box">
-          <option value="">Tất cả mức giá</option>
-          <option value="duoi-10tr">Dưới 10 triệu</option>
-          <option value="10tr-25tr">Từ 10 - 25 triệu</option>
-          <option value="tren-25tr">Trên 25 triệu</option>
-        </select>
+      <!-- 4 Cam Kết Vàng Về Dịch Vụ -->
+      <div class="feature-highlights-grid">
+        <div class="highlight-box">
+          <div class="highlight-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="highlight-text">
+            <h4>100% Chính Hãng</h4>
+            <p>Cam kết bồi thường 200% nếu phát hiện máy dựng</p>
+          </div>
+        </div>
+        <div class="highlight-box">
+          <div class="highlight-icon"><i class="fa-solid fa-truck-bolt"></i></div>
+          <div class="highlight-text">
+            <h4>Giao Siêu Tốc 2H</h4>
+            <p>Miễn phí vận chuyển toàn quốc cho đơn từ 5 triệu</p>
+          </div>
+        </div>
+        <div class="highlight-box">
+          <div class="highlight-icon"><i class="fa-solid fa-rotate-left"></i></div>
+          <div class="highlight-text">
+            <h4>Lỗi 1 Đổi 1 Trong 30 Ngày</h4>
+            <p>Thủ tục đổi trả cực nhanh tại hệ thống toàn quốc</p>
+          </div>
+        </div>
+        <div class="highlight-box">
+          <div class="highlight-icon"><i class="fa-solid fa-credit-card"></i></div>
+          <div class="highlight-text">
+            <h4>Hỗ Trợ Trả Góp 0%</h4>
+            <p>Duyệt hồ sơ nhanh qua CCCD trong 5 phút</p>
+          </div>
+        </div>
       </div>
 
-      <!-- Lưới sản phẩm (có nút 'Thêm vào giỏ' và 'Mua ngay') -->
-      <div id="product-grid" class="product-grid">
-        <!-- Render từ JavaScript -->
+      <!-- Khối Ưu Đãi Giờ Vàng (Hotsale Công Nghệ Chính Hãng) -->
+      <div class="flash-sale-box" id="home-flash-sale-section">
+        <div class="flash-sale-header">
+          <div class="flash-sale-title-group">
+            <span class="flash-badge-fire"><i class="fa-solid fa-fire"></i> ĐẶC QUYỀN HÔM NAY</span>
+            <div>
+              <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #ffffff;">
+                <i class="fa-solid fa-bolt" style="color: #facc15;"></i> ƯU ĐÃI GIỜ VÀNG - GIÁ TỐT NHẤT
+              </h2>
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+                <i class="fa-solid fa-shield-halved" style="color: #38bdf8;"></i> 100% Máy mới nguyên seal • Bảo hành 12 tháng chính hãng • Lỗi 1 đổi 1 trong 30 ngày
+              </div>
+            </div>
+          </div>
+          <div class="flash-countdown-wrap">
+            <span class="flash-countdown-label"><i class="fa-solid fa-clock"></i> Ưu đãi kết thúc sau:</span>
+            <div class="countdown-timer" id="flash-countdown-timer">
+              <span class="timer-unit-box" id="flash-timer-hours">02</span>
+              <span class="timer-sep">:</span>
+              <span class="timer-unit-box" id="flash-timer-minutes">45</span>
+              <span class="timer-sep">:</span>
+              <span class="timer-unit-box" id="flash-timer-seconds">18</span>
+            </div>
+          </div>
+        </div>
+        <div class="flash-product-grid" id="home-flash-sale-products">
+          <!-- Render động 4 sản phẩm Ưu Đãi Giờ Vàng từ JS -->
+        </div>
       </div>
 
-      <!-- Thanh phân trang danh sách sản phẩm (Pagination) -->
-      <div id="shop-pagination" class="pagination-wrapper"></div>
+      <!-- Danh Mục 8 Thương Hiệu Nổi Bật -->
+      <div style="margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text);">
+            <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> 8 Thương Hiệu Hàng Đầu
+          </h2>
+          <span style="font-size: 13px; color: var(--text-muted);">Bấm để lọc theo hãng</span>
+        </div>
+        <div class="brand-pills-scroll" id="home-category-pills">
+          <!-- Render tự động 8 thương hiệu -->
+        </div>
+      </div>
+
+      <!-- Siêu Phẩm Gaming Phone Nổi Bật -->
+      <div style="margin-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text);">
+              <i class="fa-solid fa-gamepad" style="color: var(--purple);"></i> Chiến Binh Gaming Phone
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Tần số quét cao, tản nhiệt buồng hơi, Snapdragon 8 Elite</p>
+          </div>
+          <button class="btn-secondary btn-sm" onclick="window.appNav.filterBrand('7')">
+            Xem Tất Cả ROG & RedMagic <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+        <div class="product-grid" id="home-gaming-products">
+          <!-- Render 4 sản phẩm Gaming Phone -->
+        </div>
+      </div>
+
+      <!-- Sản Phẩm Mới & Bán Chạy Nhất -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text);">
+              <i class="fa-solid fa-fire" style="color: var(--accent);"></i> Điện Thoại Bán Chạy Nhất
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Được cộng đồng công nghệ săn đón nhiều nhất tuần qua</p>
+          </div>
+          <button class="btn-primary btn-sm" onclick="window.appNav.goTo('shop')">
+            Xem Tất Cả 40 Máy <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+        <div class="product-grid" id="home-featured-products">
+          <!-- Render 8 sản phẩm nổi bật -->
+        </div>
+      </div>
     </section>
 
-    <!-- ================= 2. TRANG GIỎ HÀNG & THANH TOÁN ================= -->
-    <section id="view-cart" class="view-panel">
-      <h2 class="cart-heading">
-        <i class="fas fa-cart-shopping"></i> Giỏ Hàng Của Bạn
-      </h2>
+    <!-- ------------------------------------------------------------------------
+         VIEW 2: CỬA HÀNG (SHOP VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-shop" class="view-panel">
+      <!-- Toolbar Tìm Kiếm, Lọc & Sắp Xếp -->
+      <div class="shop-toolbar">
+        <div class="toolbar-top-row">
+          <!-- Hộp Tìm Kiếm Tên Máy -->
+          <div class="search-box-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="shop-search-input" class="search-input" placeholder="Tìm theo tên máy (iPhone 16, ROG Phone, Galaxy S25, Snapdragon...)...">
+          </div>
 
-      <div class="cart-layout">
-        <!-- Bảng sản phẩm trong giỏ -->
+          <!-- Lọc Khoảng Giá & Sắp Xếp -->
+          <div class="filter-selects-group">
+            <select id="filter-price-range" class="select-custom">
+              <option value="all">Tất cả mức giá</option>
+              <option value="under-10">Dưới 10 triệu</option>
+              <option value="10-20">Từ 10 - 20 triệu</option>
+              <option value="20-30">Từ 20 - 30 triệu</option>
+              <option value="over-30">Trên 30 triệu (Flagship)</option>
+            </select>
+
+            <select id="filter-sort-by" class="select-custom">
+              <option value="default">Sắp xếp: Mặc định</option>
+              <option value="price-asc">Giá: Thấp đến Cao</option>
+              <option value="price-desc">Giá: Cao đến Thấp</option>
+              <option value="name-asc">Tên: A - Z</option>
+            </select>
+
+            <button class="btn-secondary btn-sm" id="btn-reset-filters" title="Xóa bộ lọc">
+              <i class="fa-solid fa-rotate"></i> Đặt Lại
+            </button>
+          </div>
+        </div>
+
+        <!-- Dải Nút Chọn Nhanh 8 Thương Hiệu -->
+        <div>
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: block;">
+            LỌC THEO THƯƠNG HIỆU:
+          </span>
+          <div class="brand-pills-scroll" id="shop-brand-pills">
+            <!-- Render động nút Tất cả + 8 Hãng -->
+          </div>
+        </div>
+
+        <!-- Lọc theo nhu cầu người dùng (Demand Filter Chips) -->
+        <div class="filter-chips-row" id="shop-demand-filter-chips">
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); align-self: center;">NHU CẦU:</span>
+          <button class="filter-chip-btn active" data-demand="all" onclick="window.shopModule.setDemand('all')">
+            <i class="fa-solid fa-border-all"></i> Tất Cả Nhu Cầu
+          </button>
+          <button class="filter-chip-btn" data-demand="gaming" onclick="window.shopModule.setDemand('gaming')">
+            <i class="fa-solid fa-gamepad" style="color: #8b5cf6;"></i> Gaming Đồ Họa Nặng
+          </button>
+          <button class="filter-chip-btn" data-demand="camera" onclick="window.shopModule.setDemand('camera')">
+            <i class="fa-solid fa-camera" style="color: #0284c7;"></i> Chụp Ảnh Quay Phim Pro
+          </button>
+          <button class="filter-chip-btn" data-demand="battery" onclick="window.shopModule.setDemand('battery')">
+            <i class="fa-solid fa-battery-full" style="color: #10b981;"></i> Pin Trâu & Sạc Nhanh
+          </button>
+          <button class="filter-chip-btn" data-demand="foldable" onclick="window.shopModule.setDemand('foldable')">
+            <i class="fa-solid fa-mobile-screen" style="color: #f59e0b;"></i> Màn Hình Gập Thời Thượng
+          </button>
+        </div>
+      </div>
+
+      <!-- Thanh Thống Kê Số Lượng Tìm Thấy -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <p style="font-size: 14px; color: var(--text-muted);" id="shop-result-count">
+          Đang hiển thị <strong>0</strong> sản phẩm
+        </p>
+      </div>
+
+      <!-- Lưới 40 Sản Phẩm Cửa Hàng -->
+      <div class="product-grid" id="shop-product-grid">
+        <!-- Render động sản phẩm -->
+      </div>
+
+      <!-- Phân Trang Cửa Hàng (8 sản phẩm / trang) -->
+      <div class="pagination-wrapper" id="shop-pagination">
+        <!-- Render các nút số trang -->
+      </div>
+
+      <!-- KHU VỰC SO SÁNH SẢN PHẨM TÍCH HỢP TRỰC TIẾP TRONG CỬA HÀNG -->
+      <div id="shop-compare-section" style="margin-top: 48px; border-top: 2px dashed var(--border); padding-top: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text);">
+              <i class="fa-solid fa-code-compare" style="color: var(--primary);"></i> So Sánh Thông Số Kỹ Thuật (Tối Đa 3 Máy)
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+              Bấm nút <strong>"So Sánh"</strong> trên các mẫu điện thoại phía trên để đối chiếu 10 thông số chuẩn Thế Giới Di Động ngay tại đây.
+            </p>
+          </div>
+          <button class="btn-secondary btn-sm" id="btn-shop-clear-compare" onclick="window.compareModule.clear()">
+            <i class="fa-solid fa-trash-can"></i> Xóa Bảng So Sánh
+          </button>
+        </div>
+
+        <!-- Khung Hiển Thị Bảng So Sánh Cửa Hàng -->
+        <div class="compare-container" id="shop-compare-table-wrapper">
+          <!-- Render động từ JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 3: XEM CHI TIẾT SẢN PHẨM (PRODUCT DETAIL VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-detail" class="view-panel">
+      <!-- Breadcrumb Điều Hướng -->
+      <div style="margin-bottom: 20px; font-size: 13px; color: var(--text-muted);">
+        <a href="javascript:void(0)" onclick="window.appNav.goTo('home')">Trang Chủ</a> /
+        <a href="javascript:void(0)" onclick="window.appNav.goTo('shop')">Cửa Hàng</a> /
+        <span id="detail-breadcrumb-name" style="color: var(--text); font-weight: 600;">Chi tiết sản phẩm</span>
+      </div>
+
+      <!-- Khung Chi Tiết & Bảng 10 Cấu Hình Chuẩn CellphoneS -->
+      <div class="product-detail-layout" id="product-detail-container">
+        <!-- Render động từ JavaScript -->
+      </div>
+
+      <!-- Sản Phẩm Cùng Thương Hiệu -->
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 18px; color: var(--text);">
+          <i class="fa-solid fa-shapes" style="color: var(--primary);"></i> Sản Phẩm Cùng Hãng Đáng Mua
+        </h3>
+        <div class="product-grid" id="detail-related-products">
+          <!-- Render 4 sản phẩm cùng hãng -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 4: GIỎ HÀNG (SHOPPING CART VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-cart" class="view-panel">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+          <i class="fa-solid fa-cart-shopping" style="color: var(--primary);"></i> Giỏ Hàng Của Bạn
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted);">Kiểm tra lại số lượng các dòng smartphone trước khi tiến hành thanh toán</p>
+      </div>
+
+      <div class="cart-layout" id="cart-content-wrapper">
+        <!-- Bảng Danh Sách Món Trong Giỏ -->
         <div class="cart-table-box">
           <table class="cart-table">
             <thead>
               <tr>
                 <th>Sản phẩm</th>
                 <th>Đơn giá</th>
-                <th class="col-qty">Số lượng</th>
-                <th>Thành tiền</th>
-                <th class="col-action">Xóa</th>
+                <th style="text-align: center;">Số lượng</th>
+                <th style="text-align: right;">Thành tiền</th>
+                <th style="text-align: center;">Xóa</th>
               </tr>
             </thead>
-            <tbody id="cart-tbody">
-              <!-- Render từ JS -->
+            <tbody id="cart-table-tbody">
+              <!-- Render danh sách sản phẩm trong giỏ -->
             </tbody>
           </table>
+          <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <button class="btn-secondary btn-sm" onclick="window.appNav.goTo('shop')">
+              <i class="fa-solid fa-arrow-left"></i> Tiếp Tục Chọn Máy
+            </button>
+            <button class="btn-danger btn-sm" id="btn-clear-cart">
+              <i class="fa-solid fa-trash-can"></i> Xóa Hết Giỏ Hàng
+            </button>
+          </div>
         </div>
 
-        <!-- Bảng tóm tắt thanh toán -->
-        <div class="cart-summary">
-          <h3 class="summary-title">Thanh Toán Đơn Hàng</h3>
+        <!-- Hộp Tính Tiền & Thanh Toán -->
+        <div class="cart-summary-box">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Tóm Tắt Đơn Hàng
+          </h3>
           <div class="summary-row">
             <span>Tạm tính:</span>
-            <span id="cart-subtotal">0 đ</span>
+            <strong id="cart-subtotal">0 đ</strong>
           </div>
           <div class="summary-row">
             <span>Phí vận chuyển:</span>
-            <span class="free-shipping-text">Miễn phí</span>
+            <strong style="color: var(--success);">Miễn Phí (Toàn Quốc)</strong>
           </div>
-          <div class="summary-row cart-total-row">
+          <div class="summary-row">
+            <span>Bảo hành chính hãng:</span>
+            <strong>12 Tháng (Free)</strong>
+          </div>
+          <div class="summary-row total-row">
             <span>Tổng cộng:</span>
-            <span class="summary-total" id="cart-total">0 đ</span>
+            <span id="cart-grand-total">0 đ</span>
           </div>
 
-          <!-- Thông báo nhắc đăng nhập nếu chưa đăng nhập -->
-          <div id="cart-login-warning" class="cart-alert-box hidden">
-            <i class="fas fa-circle-exclamation"></i>
-            <span>Bạn cần đăng nhập tài khoản trước khi bấm Đặt Hàng!</span>
-          </div>
+          <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px;" onclick="window.appNav.goTo('checkout')">
+            <i class="fa-solid fa-credit-card"></i> Tiến Hành Đặt Hàng
+          </button>
+        </div>
+      </div>
 
-          <form id="checkout-form" class="checkout-form">
+      <!-- Khung Giỏ Hàng Trống -->
+      <div id="cart-empty-state" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+        <i class="fa-solid fa-bag-shopping" style="font-size: 64px; color: var(--text-muted); margin-bottom: 16px;"></i>
+        <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Giỏ hàng của bạn đang trống!</h3>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">Hãy khám phá ngay 40 dòng điện thoại đỉnh cao với giá siêu ưu đãi.</p>
+        <button class="btn-primary" onclick="window.appNav.goTo('shop')">
+          <i class="fa-solid fa-mobile-screen-button"></i> Khám Phá Cửa Hàng Ngay
+        </button>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 5: THANH TOÁN & ĐẶT HÀNG (CHECKOUT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-checkout" class="view-panel">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> Thanh Toán & Đặt Hàng
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted);">Vui lòng nhập đầy đủ thông tin người nhận để SmartStore giao hàng nhanh nhất</p>
+      </div>
+
+      <div class="cart-layout">
+        <!-- Form Thông Tin Giao Nhận -->
+        <div class="checkout-card">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 18px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+            1. Thông Tin Người Nhận
+          </h3>
+          <form id="checkout-form" onsubmit="return false;">
             <div class="form-group">
-              <label class="form-label" for="order-name">Họ và tên người nhận *</label>
-              <input type="text" id="order-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required />
+              <label class="form-label" for="checkout-name">Họ và tên người nhận <span style="color: var(--accent);">*</span></label>
+              <input type="text" id="checkout-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="checkout-phone">Số điện thoại liên hệ <span style="color: var(--accent);">*</span></label>
+                <input type="tel" id="checkout-phone" class="form-input" placeholder="Ví dụ: 0912345678" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="checkout-email">Email nhận hóa đơn</label>
+                <input type="email" id="checkout-email" class="form-input" placeholder="Ví dụ: hung@gmail.com">
+              </div>
             </div>
             <div class="form-group">
-              <label class="form-label" for="order-phone">Số điện thoại nhận hàng *</label>
-              <input type="tel" id="order-phone" class="form-input" placeholder="Ví dụ: 0912345678" required />
+              <label class="form-label" for="checkout-address">Địa chỉ nhận hàng chi tiết <span style="color: var(--accent);">*</span></label>
+              <input type="text" id="checkout-address" class="form-input" placeholder="Số nhà, ngõ/ngách, tên đường, Phường/Xã, Quận/Huyện, Tỉnh/TP" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="order-address">Địa chỉ nhận hàng chi tiết *</label>
-              <input type="text" id="order-address" class="form-input" placeholder="Ví dụ: Số 123 Cầu Giấy, Hà Nội" required />
+              <label class="form-label" for="checkout-note">Ghi chú giao hàng (nếu có)</label>
+              <textarea id="checkout-note" class="form-input" rows="3" placeholder="Giao hàng trong giờ hành chính, gọi trước khi giao..."></textarea>
             </div>
 
-            <button type="submit" class="btn-checkout" id="btn-submit-order">
-              <i class="fas fa-check-circle"></i> Đặt Hàng Ngay
+            <h3 style="font-size: 1.15rem; font-weight: 800; margin: 24px 0 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+              2. Phương Thức Thanh Toán
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="COD" checked>
+                <div>
+                  <strong>Thanh toán tiền mặt khi nhận hàng (COD)</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Kiểm tra hàng thoải mái trước khi thanh toán cho Shipper</div>
+                </div>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="BANK">
+                <div>
+                  <strong>Chuyển khoản Ngân hàng qua mã VietQR</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Xác nhận giao dịch tự động trong 30 giây</div>
+                </div>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="VNPAY">
+                <div>
+                  <strong>Ví Điện Tử VNPAY / Momo / Thẻ Tín Dụng</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Hỗ trợ thẻ ATM nội địa & thẻ Visa/Mastercard</div>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" id="btn-submit-order" class="btn-primary" style="width: 100%; padding: 14px; font-size: 15px;">
+              <i class="fa-solid fa-lock"></i> Xác Nhận Đặt Hàng Ngay
             </button>
           </form>
+        </div>
+
+        <!-- Tóm Tắt Đơn Hàng Cần Mua -->
+        <div class="cart-summary-box">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Chi Tiết Đơn Hàng
+          </h3>
+          <div id="checkout-items-list" style="max-height: 280px; overflow-y: auto; margin-bottom: 16px;">
+            <!-- Render danh sách rút gọn các món hàng -->
+          </div>
+          <div class="summary-row">
+            <span>Tạm tính:</span>
+            <strong id="checkout-subtotal">0 đ</strong>
+          </div>
+          <div class="summary-row">
+            <span>Vận chuyển:</span>
+            <strong style="color: var(--success);">0 đ (Free)</strong>
+          </div>
+          <div class="summary-row total-row">
+            <span>Tổng thanh toán:</span>
+            <span id="checkout-grand-total">0 đ</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= 3. MÀN HÌNH CẢM ƠN & THÔNG TIN ĐƠN HÀNG VỪA ĐẶT ================= -->
+    <!-- ------------------------------------------------------------------------
+         VIEW 6: MÀN HÌNH CẢM ƠN SAU KHI ĐẶT HÀNG (THANK YOU VIEW)
+         ------------------------------------------------------------------------ -->
     <section id="view-thankyou" class="view-panel">
-      <div class="thankyou-box">
-        <div class="thankyou-icon-box">
-          <i class="fas fa-circle-check thankyou-icon"></i>
+      <div class="thank-you-card">
+        <div class="icon-success-circle">
+          <i class="fa-solid fa-check"></i>
         </div>
-        <h2 class="thankyou-title">Đặt Hàng Thành Công!</h2>
-        <p id="thankyou-desc" class="thankyou-desc">
-          Cảm ơn bạn đã tin tưởng mua sắm tại SmartStore. Đơn hàng của bạn đã được tiếp nhận.
+        <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">
+          Đặt Hàng Thành Công!
+        </h2>
+        <p style="color: var(--text-muted); font-size: 14px;">
+          Cảm ơn bạn đã tin tưởng mua sắm tại <strong>SmartStore</strong>. Nhân viên chăm sóc sẽ liên hệ xác nhận đơn qua số điện thoại của bạn.
         </p>
 
-        <!-- Khung hiển thị chi tiết đơn hàng vừa đặt -->
-        <div id="thankyou-order-info" class="thankyou-order-card">
-          <div class="thankyou-order-header">
-            <span>Mã đơn hàng: <strong id="placed-order-id">#—</strong></span>
-            <span class="order-status-badge status-processing">Đang xử lý</span>
-          </div>
+        <!-- Mã đơn hàng 11 ký tự chuẩn mực -->
+        <div class="order-code-badge" id="thankyou-order-code">
+          #DH883921094
+        </div>
 
-          <div class="thankyou-grid">
-            <div class="thankyou-col">
-              <span class="info-label">Người nhận:</span>
-              <strong id="placed-order-name">—</strong>
-            </div>
-            <div class="thankyou-col">
-              <span class="info-label">Số điện thoại:</span>
-              <strong id="placed-order-phone">—</strong>
-            </div>
-            <div class="thankyou-col full-width">
-              <span class="info-label">Địa chỉ nhận hàng:</span>
-              <strong id="placed-order-address">—</strong>
-            </div>
+        <!-- Thanh Tiến Trình Giao Hàng -->
+        <div class="order-stepper">
+          <div class="step-item active">
+            <div class="step-circle"><i class="fa-solid fa-receipt"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đã Đặt</div>
           </div>
-
-          <div class="placed-items-wrapper">
-            <h4 class="placed-items-title">Chi tiết sản phẩm đã mua:</h4>
-            <div id="placed-items-list" class="placed-items-list">
-              <!-- JS đổ danh sách sản phẩm -->
-            </div>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-box-open"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đang Chuẩn Bị</div>
           </div>
-
-          <div class="placed-total-row">
-            <span>Tổng thanh toán:</span>
-            <span id="placed-order-total" class="placed-total-price">0 đ</span>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-truck"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đang Giao</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Hoàn Tất</div>
           </div>
         </div>
 
-        <div class="thankyou-action-btns">
-          <button class="btn-primary" id="btn-view-order-history">
-            <i class="fas fa-clock-rotate-left"></i> Xem Lịch Sử Đơn Hàng
+        <div id="thankyou-order-summary" style="text-align: left; background: var(--bg); padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px; font-size: 13px;">
+          <!-- Chi tiết tóm tắt người nhận và tiền -->
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="window.appNav.goTo('shop')">
+            <i class="fa-solid fa-bag-shopping"></i> Tiếp Tục Mua Sắm
           </button>
-          <button class="btn-secondary" id="btn-back-to-shop">
-            <i class="fas fa-store"></i> Tiếp tục mua sắm
+          <button class="btn-secondary" id="btn-view-my-orders-thankyou">
+            <i class="fa-solid fa-clock-rotate-left"></i> Xem Đơn Hàng Của Tôi
           </button>
         </div>
       </div>
     </section>
 
-    <!-- ================= 4. TRANG LỊCH SỬ ĐƠN HÀNG (ORDER HISTORY) ================= -->
-    <section id="view-orders" class="view-panel">
-      <div class="orders-page-container">
-        <div class="orders-page-header">
-          <h2><i class="fas fa-clock-rotate-left"></i> Lịch Sử Đơn Hàng Của Bạn</h2>
-          <p>Xem lại tất cả các đơn hàng bạn đã mua và theo dõi trạng thái giao hàng.</p>
-        </div>
-
-        <!-- Khung nhắc đăng nhập nếu chưa đăng nhập -->
-        <div id="orders-not-logged" class="orders-alert-card hidden">
-          <i class="fas fa-user-lock"></i>
-          <h3>Vui lòng đăng nhập để xem đơn hàng</h3>
-          <p>Bạn cần đăng nhập tài khoản để theo dõi lịch sử mua hàng của mình.</p>
-          <button class="btn-primary" id="btn-orders-go-login">
-            <i class="fas fa-sign-in-alt"></i> Đăng nhập ngay
+    <!-- ------------------------------------------------------------------------
+         VIEW 7: ĐĂNG NHẬP & ĐĂNG KÝ (AUTH VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-auth" class="view-panel">
+      <div class="auth-wrapper">
+        <!-- Chuyển Đổi Tab Đăng Nhập / Đăng Ký -->
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="tab-btn-login" onclick="window.authModule.switchTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+          </button>
+          <button class="auth-tab-btn" id="tab-btn-register" onclick="window.authModule.switchTab('register')">
+            <i class="fa-solid fa-user-plus"></i> Đăng Ký
           </button>
         </div>
 
-        <!-- Danh sách đơn hàng đã mua -->
-        <div id="orders-history-list" class="orders-history-list">
-          <!-- JS đổ danh sách đơn hàng -->
+        <!-- Form Đăng Nhập -->
+        <form id="form-login" onsubmit="return false;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Chào Mừng Trở Lại!
+          </h3>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email đăng nhập</label>
+            <input type="email" id="login-email" class="form-input" placeholder="admin@smartstore.vn hoặc email của bạn" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Mật khẩu</label>
+            <input type="password" id="login-password" class="form-input" placeholder="Nhập mật khẩu..." required>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px;">
+            💡 <em>Gợi ý tài khoản demo:</em><br>
+            • Admin: <code>admin@smartstore.vn</code> / pass: <code>admin</code><br>
+            • Khách hàng: <code>hung.nv@gmail.com</code> / pass: <code>123</code>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Ngay
+          </button>
+        </form>
+
+        <!-- Form Đăng Ký Tài Khoản Mới -->
+        <form id="form-register" style="display: none;" onsubmit="return false;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Tạo Tài Khoản Mới
+          </h3>
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Họ và tên đầy đủ <span style="color: var(--accent);">*</span></label>
+            <input type="text" id="reg-name" class="form-input" placeholder="Ví dụ: Trần Văn Nam" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email đăng ký <span style="color: var(--accent);">*</span></label>
+            <input type="email" id="reg-email" class="form-input" placeholder="Ví dụ: nam.tran@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Số điện thoại <span style="color: var(--accent);">*</span></label>
+            <input type="tel" id="reg-phone" class="form-input" placeholder="Ví dụ: 0987654321" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-address">Địa chỉ</label>
+            <input type="text" id="reg-address" class="form-input" placeholder="Quận/Huyện, Tỉnh/TP">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Mật khẩu <span style="color: var(--accent);">*</span></label>
+            <input type="password" id="reg-password" class="form-input" placeholder="Tối thiểu 6 ký tự" required>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+            <i class="fa-solid fa-user-check"></i> Đăng Ký Tài Khoản
+          </button>
+        </form>
+
+        <!-- HỘP NHẬN DIỆN TÀI KHOẢN THÔNG MINH (SMART IDENTITY RESOLUTION UX) -->
+        <div id="smart-identity-box" class="smart-identity-card" style="display: none;">
+          <div class="smart-avatar">
+            <i class="fa-solid fa-circle-user"></i>
+          </div>
+          <h4 class="smart-identity-title">
+            Có phải bạn là <strong id="smart-user-name" style="color: var(--primary);">[Tên Người Dùng]</strong> không?
+          </h4>
+          <p class="smart-identity-desc">
+            Hệ thống nhận thấy tài khoản gắn với email/SĐT này đã tồn tại trên SmartStore. Vui lòng nhập mật khẩu để đăng nhập nhanh chóng!
+          </p>
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" for="smart-login-password">Mật khẩu của bạn</label>
+            <input type="password" id="smart-login-password" class="form-input" placeholder="Nhập mật khẩu..." required>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 14px;">
+            <button type="button" class="btn-primary" style="flex: 1; padding: 11px;" id="btn-smart-login-submit">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Ngay
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 11px;" id="btn-smart-cancel">
+              Không Phải Tôi
+            </button>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= 5. TRANG TÀI KHOẢN (ĐĂNG NHẬP / ĐĂNG KÝ) ================= -->
-    <section id="view-account" class="view-panel">
-      <div class="auth-card">
-        <!-- Khung khi đã đăng nhập: Xem thông tin chi tiết & Đổi mật khẩu & Xem đơn hàng -->
-        <div id="account-logged-box" class="hidden">
-          <div class="user-avatar-circle">
-            <i class="fas fa-user-check"></i>
-          </div>
-          <h3 id="account-user-name" class="account-name-heading"></h3>
-          <p id="account-user-email" class="account-email-heading"></p>
+    <!-- ------------------------------------------------------------------------
+         VIEW 8: TRANG THÔNG TIN CÁ NHÂN & TỰ SỬA THÔNG TIN (PROFILE VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-profile" class="view-panel">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+          <i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Thông Tin Tài Khoản
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted);">Quản lý thông tin liên hệ và xem lại lịch sử các đơn hàng đã đặt</p>
+      </div>
 
-          <!-- Thẻ lối tắt Quản trị viên (Chỉ hiển thị khi tài khoản có quyền Admin) -->
-          <div id="admin-shortcut-card" class="admin-shortcut-card hidden">
-            <div class="admin-shortcut-content">
-              <i class="fas fa-shield-halved admin-shortcut-icon"></i>
-              <div>
-                <h4 class="admin-shortcut-title">Bảng Quản Trị Hệ Thống (Admin Panel)</h4>
-                <p class="admin-shortcut-desc">Tài khoản này có quyền Quản trị viên. Bạn có thể quản lý sản phẩm, đơn hàng và danh mục.</p>
-              </div>
+      <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+        <!-- Cột Trái: Form Chỉnh Sửa Thông Tin Cá Nhân -->
+        <div class="checkout-card">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 72px; height: 72px; background: var(--primary-light); color: var(--primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px;">
+              <i class="fa-solid fa-user-astronaut"></i>
             </div>
-            <a href="admin.html" class="btn-primary btn-goto-admin">
-              <i class="fas fa-gauge-high"></i> Vào Trang Quản Trị
-            </a>
+            <h3 id="profile-display-name" style="font-size: 1.2rem; font-weight: 800;">Khách Hàng</h3>
+            <span id="profile-display-role" class="badge" style="background: #e0f2fe; color: #0284c7;">Khách Hàng Thân Thiết</span>
           </div>
 
-          <!-- Bảng xem thông tin chi tiết tài khoản -->
-          <div class="profile-info-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 class="profile-section-title" style="margin-bottom: 0;"><i class="fas fa-id-card"></i> Thông Tin Cá Nhân</h4>
-              <button type="button" class="btn-secondary" id="btn-toggle-edit-profile" style="padding: 6px 12px; font-size: 0.85rem;">
-                <i class="fas fa-user-pen"></i> Sửa thông tin
-              </button>
+          <form id="profile-edit-form" onsubmit="return false;">
+            <div class="form-group">
+              <label class="form-label" for="profile-name">Họ và tên</label>
+              <input type="text" id="profile-name" class="form-input" required>
             </div>
-            <div class="profile-row">
-              <span class="profile-label">Họ và tên:</span>
-              <strong id="profile-name-val" class="profile-value">—</strong>
+            <div class="form-group">
+              <label class="form-label" for="profile-email">Email (Không thể đổi)</label>
+              <input type="email" id="profile-email" class="form-input" disabled style="background: #f1f5f9; cursor: not-allowed;">
             </div>
-            <div class="profile-row">
-              <span class="profile-label">Số điện thoại:</span>
-              <strong id="profile-phone" class="profile-value">—</strong>
+            <div class="form-group">
+              <label class="form-label" for="profile-phone">Số điện thoại</label>
+              <input type="tel" id="profile-phone" class="form-input" required>
             </div>
-            <div class="profile-row">
-              <span class="profile-label">Địa chỉ nhận hàng:</span>
-              <strong id="profile-address" class="profile-value">—</strong>
+            <div class="form-group">
+              <label class="form-label" for="profile-address">Địa chỉ mặc định</label>
+              <textarea id="profile-address" class="form-input" rows="3"></textarea>
             </div>
-            <div class="profile-row">
-              <span class="profile-label">Vai trò tài khoản:</span>
-              <span id="profile-role" class="profile-badge">Khách hàng</span>
+            <div class="form-group">
+              <label class="form-label" for="profile-password">Mật khẩu mới (Để trống nếu không đổi)</label>
+              <input type="password" id="profile-password" class="form-input" placeholder="••••••••">
             </div>
-          </div>
 
-          <!-- Khung chỉnh sửa thông tin cá nhân (Ẩn mặc định, bật khi bấm Sửa thông tin) -->
-          <div id="edit-profile-card" class="edit-profile-card hidden">
-            <h4 class="profile-section-title"><i class="fas fa-user-gear"></i> Cập Nhật Thông Tin Cá Nhân</h4>
-            <form id="edit-profile-form">
-              <div class="form-group">
-                <label class="form-label" for="edit-profile-name">Họ và tên *</label>
-                <input type="text" id="edit-profile-name" class="form-input" placeholder="Nhập họ và tên..." required />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="edit-profile-phone">Số điện thoại *</label>
-                <input type="tel" id="edit-profile-phone" class="form-input" placeholder="Nhập số điện thoại..." required />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="edit-profile-address">Địa chỉ nhận hàng chi tiết *</label>
-                <input type="text" id="edit-profile-address" class="form-input" placeholder="Nhập địa chỉ giao hàng..." required />
-              </div>
-              <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button type="submit" class="btn-primary" style="flex: 1;">
-                  <i class="fas fa-floppy-disk"></i> Lưu Thay Đổi
-                </button>
-                <button type="button" class="btn-secondary" id="btn-cancel-edit-profile">
-                  <i class="fas fa-xmark"></i> Hủy Bỏ
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Nút truy cập nhanh lịch sử đơn hàng từ tài khoản -->
-          <div class="profile-orders-shortcut-card">
-            <h4 class="profile-section-title"><i class="fas fa-boxes-stacked"></i> Lịch Sử Mua Hàng</h4>
-            <p class="profile-shortcut-desc">Xem lại toàn bộ danh sách đơn hàng bạn đã đặt mua.</p>
-            <button type="button" class="btn-primary btn-full-width" id="btn-account-view-orders">
-              <i class="fas fa-clock-rotate-left"></i> Xem Danh Sách Đơn Hàng
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+              <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
             </button>
-          </div>
+          </form>
 
-          <!-- Khu vực Đổi Mật Khẩu -->
-          <div class="change-password-card">
-            <h4 class="profile-section-title"><i class="fas fa-key"></i> Đổi Mật Khẩu</h4>
-            <form id="change-password-form">
-              <div class="form-group">
-                <label class="form-label" for="old-pass">Mật khẩu hiện tại *</label>
-                <input type="password" id="old-pass" class="form-input" placeholder="Nhập mật khẩu đang dùng..." required />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="new-pass">Mật khẩu mới *</label>
-                <input type="password" id="new-pass" class="form-input" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)..." required />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="confirm-new-pass">Xác nhận mật khẩu mới *</label>
-                <input type="password" id="confirm-new-pass" class="form-input" placeholder="Nhập lại mật khẩu mới..." required />
-              </div>
-              <button type="submit" class="btn-primary btn-full-width">
-                <i class="fas fa-lock-open"></i> Cập Nhật Mật Khẩu
-              </button>
-            </form>
-          </div>
-
-          <button class="btn-secondary btn-full-width btn-logout-spacing" id="btn-logout">
-            <i class="fas fa-arrow-right-from-bracket"></i> Đăng xuất tài khoản
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+          <button class="btn-danger" style="width: 100%; padding: 10px;" onclick="window.authModule.logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất Tài Khoản
           </button>
         </div>
 
-        <!-- Khung Form Đăng nhập & Đăng ký (Có tab chuyển đổi) -->
-        <div id="auth-forms-wrapper">
-          <div class="auth-tabs">
-            <button class="auth-tab-btn active" id="tab-btn-login">Đăng Nhập</button>
-            <button class="auth-tab-btn" id="tab-btn-register">Đăng Ký</button>
+        <!-- Cột Phải: Lịch Sử Các Đơn Hàng Của Tài Khoản -->
+        <div class="cart-table-box">
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            <i class="fa-solid fa-box-archive" style="color: var(--primary);"></i> Lịch Sử Đơn Hàng Của Bạn
+          </h3>
+          <div id="user-orders-table-container">
+            <table class="cart-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Ngày đặt</th>
+                  <th>Tổng tiền</th>
+                  <th>Phương thức</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align: center;">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="user-orders-tbody">
+                <!-- Render các đơn hàng của user -->
+              </tbody>
+            </table>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <!-- Form Đăng Nhập -->
-          <form id="login-form" class="auth-form-box">
-            <div class="form-group">
-              <label class="form-label" for="login-email">Email tài khoản *</label>
-              <input type="email" id="login-email" class="form-input" placeholder="Ví dụ: hung.nv@gmail.com" required />
+    <!-- ------------------------------------------------------------------------
+         VIEW 9: TRA CỨU TIẾN ĐỘ ĐƠN HÀNG (ORDER TRACKING VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-tracking" class="view-panel">
+      <div style="max-width: 680px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text);">
+            <i class="fa-solid fa-magnifying-glass-location" style="color: var(--primary);"></i> Tra Cứu Đơn Hàng
+          </h2>
+          <p style="font-size: 14px; color: var(--text-muted);">Nhập mã đơn hàng (Ví dụ: #DH883921094) hoặc số điện thoại để kiểm tra hành trình</p>
+        </div>
+
+        <!-- Hộp Tra Cứu -->
+        <div class="shop-toolbar" style="margin-bottom: 24px;">
+          <div style="display: flex; gap: 10px;">
+            <div class="search-box-wrapper" style="flex: 1;">
+              <i class="fa-solid fa-receipt"></i>
+              <input type="text" id="tracking-input" class="search-input" placeholder="Nhập mã đơn (#DH...) hoặc Số điện thoại đặt hàng...">
             </div>
-            <div class="form-group">
-              <label class="form-label" for="login-password">Mật khẩu *</label>
-              <input type="password" id="login-password" class="form-input" placeholder="Nhập mật khẩu..." required />
-            </div>
-            <button type="submit" class="btn-primary btn-full-width">
-              <i class="fas fa-sign-in-alt"></i> Đăng Nhập
+            <button class="btn-primary" id="btn-tracking-search">
+              <i class="fa-solid fa-search"></i> Kiểm Tra
             </button>
-            <p class="auth-hint-text">
-              Chưa có tài khoản? Bấm nút <b>Đăng Ký</b> ở trên!
+          </div>
+        </div>
+
+        <!-- Kết Quả Hiển Thị Đơn Hàng -->
+        <div id="tracking-result-box" style="display: none;">
+          <!-- Render thông tin chi tiết và stepper -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 10: SO SÁNH ĐIỆN THOẠI (COMPARE VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-compare" class="view-panel">
+      <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+            <i class="fa-solid fa-code-compare" style="color: var(--primary);"></i> So Sánh Thông Số Kỹ Thuật
+          </h2>
+          <p style="font-size: 14px; color: var(--text-muted);">Đặt lên bàn cân 2 hoặc 3 mẫu điện thoại để so sánh chi tiết 10 thông số chuẩn Thế Giới Di Động</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-secondary btn-sm" id="btn-clear-compare">
+            <i class="fa-solid fa-trash-can"></i> Xóa So Sánh
+          </button>
+          <button class="btn-primary btn-sm" onclick="window.appNav.goTo('shop')">
+            <i class="fa-solid fa-plus"></i> Chọn Thêm Máy
+          </button>
+        </div>
+      </div>
+
+      <!-- Bảng So Sánh Chi Tiết -->
+      <div class="compare-container" id="compare-table-wrapper">
+        <!-- Render động bảng so sánh thông số -->
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 11: GIỚI THIỆU VỀ HỆ THỐNG (ABOUT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-about" class="view-panel">
+      <div class="checkout-card" style="max-width: 900px; margin: 0 auto; line-height: 1.8;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h2 style="font-size: 2rem; font-weight: 800; color: var(--text);">
+            Về Hệ Thống SmartStore
+          </h2>
+          <p style="color: var(--primary); font-weight: 700;">HỆ THỐNG PHÂN PHỐI SMARTPHONE & GAMING PHONE CHÍNH HÃNG HÀNG ĐẦU VIỆT NAM</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+          <div style="background: var(--bg); padding: 20px; border-radius: var(--radius-md); border-left: 4px solid var(--primary);">
+            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Sứ Mệnh Của Chúng Tôi</h4>
+            <p style="font-size: 14px; color: var(--text-body);">
+              Mang đến cho người dùng Việt Nam trải nghiệm công nghệ đỉnh cao nhất từ các thương hiệu hàng đầu thế giới với mức giá cạnh tranh nhất và dịch vụ hậu mãi vượt trội.
             </p>
-          </form>
+          </div>
+          <div style="background: var(--bg); padding: 20px; border-radius: var(--radius-md); border-left: 4px solid var(--purple);">
+            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Cộng Đồng Game Thủ</h4>
+            <p style="font-size: 14px; color: var(--text-body);">
+              Là địa chỉ số 1 cung cấp các dòng Gaming Phone chuyên dụng (ROG Phone, RedMagic) cùng hệ sinh thái phụ kiện quạt tản nhiệt, tay cầm chơi game đỉnh cao.
+            </p>
+          </div>
+        </div>
 
-          <!-- Form Đăng Ký -->
-          <form id="register-form" class="auth-form-box hidden">
+        <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 12px; color: var(--text);">Thông Tin Đồ Án Môn Học</h3>
+        <p style="font-size: 14px; color: var(--text-body); margin-bottom: 12px;">
+          Dự án được xây dựng phục vụ bài tập Assignment môn <strong>Lập trình JavaScript Nâng Cao</strong> tại FPT Polytechnic.
+        </p>
+        <ul style="margin-left: 20px; font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+          <li>Kiến trúc SPA (Single Page Application) hiện đại kết hợp CSS Cyber/Gaming Design System.</li>
+          <li>Cơ sở dữ liệu mô phỏng chuẩn RESTful API với <code>json-server</code>.</li>
+          <li>Quản lý đầy đủ luồng nghiệp vụ E-Commerce: Danh mục 8 hãng, 40 sản phẩm, Lọc theo giá, Lọc theo hãng, Giỏ hàng, Đặt hàng trừ tồn kho, So sánh 10 cấu hình, Đăng nhập/Đăng ký và Trang Quản trị Admin chuyên biệt.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 12: LIÊN HỆ & HỖ TRỢ (CONTACT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-contact" class="view-panel">
+      <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Cột Trái: Thông Tin Liên Hệ -->
+        <div class="checkout-card">
+          <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Thông Tin Trụ Sở
+          </h3>
+          <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+            Hãy liên hệ với chúng tôi nếu bạn có bất kỳ thắc mắc nào về sản phẩm, chính sách bảo hành hoặc hợp tác doanh nghiệp.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 16px; font-size: 14px;">
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+              <i class="fa-solid fa-location-dot" style="color: var(--primary); font-size: 18px; margin-top: 3px;"></i>
+              <div>
+                <strong>Địa chỉ Showroom:</strong><br>
+                Tòa nhà FPT Polytechnic, Phố Trịnh Văn Bô, Nam Từ Liêm, Hà Nội
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+              <i class="fa-solid fa-phone" style="color: var(--success); font-size: 18px; margin-top: 3px;"></i>
+              <div>
+                <strong>Hotline Hỗ Trợ 24/7:</strong><br>
+                1900 6868 (Miễn phí cước gọi)
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+              <i class="fa-solid fa-envelope" style="color: var(--accent); font-size: 18px; margin-top: 3px;"></i>
+              <div>
+                <strong>Email Hỗ Trợ:</strong><br>
+                support@smartstore.vn
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+              <i class="fa-solid fa-clock" style="color: var(--warning); font-size: 18px; margin-top: 3px;"></i>
+              <div>
+                <strong>Giờ Mở Cửa:</strong><br>
+                08:00 - 22:00 (Tất cả các ngày trong tuần)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột Phải: Form Gửi Tin Nhắn -->
+        <div class="checkout-card">
+          <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Gửi Tin Nhắn Cho Chúng Tôi
+          </h3>
+          <form id="contact-form" onsubmit="return false;">
             <div class="form-group">
-              <label class="form-label" for="reg-name">Họ và tên *</label>
-              <input type="text" id="reg-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required />
+              <label class="form-label" for="contact-name">Họ và tên của bạn</label>
+              <input type="text" id="contact-name" class="form-input" placeholder="Nguyễn Văn A" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="reg-email">Email tài khoản *</label>
-              <input type="email" id="reg-email" class="form-input" placeholder="Ví dụ: hung.nv@gmail.com" required />
+              <label class="form-label" for="contact-email">Email</label>
+              <input type="email" id="contact-email" class="form-input" placeholder="email@gmail.com" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="reg-phone">Số điện thoại *</label>
-              <input type="tel" id="reg-phone" class="form-input" placeholder="Ví dụ: 0912345678" required />
+              <label class="form-label" for="contact-subject">Chủ đề cần tư vấn</label>
+              <input type="text" id="contact-subject" class="form-input" placeholder="Tư vấn mua điện thoại Gaming...">
             </div>
             <div class="form-group">
-              <label class="form-label" for="reg-password">Mật khẩu *</label>
-              <input type="password" id="reg-password" class="form-input" placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)..." required />
+              <label class="form-label" for="contact-message">Nội dung tin nhắn</label>
+              <textarea id="contact-message" class="form-input" rows="4" placeholder="Nhập câu hỏi của bạn tại đây..." required></textarea>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="reg-address">Địa chỉ nhận hàng</label>
-              <input type="text" id="reg-address" class="form-input" placeholder="Địa chỉ giao hàng mặc định..." />
-            </div>
-            <button type="submit" class="btn-success btn-full-width">
-              <i class="fas fa-user-plus"></i> Đăng Ký Ngay
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+              <i class="fa-solid fa-paper-plane"></i> Gửi Tin Nhắn Đi
             </button>
           </form>
         </div>
       </div>
     </section>
-
-    <!-- ================= 6. MODAL XEM CHI TIẾT SẢN PHẨM ================= -->
-    <div id="product-detail-modal" class="modal-overlay">
-      <div class="modal-box product-detail-box">
-        <button class="btn-close-modal" id="btn-close-detail-modal">&times;</button>
-        
-        <div class="detail-layout">
-          <!-- Cột trái: Ảnh sản phẩm lớn -->
-          <div class="detail-img-box">
-            <span class="product-badge" id="detail-brand-badge">Thương hiệu</span>
-            <img id="detail-img" src="" alt="Chi tiết sản phẩm" />
-          </div>
-
-          <!-- Cột phải: Thông tin chi tiết & nút mua -->
-          <div class="detail-info-box">
-            <h2 id="detail-name" class="detail-title">Tên sản phẩm</h2>
-            
-            <div class="detail-price-box">
-              <span id="detail-price" class="detail-price">0 đ</span>
-              <span id="detail-stock" class="detail-stock">Kho: 0</span>
-            </div>
-
-            <!-- Cam kết và ưu đãi -->
-            <div class="detail-highlights">
-              <div class="highlight-item"><i class="fas fa-shield-halved"></i> Bảo hành chính hãng 12 tháng</div>
-              <div class="highlight-item"><i class="fas fa-truck-fast"></i> Miễn phí giao hàng toàn quốc</div>
-              <div class="highlight-item"><i class="fas fa-rotate"></i> 1 đổi 1 trong 30 ngày nếu lỗi NSX</div>
-            </div>
-
-            <!-- Mô tả chi tiết -->
-            <div class="detail-desc-box">
-              <h4>Đặc điểm nổi bật:</h4>
-              <p id="detail-desc">Mô tả chi tiết sản phẩm...</p>
-            </div>
-
-            <!-- Nút hành động Mua ngay và Thêm giỏ hàng -->
-            <div class="detail-actions">
-              <button class="btn-add-cart" id="btn-detail-add-cart">
-                <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
-              </button>
-              <button class="btn-buy-now" id="btn-detail-buy-now">
-                <i class="fas fa-bolt"></i> Mua ngay
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= 7. MODAL XÁC NHẬN THANH TOÁN ĐƠN HÀNG ================= -->
-    <div id="checkout-confirm-modal" class="modal-overlay">
-      <div class="modal-box checkout-confirm-box">
-        <div class="confirm-icon-circle">
-          <i class="fas fa-question"></i>
-        </div>
-        <h3 class="confirm-modal-title">Xác Nhận Đặt Hàng</h3>
-        <p class="confirm-modal-question">Bạn có muốn đặt hàng hay không?</p>
-        
-        <div class="confirm-order-summary">
-          <div class="confirm-summary-row">
-            <span>Người nhận:</span>
-            <strong id="confirm-buyer-name">—</strong>
-          </div>
-          <div class="confirm-summary-row">
-            <span>Số điện thoại:</span>
-            <strong id="confirm-buyer-phone">—</strong>
-          </div>
-          <div class="confirm-summary-row">
-            <span>Địa chỉ giao hàng:</span>
-            <strong id="confirm-buyer-address">—</strong>
-          </div>
-
-          <div class="confirm-items-section">
-            <span class="confirm-items-label">Sản phẩm đặt mua:</span>
-            <div id="confirm-items-list" class="confirm-items-list">
-              <!-- JS đổ danh sách sản phẩm -->
-            </div>
-          </div>
-
-          <div class="confirm-summary-row total-row">
-            <span>Tổng tiền thanh toán:</span>
-            <span id="confirm-order-total" class="confirm-price-total">0 đ</span>
-          </div>
-        </div>
-
-        <div class="confirm-modal-actions">
-          <button type="button" class="btn-secondary" id="btn-cancel-checkout">
-            <i class="fas fa-times"></i> Hủy
-          </button>
-          <button type="button" class="btn-success" id="btn-accept-checkout">
-            <i class="fas fa-check"></i> Xác nhận
-          </button>
-        </div>
-      </div>
-    </div>
 
   </main>
 
-  <!-- ================= FOOTER CHÂN TRANG ================= -->
+  <!-- ==========================================================================
+       THANH GHIM SO SÁNH NỔI DƯỚI ĐÁY MÀN HÌNH (STICKY COMPARE DOCK)
+       ========================================================================== -->
+  <div id="sticky-compare-dock" class="sticky-compare-bar" style="display: none;">
+    <div class="sticky-compare-inner">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-weight: 700; font-size: 13px; color: #ffffff;">
+          <i class="fa-solid fa-code-compare" style="color: #38bdf8;"></i> So Sánh (<span id="dock-compare-count">0</span>/3):
+        </span>
+        <div id="dock-compare-thumbs" style="display: flex; gap: 8px; align-items: center;">
+          <!-- Render ảnh các máy đang so sánh -->
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary btn-sm" onclick="window.shopModule.scrollToCompare()">
+          <i class="fa-solid fa-table-list"></i> Xem Bảng So Sánh
+        </button>
+        <button class="btn-danger btn-sm" onclick="window.compareModule.clear()" title="Xóa hết so sánh">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       3. MODAL HỘP THOẠI XEM NHANH SẢN PHẨM (QUICK VIEW MODAL)
+       ========================================================================== -->
+  <div class="modal-overlay" id="quick-view-modal">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="quick-view-title">Xem Nhanh Cấu Hình</h3>
+        <button class="btn-close-modal" onclick="window.appNav.closeModal('quick-view-modal')">&times;</button>
+      </div>
+      <div style="padding: 20px;" id="quick-view-body">
+        <!-- Render động thông tin sản phẩm -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.appNav.closeModal('quick-view-modal')">Đóng</button>
+        <button class="btn-primary" id="btn-quick-view-add-cart">
+          <i class="fa-solid fa-cart-plus"></i> Thêm Vào Giỏ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       4. THANH CHÂN TRANG (FOOTER)
+       ========================================================================== -->
   <footer class="site-footer">
-    <div class="footer-container">
-      <!-- Cột 1: Thông tin thương hiệu -->
+    <div class="footer-inner">
       <div class="footer-col">
-        <div class="footer-logo">
-          <i class="fas fa-mobile-screen-button"></i> SmartStore
+        <div class="brand-logo" style="margin-bottom: 14px;">
+          <i class="fa-solid fa-bolt-lightning"></i>
+          <span style="color:#fff;">Smart<span style="color: #38bdf8;">Store</span></span>
         </div>
-        <p class="footer-desc">
-          Hệ thống bán lẻ điện thoại thông minh chính hãng hàng đầu Việt Nam. Cam kết chất lượng, bảo hành 12 tháng 1 đổi 1.
+        <p style="font-size: 13px; line-height: 1.7; color: #94a3b8;">
+          Hệ thống bán lẻ điện thoại thông minh, gaming phone chính hãng uy tín số 1 Việt Nam. Đồng hành cùng đam mê công nghệ của bạn.
         </p>
-        <div class="footer-socials">
-          <a href="#" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" class="social-icon" title="YouTube"><i class="fab fa-youtube"></i></a>
-          <a href="#" class="social-icon" title="TikTok"><i class="fab fa-tiktok"></i></a>
-          <a href="#" class="social-icon" title="Zalo"><i class="fas fa-comment-dots"></i></a>
-        </div>
       </div>
 
-      <!-- Cột 2: Danh mục thương hiệu -->
       <div class="footer-col">
-        <h4 class="footer-heading">Thương Hiệu Nổi Bật</h4>
-        <ul class="footer-links">
-          <li><a href="#" onclick="locTheoThuongHieuFooter('1')">Apple iPhone 15 Series</a></li>
-          <li><a href="#" onclick="locTheoThuongHieuFooter('2')">Samsung Galaxy AI</a></li>
-          <li><a href="#" onclick="locTheoThuongHieuFooter('3')">Xiaomi Leica Camera</a></li>
-          <li><a href="#" onclick="locTheoThuongHieuFooter('4')">OPPO Chuyên Gia Chân Dung</a></li>
+        <h4>8 Thương Hiệu</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="window.appNav.filterBrand('1')">Apple iPhone</a></li>
+          <li><a href="javascript:void(0)" onclick="window.appNav.filterBrand('2')">Samsung Galaxy</a></li>
+          <li><a href="javascript:void(0)" onclick="window.appNav.filterBrand('3')">Xiaomi & POCO</a></li>
+          <li><a href="javascript:void(0)" onclick="window.appNav.filterBrand('7')">ASUS ROG Phone</a></li>
+          <li><a href="javascript:void(0)" onclick="window.appNav.filterBrand('8')">Nubia RedMagic</a></li>
         </ul>
       </div>
 
-      <!-- Cột 3: Chính sách & Hỗ trợ -->
       <div class="footer-col">
-        <h4 class="footer-heading">Chính Sách & Hỗ Trợ</h4>
-        <ul class="footer-links">
-          <li><a href="#">Chính sách bảo hành 1 đổi 1</a></li>
-          <li><a href="#">Chính sách giao hàng miễn phí</a></li>
-          <li><a href="#">Hướng dẫn mua hàng trả góp 0%</a></li>
-          <li><a href="#">Chính sách bảo mật thông tin</a></li>
+        <h4>Chính Sách & Hỗ Trợ</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="window.appNav.goTo('tracking')">Tra cứu đơn hàng</a></li>
+          <li><a href="javascript:void(0)">Chính sách đổi trả 30 ngày</a></li>
+          <li><a href="javascript:void(0)">Chính sách bảo hành 12 tháng</a></li>
+          <li><a href="javascript:void(0)">Hướng dẫn mua hàng trả góp 0%</a></li>
         </ul>
       </div>
 
-      <!-- Cột 4: Thông tin liên hệ -->
       <div class="footer-col">
-        <h4 class="footer-heading">Tổng Đài Hỗ Trợ</h4>
-        <div class="footer-contact-item">
-          <i class="fas fa-phone-volume"></i>
-          <div>
-            <span>Tư vấn mua hàng:</span>
-            <strong>1800 6868 (Miễn phí)</strong>
-          </div>
-        </div>
-        <div class="footer-contact-item">
-          <i class="fas fa-headset"></i>
-          <div>
-            <span>Hỗ trợ kỹ thuật:</span>
-            <strong>1800 6969 (8:00 - 21:00)</strong>
-          </div>
-        </div>
-        <div class="footer-contact-item">
-          <i class="fas fa-location-dot"></i>
-          <div>
-            <span>Địa chỉ cửa hàng:</span>
-            <span>Hà Nội • TP. Hồ Chí Minh • Đà Nẵng</span>
-          </div>
-        </div>
+        <h4>Hệ Thống Quản Trị</h4>
+        <p style="font-size: 13px; margin-bottom: 14px;">Dành riêng cho nhân viên và ban quản lý cửa hàng SmartStore.</p>
+        <a href="admin.html" class="btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; background: #1e293b; color: #38bdf8; border-color: #334155;">
+          <i class="fa-solid fa-screwdriver-wrench"></i> Đến Trang Admin Dashboard
+        </a>
       </div>
     </div>
 
-    <!-- Dòng bản quyền dưới cùng -->
     <div class="footer-bottom">
-      <div class="footer-bottom-inner">
-        <p>© 2026 SmartStore. Dự án môn học Lập trình JavaScript Nâng Cao (FPT Polytechnic).</p>
-        <p>Thành viên nhóm: Nhóm 3 người • Sinh viên thực hiện</p>
-      </div>
+      <div>© 2026 SmartStore. Dự án Assignment môn Lập trình JavaScript Nâng Cao - FPT Polytechnic.</div>
+      <div>Bảo mật SSL 256-bit | Chuẩn RESTful API json-server</div>
     </div>
   </footer>
 
-  <!-- ================= THÔNG BÁO TOAST ================= -->
-  <div id="toast" class="toast-notice"></div>
+  <!-- ==========================================================================
+       5. THÔNG BÁO TOAST THỜI GIAN THỰC (TOAST NOTIFICATION)
+       ========================================================================== -->
+  <div id="toast-container" class="toast-notice">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-message">Thông báo thành công</span>
+  </div>
 
-  <!-- File JavaScript User -->
+  <!-- Tệp mã JavaScript Logic Client -->
   <script src="js/app.js"></script>
 </body>
 </html>

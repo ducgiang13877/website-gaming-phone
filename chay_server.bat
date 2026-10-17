@@ -1,37 +1,32 @@
 @echo off
 chcp 65001 >nul
-title [Gaming Phone] SmartStore - Chay Web va API JSON Server cong 3000
-
-:: Chuyen thu muc lam viec ve dung thu muc chua file bat
-cd /d "%~dp0"
-
+title [SmartStore] Máy Chủ API & Website Bán Điện Thoại (Cổng 3000)
 echo =========================================================================
-echo    DỰ ÁN WEBSITE GAMING PHONE (SMARTSTORE) - JAVASCRIPT NÂNG CAO
+echo DỰ ÁN ASSIGNMENT: WEBSITE BÁN ĐIỆN THOẠI THÔNG MINH & GAMING (SMARTSTORE)
+echo Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
 echo =========================================================================
 echo.
-echo [1] Kiem tra va giai phong cong 3000 neu dang bi chiem dung...
+
+:: Tự động giải phóng cổng 3000 nếu có tiến trình cũ đang chiếm giữ
+echo [*] Đang kiểm tra và giải phóng cổng 3000...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
-    echo     -^> Dang giai phong cong 3000 tu tien trinh PID: %%a...
+    echo     -> Đang tắt tiến trình cũ chiếm cổng 3000 (PID: %%a)...
     taskkill /F /PID %%a >nul 2>&1
 )
 
 echo.
-echo [2] Thong tin dia chi truy cap ung dung:
-echo     - Trang Cua Hang (User):    http://localhost:3000
-echo     - Trang Quan Tri (Admin):   http://localhost:3000/admin.html
+echo [1] Đang tự động mở Website trên trình duyệt...
+echo     - Giao diện Khách hàng (Client): http://localhost:3000/index.html
+echo     - Giao diện Quản trị viên (Admin): http://localhost:3000/admin.html
 echo.
-echo [3] Tai khoan kiem thu he thong:
-echo     - Quan Tri Vien: admin@smartstore.vn / admin
-echo     - Khach Hang:    hung@gmail.com      / 123456
+echo [2] Tài khoản Đăng nhập Demo:
+echo     - Admin:      admin@smartstore.vn  /  Mật khẩu: admin
+echo     - Khách hàng: hung.nv@gmail.com    /  Mật khẩu: 123
 echo.
-echo [4] Dang tu dong mo trinh duyet...
-start http://localhost:3000
-
-echo.
-echo [5] Dang khoi dong JSON Server kiem Web Server tinh tren cong 3000...
-echo     (Moi thao tac CRUD dien ra truc tiep tren DOM, khong reload trang)
+echo [3] Đang khởi động JSON Server & Static Web Server tại cổng 3000...
 echo =========================================================================
 echo.
 
+start http://localhost:3000/index.html
 npx json-server -s . db.json -p 3000
 pause

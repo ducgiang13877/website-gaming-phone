@@ -1,379 +1,534 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartStore - Bảng Quản Trị Hệ Thống (Admin)</title>
-
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <!-- Toàn bộ CSS tách biệt trong styles/style.css -->
-  <link rel="stylesheet" href="styles/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStore - Bảng Quản Trị Quản Lý Cửa Hàng (Admin Dashboard)</title>
+  <!-- Google Fonts & FontAwesome 6 Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Stylesheet chính -->
+  <link rel="stylesheet" href="styles/style.css">
 </head>
+<body style="background-color: #f1f5f9;">
 
-<body class="admin-body">
-
-  <!-- ================= 1. MÀN HÌNH ĐĂNG NHẬP DÀNH RIÊNG CHO ADMIN ================= -->
-  <div id="admin-login-screen" class="admin-login-wrapper">
-    <div class="admin-login-card">
-      <div class="admin-login-header">
-        <i class="fas fa-shield-halved admin-login-icon"></i>
-        <h2>Đăng Nhập Quản Trị Viên</h2>
-        <p>Vui lòng đăng nhập bằng tài khoản Admin để truy cập hệ thống.</p>
+  <!-- ==========================================================================
+       1. MÀN HÌNH ĐĂNG NHẬP DÀNH RIÊNG QUẢN TRỊ VIÊN (NẾU CHƯA ĐĂNG NHẬP ADMIN)
+       ========================================================================== -->
+  <div id="admin-login-screen" style="display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px;">
+    <div class="auth-wrapper" style="box-shadow: var(--shadow-lg); border-top: 5px solid var(--secondary);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="width: 60px; height: 60px; background: var(--secondary); color: #38bdf8; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 12px;">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text);">Hệ Thống Quản Trị SmartStore</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Vui lòng đăng nhập bằng tài khoản Quản trị viên (Admin)</p>
       </div>
 
-      <form id="admin-login-form">
+      <form id="admin-login-form" onsubmit="return false;">
         <div class="form-group">
-          <label class="form-label" for="admin-email">Email Admin *</label>
-          <input type="email" id="admin-email" class="form-input" placeholder="
-          " required />
+          <label class="form-label" for="admin-login-email">Email Quản trị viên</label>
+          <input type="email" id="admin-login-email" class="form-input" value="admin@smartstore.vn" required>
         </div>
-
         <div class="form-group">
-          <label class="form-label" for="admin-password">Mật khẩu *</label>
-          <input type="password" id="admin-password" class="form-input" placeholder="Mật khẩu (mặc định: admin)" required />
+          <label class="form-label" for="admin-login-password">Mật khẩu</label>
+          <input type="password" id="admin-login-password" class="form-input" value="admin" required>
         </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
-          <i class="fas fa-arrow-right-to-bracket"></i> Đăng Nhập Quản Trị
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; background: var(--secondary);">
+          <i class="fa-solid fa-lock-open"></i> Đăng Nhập Quản Trị
         </button>
-
-        <div style="margin-top: 18px; text-align: center;">
-          <a href="index.html" style="font-size: 13px; color: var(--primary); text-decoration: none;">
-            <i class="fas fa-arrow-left"></i> Quay lại trang Cửa hàng (User)
-          </a>
-        </div>
       </form>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="index.html" style="font-size: 13px; color: var(--primary);">
+          <i class="fa-solid fa-arrow-left"></i> Quay lại Cửa Hàng (Client)
+        </a>
+      </div>
     </div>
   </div>
 
-  <!-- ================= 2. GIAO DIỆN CHÍNH QUẢN TRỊ (ADMIN DASHBOARD) ================= -->
+  <!-- ==========================================================================
+       2. MÀN HÌNH CHÍNH QUẢN TRỊ VIÊN (ADMIN DASHBOARD)
+       ========================================================================== -->
   <div id="admin-dashboard-screen" style="display: none;">
-    <!-- Header Admin -->
+    <!-- Thanh Header Admin -->
     <header class="site-header admin-navbar">
       <div class="header-inner">
-        <div class="brand-logo">
-          <i class="fas fa-gauge-high"></i> SmartStore Admin
+        <!-- Logo Admin -->
+        <div class="brand-logo" style="color: #ffffff;">
+          <i class="fa-solid fa-screwdriver-wrench" style="color: #38bdf8;"></i>
+          <span>Smart<span style="color: #38bdf8;">Admin</span></span>
+          <span class="logo-tag" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">CONTROL PANEL</span>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <span id="admin-logged-name" style="font-size: 14px; font-weight: 600; color: #ffffff;">Admin</span>
-          <a href="index.html" class="nav-item btn-view-shop-header" id="btn-admin-view-shop" title="Xem giao diện Cửa Hàng (Shop)">
-            <i class="fas fa-store"></i> <span>Xem Cửa Hàng (Shop)</span>
+        <!-- Điều Hướng Các Tab Admin -->
+        <nav class="main-nav">
+          <button class="nav-item active" data-admin-tab="products" id="tab-btn-products">
+            <i class="fa-solid fa-boxes-stacked"></i> Quản Lý Sản Phẩm
+          </button>
+          <button class="nav-item" data-admin-tab="customers" id="tab-btn-customers">
+            <i class="fa-solid fa-users"></i> Quản Lý Khách Hàng
+          </button>
+          <button class="nav-item" data-admin-tab="orders" id="tab-btn-orders">
+            <i class="fa-solid fa-clipboard-list"></i> Quản Lý Đơn Hàng
+          </button>
+        </nav>
+
+        <!-- Thao Tác Nhanh: Về Client & Đăng Xuất -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="index.html" class="btn-secondary btn-sm" style="background: rgba(255, 255, 255, 0.1); color: #ffffff; border-color: rgba(255, 255, 255, 0.2);">
+            <i class="fa-solid fa-store"></i> Xem Cửa Hàng
           </a>
-          <button class="nav-item" id="btn-admin-logout" style="color: #ffffff; background: var(--accent);">
-            <i class="fas fa-power-off"></i> Đăng xuất
+          <button class="btn-danger btn-sm" id="btn-admin-logout" title="Đăng xuất khỏi hệ thống quản trị">
+            <i class="fa-solid fa-power-off"></i> Đăng Xuất
           </button>
         </div>
       </div>
     </header>
 
-    <main class="app-container">
-      <div class="admin-header-bar">
-        <h2 class="admin-title"><i class="fas fa-chart-line"></i> Báo Cáo & Quản Trị Hệ Thống</h2>
-        <div>
-          <button type="button" class="btn-primary" id="btn-admin-add-product">
-            <i class="fas fa-plus"></i> Thêm sản phẩm mới
-          </button>
-          <button type="button" class="btn-secondary" id="btn-admin-add-category" style="margin-left: 8px;">
-            <i class="fas fa-folder-plus"></i> Thêm danh mục
-          </button>
-        </div>
-      </div>
+    <!-- Khung Nội Dung Admin -->
+    <main class="app-container" style="max-width: 1400px; padding-top: 24px;">
 
-      <!-- Thống kê doanh thu, số sản phẩm đã bán, tồn kho, đơn hàng (Yêu cầu Y2) -->
+      <!-- 4 Thẻ Thống Kê KPI Tự Động -->
       <div class="stat-cards-grid">
         <div class="stat-card">
-          <div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div>
+          <div class="stat-icon green">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </div>
           <div class="stat-info">
-            <h4>Tổng Doanh Thu</h4>
+            <h4>Doanh Thu Thực Tế</h4>
             <p id="stat-revenue">0 đ</p>
+            <span class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +18.5% tháng này</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon blue"><i class="fas fa-bag-shopping"></i></div>
+          <div class="stat-icon blue">
+            <i class="fa-solid fa-truck-ramp-box"></i>
+          </div>
           <div class="stat-info">
-            <h4>Sản Phẩm Đã Bán</h4>
-            <p id="stat-sold">0</p>
+            <h4>Tổng Máy Đã Bán</h4>
+            <p id="stat-sold-count">0 máy</p>
+            <span class="stat-card-trend up"><i class="fa-solid fa-bolt"></i> +32 đơn tuần này</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon orange"><i class="fas fa-boxes-stacked"></i></div>
+          <div class="stat-icon orange">
+            <i class="fa-solid fa-warehouse"></i>
+          </div>
           <div class="stat-info">
-            <h4>Tổng Hàng Tồn Kho</h4>
-            <p id="stat-stock">0</p>
+            <h4>Tổng Máy Tồn Kho</h4>
+            <p id="stat-stock-count">0 máy</p>
+            <span class="stat-card-trend" id="stat-stock-alert"><i class="fa-solid fa-boxes-stacked"></i> Ổn định</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon purple"><i class="fas fa-receipt"></i></div>
+          <div class="stat-icon purple">
+            <i class="fa-solid fa-cart-flatbed"></i>
+          </div>
           <div class="stat-info">
-            <h4>Tổng Đơn Hàng</h4>
-            <p id="stat-orders">0</p>
+            <h4>Tổng Số Đơn Hàng</h4>
+            <p id="stat-order-count">0 đơn</p>
+            <span class="stat-card-trend up"><i class="fa-solid fa-circle-check"></i> 96% thành công</span>
           </div>
         </div>
       </div>
 
-      <!-- Thanh chọn bảng dữ liệu -->
-      <div class="admin-nav-tabs">
-        <button type="button" class="admin-tab-btn active" data-subtab="admin-tab-products">Quản lý Sản phẩm</button>
-        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-categories">Quản lý Danh mục</button>
-        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-orders">Quản lý Đơn hàng</button>
-        <button type="button" class="admin-tab-btn" data-subtab="admin-tab-users">Quản lý Khách hàng</button>
-      </div>
+      <!-- ====================================================================
+           TAB 1: QUẢN LÝ SẢN PHẨM (CRUD + 1 ID + FILEREADER ẢNH + 10 SPECS)
+           ==================================================================== -->
+      <section id="admin-panel-products" class="admin-tab-content">
+        <!-- Toolbar Thao Tác Sản Phẩm -->
+        <div class="shop-toolbar" style="margin-bottom: 20px;">
+          <div class="toolbar-top-row">
+            <!-- Tìm Kiếm Tên Sản Phẩm -->
+            <div class="search-box-wrapper" style="max-width: 400px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="admin-search-product" class="search-input" placeholder="Tìm sản phẩm theo tên, chip, màn hình...">
+            </div>
 
-      <!-- Bảng 1: Quản lý Sản phẩm -->
-      <div id="admin-tab-products" class="admin-subpanel" style="display: block;">
-        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-          <input type="text" id="admin-search-product" class="search-input" placeholder="Tìm sản phẩm theo tên..." style="max-width: 280px;" />
-          <select id="admin-filter-category" class="select-box" style="max-width: 200px;">
-            <option value="">Tất cả thương hiệu</option>
-          </select>
-        </div>
-        <div class="admin-table-box">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th style="width: 50px;">ID</th>
-                <th style="width: 70px;">Ảnh</th>
-                <th>Tên điện thoại</th>
-                <th>Hãng</th>
-                <th>Giá bán</th>
-                <th>Tồn kho</th>
-                <th style="width: 140px;">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="admin-product-tbody">
-              <!-- Render từ JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <!-- Lọc Theo Danh Mục Hãng -->
+            <div class="filter-selects-group">
+              <select id="admin-filter-category" class="select-custom">
+                <option value="all">Tất cả thương hiệu (8 Hãng)</option>
+              </select>
 
-      <!-- Bảng 2: Quản lý Danh mục -->
-      <div id="admin-tab-categories" class="admin-subpanel" style="display: none;">
+              <!-- Nút Thêm Sản Phẩm Mới -->
+              <button class="btn-primary" id="btn-open-add-product">
+                <i class="fa-solid fa-circle-plus"></i> Thêm Sản Phẩm Mới
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng Dữ Liệu Danh Sách Sản Phẩm -->
         <div class="admin-table-box">
           <table class="admin-table">
             <thead>
               <tr>
                 <th style="width: 60px;">ID</th>
-                <th>Tên thương hiệu</th>
-                <th>Mã cha (parent_id)</th>
-                <th style="width: 140px;">Hành động</th>
+                <th style="width: 80px;">Hình ảnh</th>
+                <th>Tên điện thoại</th>
+                <th>Thương hiệu</th>
+                <th>Giá niêm yết</th>
+                <th>Tồn kho</th>
+                <th>Đã bán</th>
+                <th style="text-align: center; width: 140px;">Hành động</th>
               </tr>
             </thead>
-            <tbody id="admin-category-tbody">
-              <!-- Render từ JS -->
+            <tbody id="admin-products-tbody">
+              <!-- Render tự động 40 sản phẩm -->
             </tbody>
           </table>
         </div>
-      </div>
 
-      <!-- Bảng 3: Quản lý Đơn hàng -->
-      <div id="admin-tab-orders" class="admin-subpanel" style="display: none;">
-        <div class="admin-table-box">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th style="width: 110px;">Mã ĐH</th>
-                <th>Khách hàng</th>
-                <th>Số điện thoại</th>
-                <th>Tổng tiền</th>
-                <th>Ngày đặt</th>
-                <th style="width: 170px;">Trạng thái</th>
-                <th style="width: 130px;">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="admin-order-tbody">
-              <!-- Render từ JS -->
-            </tbody>
-          </table>
+        <!-- Phân trang danh sách sản phẩm admin -->
+        <div class="pagination-wrapper" id="admin-products-pagination" style="margin-top: 20px;">
+          <!-- Nút số trang -->
         </div>
-      </div>
+      </section>
 
-      <!-- Bảng 4: Quản lý Khách hàng (Lab 7.2) -->
-      <div id="admin-tab-users" class="admin-subpanel" style="display: none;">
-        <div class="admin-table-box">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th style="width: 50px;">STT</th>
-                <th>Tên người dùng</th>
-                <th>Email</th>
-                <th>Số điện thoại</th>
-                <th>Vai trò</th>
-                <th>Địa chỉ</th>
-                <th style="width: 100px;">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="admin-user-tbody">
-              <!-- Render từ JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-  </div>
+      <!-- ====================================================================
+           TAB 2: QUẢN LÝ KHÁCH HÀNG (CRUD NGƯỜI DÙNG)
+           ==================================================================== -->
+      <section id="admin-panel-customers" class="admin-tab-content" style="display: none;">
+        <!-- Toolbar Khách Hàng -->
+        <div class="shop-toolbar" style="margin-bottom: 20px;">
+          <div class="toolbar-top-row">
+            <div class="search-box-wrapper" style="max-width: 400px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="admin-search-customer" class="search-input" placeholder="Tìm khách hàng theo tên, email, SĐT...">
+            </div>
 
-  <!-- ================= MODAL THÊM / SỬA SẢN PHẨM ================= -->
-  <div id="product-modal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="product-modal-title" class="modal-title">Thêm Sản Phẩm Mới</h3>
-        <button type="button" class="btn-close-modal" id="btn-close-product-modal">&times;</button>
-      </div>
-
-      <form id="product-form">
-        <input type="hidden" id="form-product-id" />
-
-        <div class="form-group">
-          <label class="form-label" for="form-product-name">Tên sản phẩm *</label>
-          <input type="text" id="form-product-name" class="form-input" placeholder="Ví dụ: iPhone 15 Pro Max" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-product-cate">Thương hiệu *</label>
-          <select id="form-product-cate" class="form-input" required>
-            <!-- Render từ categories -->
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-product-price">Giá bán (VNĐ) *</label>
-          <input type="number" id="form-product-price" class="form-input" min="1000" step="1000" placeholder="Ví dụ: 29990000" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-product-qty">Số lượng tồn kho *</label>
-          <input type="number" id="form-product-qty" class="form-input" min="0" value="10" required />
-        </div>
-
-        <!-- Chọn ảnh từ máy tính bằng Choose File (FileReader) -->
-        <div class="form-group">
-          <label class="form-label" for="form-product-file">Chọn hình ảnh sản phẩm:</label>
-          <input type="file" id="form-product-file" class="form-input" accept="image/*" />
-          <div id="product-img-preview" class="img-preview-box" style="display: none;">
-            <img id="preview-product-thumb" src="" alt="Xem trước ảnh" class="img-preview-thumb" />
-            <span style="font-size: 13px; color: var(--text-muted);">Ảnh đã chọn</span>
+            <button class="btn-primary" id="btn-open-add-customer">
+              <i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng Mới
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="form-product-detail">Mô tả chi tiết</label>
-          <textarea id="form-product-detail" class="form-input" rows="3" placeholder="Nhập thông tin nổi bật..."></textarea>
+        <!-- Bảng Khách Hàng -->
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 60px;">ID</th>
+                <th>Họ và tên</th>
+                <th>Email</th>
+                <th>Số điện thoại</th>
+                <th>Địa chỉ</th>
+                <th>Vai trò</th>
+                <th style="text-align: center; width: 140px;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="admin-customers-tbody">
+              <!-- Render danh sách khách hàng từ db.json -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 3: QUẢN LÝ ĐƠN HÀNG (THEO DÕI & ĐỔI TRẠNG THÁI)
+           ==================================================================== -->
+      <section id="admin-panel-orders" class="admin-tab-content" style="display: none;">
+        <!-- Toolbar Đơn Hàng -->
+        <div class="shop-toolbar" style="margin-bottom: 20px;">
+          <div class="toolbar-top-row">
+            <div class="search-box-wrapper" style="max-width: 400px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="admin-search-order" class="search-input" placeholder="Tìm đơn hàng theo mã (#DH...) hoặc SĐT người nhận...">
+            </div>
+
+            <div class="filter-selects-group">
+              <select id="admin-filter-order-status" class="select-custom">
+                <option value="all">Tất cả trạng thái</option>
+                <option value="processing">Chờ xử lý (processing)</option>
+                <option value="shipping">Đang giao hàng (shipping)</option>
+                <option value="delivered">Đã giao thành công (delivered)</option>
+                <option value="cancelled">Đã hủy đơn (cancelled)</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="btn-cancel-product-modal">Hủy</button>
-          <button type="submit" class="btn-primary" id="btn-submit-product">Lưu sản phẩm</button>
+        <!-- Bảng Đơn Hàng -->
+        <div class="admin-table-box">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách nhận hàng</th>
+                <th>Số điện thoại</th>
+                <th>Ngày đặt</th>
+                <th>Tổng thanh toán</th>
+                <th>Phương thức</th>
+                <th>Trạng thái</th>
+                <th style="text-align: center; width: 110px;">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-tbody">
+              <!-- Render danh sách đơn hàng -->
+            </tbody>
+          </table>
         </div>
-      </form>
-    </div>
+      </section>
+
+    </main>
   </div>
 
-  <!-- ================= MODAL THÊM / SỬA DANH MỤC ================= -->
-  <div id="category-modal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 400px;">
+  <!-- ==========================================================================
+       3. CÁC MODAL HỘP THOẠI QUẢN TRỊ (POPUPS)
+       ========================================================================== -->
+
+  <!-- MODAL 1: THÊM / CHỈNH SỬA SẢN PHẨM (KÈM BẢNG 10 THÔNG SỐ SPECS) -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-box" style="max-width: 1000px;">
       <div class="modal-header">
-        <h3 id="category-modal-title" class="modal-title">Thêm Danh Mục Mới</h3>
-        <button type="button" class="btn-close-modal" id="btn-close-category-modal">&times;</button>
+        <h3 class="modal-title" id="product-modal-title">Thêm Sản Phẩm Mới</h3>
+        <button class="btn-close-modal" onclick="window.adminCtrl.closeModal('product-modal')">&times;</button>
       </div>
 
-      <form id="category-form">
-        <input type="hidden" id="form-category-id" />
+      <form id="product-form" onsubmit="return false;">
+        <input type="hidden" id="prod-id">
+        <div style="padding: 24px; max-height: 75vh; overflow-y: auto;">
 
-        <div class="form-group">
-          <label class="form-label" for="form-category-name">Tên danh mục *</label>
-          <input type="text" id="form-category-name" class="form-input" placeholder="Ví dụ: iPhone, Samsung..." required />
+          <div class="admin-modal-2col">
+            <!-- Cột 1: Thông tin cơ bản & Hình ảnh -->
+            <div>
+              <div class="admin-form-col-title">
+                <i class="fa-solid fa-cube"></i> 1. Thông Tin Cơ Bản & Giá Bán
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="prod-name">Tên điện thoại <span style="color: var(--accent);">*</span></label>
+                <input type="text" id="prod-name" class="form-input" placeholder="Ví dụ: iPhone 16 Pro Max 256GB" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="prod-category">Thương hiệu (8 Hãng) <span style="color: var(--accent);">*</span></label>
+                <select id="prod-category" class="select-custom" style="width: 100%;" required>
+                  <!-- Render 8 hãng -->
+                </select>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label" for="prod-price">Giá bán (VNĐ) <span style="color: var(--accent);">*</span></label>
+                  <input type="number" id="prod-price" class="form-input" placeholder="34990000" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="prod-stock">Số lượng kho <span style="color: var(--accent);">*</span></label>
+                  <input type="number" id="prod-stock" class="form-input" placeholder="25" min="0" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="prod-sold">Đã bán thực tế</label>
+                <input type="number" id="prod-sold" class="form-input" placeholder="0" min="0">
+              </div>
+
+              <!-- Quản lý ảnh (Hỗ trợ URL và Tải ảnh từ máy qua FileReader Base64) -->
+              <div class="form-group">
+                <label class="form-label">Hình ảnh đại diện <span style="color: var(--accent);">*</span></label>
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                  <input type="url" id="prod-image-url" class="form-input" placeholder="Đường link URL ảnh...">
+                  <label class="btn-secondary btn-sm" style="cursor: pointer; white-space: nowrap;">
+                    <i class="fa-solid fa-upload"></i> Chọn Ảnh
+                    <input type="file" id="prod-image-file" accept="image/*" style="display: none;">
+                  </label>
+                </div>
+                <!-- Xem trước ảnh -->
+                <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                  <img id="prod-image-preview" src="https://picsum.photos/120/120" alt="Preview" style="width: 50px; height: 50px; object-fit: contain; border-radius: 4px;">
+                  <span style="font-size: 11px; color: var(--text-muted);">Xem trước ảnh đại diện</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="prod-desc">Mô tả tóm tắt sản phẩm</label>
+                <textarea id="prod-desc" class="form-input" rows="2" placeholder="Nhập đoạn giới thiệu nổi bật về chiếc máy..."></textarea>
+              </div>
+            </div>
+
+            <!-- Cột 2: Bảng 10 Thông số kỹ thuật chuẩn CellphoneS -->
+            <div>
+              <div class="admin-form-col-title">
+                <i class="fa-solid fa-microchip"></i> 2. Cấu Hình 10 Thông Số Chuẩn CellphoneS
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                  <label class="form-label" for="spec-screen">1. Màn hình</label>
+                  <input type="text" id="spec-screen" class="form-input" placeholder="OLED 6.9' 120Hz">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-cpu">2. Vi xử lý (CPU)</label>
+                  <input type="text" id="spec-cpu" class="form-input" placeholder="Snapdragon 8 Elite">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-gpu">3. Đồ họa (GPU)</label>
+                  <input type="text" id="spec-gpu" class="form-input" placeholder="Adreno 830">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-ram">4. Dung lượng RAM</label>
+                  <input type="text" id="spec-ram" class="form-input" placeholder="12GB LPDDR5X">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-rom">5. Bộ nhớ (ROM)</label>
+                  <input type="text" id="spec-rom" class="form-input" placeholder="256GB UFS 4.0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-rear-cam">6. Camera sau</label>
+                  <input type="text" id="spec-rear-cam" class="form-input" placeholder="50MP + 50MP + 64MP">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-front-cam">7. Camera trước</label>
+                  <input type="text" id="spec-front-cam" class="form-input" placeholder="32MP Selfie">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-battery">8. Pin & Sạc nhanh</label>
+                  <input type="text" id="spec-battery" class="form-input" placeholder="6000 mAh, 80W">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-os">9. Hệ điều hành</label>
+                  <input type="text" id="spec-os" class="form-input" placeholder="Android 15">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="spec-special">10. Điểm đặc biệt</label>
+                  <input type="text" id="spec-special" class="form-input" placeholder="Phím trigger, IP68">
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="btn-cancel-category-modal">Hủy</button>
-          <button type="submit" class="btn-primary">Lưu danh mục</button>
+          <button type="button" class="btn-secondary" onclick="window.adminCtrl.closeModal('product-modal')">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" id="btn-save-product">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Sản Phẩm
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ================= MODAL XEM CHI TIẾT ĐƠN HÀNG (ADMIN) ================= -->
-  <div id="admin-order-modal" class="modal-overlay">
+  <!-- MODAL 2: THÊM / CHỈNH SỬA KHÁCH HÀNG -->
+  <div class="modal-overlay" id="customer-modal">
+    <div class="modal-box" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="customer-modal-title">Chỉnh Sửa Thông Tin Khách Hàng</h3>
+        <button class="btn-close-modal" onclick="window.adminCtrl.closeModal('customer-modal')">&times;</button>
+      </div>
+
+      <form id="customer-form" onsubmit="return false;">
+        <input type="hidden" id="cust-id">
+        <div style="padding: 20px;">
+          <div class="form-group">
+            <label class="form-label" for="cust-name">Họ và tên <span style="color: var(--accent);">*</span></label>
+            <input type="text" id="cust-name" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-email">Email <span style="color: var(--accent);">*</span></label>
+            <input type="email" id="cust-email" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-phone">Số điện thoại <span style="color: var(--accent);">*</span></label>
+            <input type="tel" id="cust-phone" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-address">Địa chỉ</label>
+            <textarea id="cust-address" class="form-input" rows="2"></textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="cust-role">Phân quyền</label>
+              <select id="cust-role" class="select-custom" style="width: 100%;">
+                <option value="user">Khách hàng thông thường (user)</option>
+                <option value="admin">Quản trị viên (admin)</option>
+              </select>
+              <small id="cust-role-hint" style="display: none; color: #ef4444; font-size: 11px; margin-top: 4px; font-weight: 600;">
+                <i class="fa-solid fa-lock"></i> Tài khoản Admin: Không thể thay đổi vai trò
+              </small>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cust-password">Mật khẩu mới (Nếu đổi)</label>
+              <input type="password" id="cust-password" class="form-input" placeholder="Để trống nếu giữ nguyên">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="window.adminCtrl.closeModal('customer-modal')">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" id="btn-save-customer">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Khách Hàng
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: XEM CHI TIẾT & CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG -->
+  <div class="modal-overlay" id="order-detail-modal">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
-        <h3 id="admin-order-modal-title" class="modal-title">Chi Tiết Đơn Hàng</h3>
-        <button type="button" class="btn-close-modal" id="btn-close-order-modal">&times;</button>
-      </div>
-      <div id="admin-order-detail-content" style="margin-top: 15px;">
-        <!-- Dữ liệu chi tiết đơn hàng đổ từ JavaScript -->
-      </div>
-      <div class="modal-footer" style="margin-top: 20px;">
-        <button type="button" class="btn-secondary" id="btn-close-order-detail">Đóng Cửa Sổ</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL CHỈNH SỬA THÔNG TIN KHÁCH HÀNG (ADMIN) ================= -->
-  <div id="user-modal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 500px;">
-      <div class="modal-header">
-        <h3 id="user-modal-title" class="modal-title">Chỉnh Sửa Thông Tin Khách Hàng</h3>
-        <button type="button" class="btn-close-modal" id="btn-close-user-modal">&times;</button>
+        <h3 class="modal-title" id="order-modal-title">Chi Tiết Đơn Hàng #DH883921094</h3>
+        <button class="btn-close-modal" onclick="window.adminCtrl.closeModal('order-detail-modal')">&times;</button>
       </div>
 
-      <form id="user-form">
-        <input type="hidden" id="form-user-id" />
+      <div style="padding: 20px;" id="order-modal-body">
+        <!-- Render động thông tin đơn hàng và danh sách món -->
+      </div>
 
-        <div class="form-group">
-          <label class="form-label" for="form-user-name">Họ và tên *</label>
-          <input type="text" id="form-user-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-user-email">Email *</label>
-          <input type="email" id="form-user-email" class="form-input" placeholder="user@example.com" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-user-phone">Số điện thoại *</label>
-          <input type="tel" id="form-user-phone" class="form-input" placeholder="0988888888" required />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-user-role">Vai trò tài khoản *</label>
-          <select id="form-user-role" class="form-input" required>
-            <option value="user">Khách hàng (User)</option>
-            <option value="admin">Quản trị viên (Admin)</option>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; font-weight: 700;">Cập nhật trạng thái:</span>
+          <select id="order-status-update-select" class="select-custom" style="padding: 6px 10px; font-size: 13px;">
+            <option value="processing">Chờ xử lý</option>
+            <option value="shipping">Đang giao hàng</option>
+            <option value="delivered">Đã giao thành công</option>
+            <option value="cancelled">Đã hủy đơn</option>
           </select>
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-user-address">Địa chỉ liên hệ</label>
-          <input type="text" id="form-user-address" class="form-input" placeholder="Ví dụ: Cầu Giấy, Hà Nội" />
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="window.adminCtrl.closeModal('order-detail-modal')">Đóng</button>
+          <button type="button" class="btn-primary" id="btn-save-order-status">
+            <i class="fa-solid fa-check"></i> Lưu Trạng Thái
+          </button>
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="form-user-password">Mật khẩu mới (Tùy chọn)</label>
-          <input type="password" id="form-user-password" class="form-input" placeholder="Để trống nếu giữ nguyên mật khẩu cũ" />
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" id="btn-cancel-user-modal">Hủy</button>
-          <button type="submit" class="btn-primary" id="btn-submit-user">Lưu Thay Đổi</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  <!-- ================= FOOTER ADMIN ================= -->
-  <footer class="admin-footer">
-    <div class="footer-bottom-inner" style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 13px; flex-wrap: wrap; gap: 10px;">
-      <p>© 2026 SmartStore Admin Panel • Hệ thống quản trị cơ sở dữ liệu điện thoại thông minh.</p>
-      <p>Nhóm 3 người • Lập trình JavaScript Nâng Cao</p>
+  <!-- MODAL 4: HỘP THOẠI XÁC NHẬN XÓA AN TOÀN -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box" style="max-width: 440px; text-align: center; padding: 24px;">
+      <div style="width: 54px; height: 54px; background: #fee2e2; color: var(--accent); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">Xác Nhận Xóa Dữ Liệu</h3>
+      <p id="confirm-modal-message" style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">
+        Bạn có chắc chắn muốn xóa mục này khỏi cơ sở dữ liệu không? Thao tác này không thể hoàn tác!
+      </p>
+      <div style="display: flex; justify-content: center; gap: 12px;">
+        <button class="btn-secondary" onclick="window.adminCtrl.closeModal('confirm-modal')">Hủy Bỏ</button>
+        <button class="btn-danger" id="btn-confirm-delete-action">
+          <i class="fa-solid fa-trash-can"></i> Đồng Ý Xóa
+        </button>
+      </div>
     </div>
-  </footer>
+  </div>
 
-  <!-- Toast thông báo -->
-  <div id="toast" class="toast-notice"></div>
+  <!-- ==========================================================================
+       4. THÔNG BÁO TOAST THỜI GIAN THỰC (TOAST NOTIFICATION)
+       ========================================================================== -->
+  <div id="toast-container" class="toast-notice">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-message">Thông báo hệ thống</span>
+  </div>
 
-  <!-- File JavaScript riêng cho Admin -->
+  <!-- Tệp mã JavaScript Quản Trị Admin -->
   <script src="js/admin.js"></script>
 </body>
 </html>

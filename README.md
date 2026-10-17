@@ -1,94 +1,104 @@
-# DỰ ÁN ASSIGNMENT - WEBSITE GAMING PHONE (SMARTSTORE)
-**Môn học:** Lập trình JavaScript Nâng Cao (WEB2064)  
-**Tên dự án:** Website Bán Điện Thoại Thông Minh Gaming (SmartStore)  
-**Nhóm thực hiện:** 3 thành viên  
+# 📱 SMARTSTORE - HỆ THỐNG BÁN ĐIỆN THOẠI THÔNG MINH & GAMING PHONE
+
+> **ĐỒ ÁN ASSIGNMENT MÔN HỌC:** LẬP TRÌNH JAVASCRIPT NÂNG CAO  
+> **ĐƠN VỊ ĐÀO TẠO:** TRƯỜNG CAO ĐẲNG FPT POLYTECHNIC  
+> **CÔNG NGHỆ CHÍNH:** HTML5, CSS3 (Cyber Gaming System), JavaScript ES6+ (Async/Await, Fetch API, LocalStorage, SessionStorage, FileReader), RESTful API (json-server).
 
 ---
 
-## 👥 1. BẢNG PHÂN CHIA CÔNG VIỆC CHO NHÓM 3 NGƯỜI
+## 🌟 1. GIỚI THIỆU TỔNG QUAN HỆ THỐNG
 
-| Thành viên | Vai trò & Trách nhiệm chính | Các chức năng cụ thể phụ trách |
-| :--- | :--- | :--- |
-| **Thành viên 1** | **Front-End & Hiển thị Sản phẩm (Client Shop)** | - Thiết kế cấu trúc cơ sở dữ liệu `categories` & `products` trong `db.json`.<br>- Hiển thị danh sách điện thoại dạng lưới thẻ sản phẩm (Product Grid) gọn gàng, đẹp mắt.<br>- Phân trang sản phẩm mượt mà (8 sản phẩm / trang).<br>- Bộ lọc đa năng: Tìm kiếm theo tên (real-time input), lọc theo thương hiệu, lọc theo 3 khoảng giá.<br>- Modal xem chi tiết cấu hình điện thoại (ảnh, thương hiệu, giá, tồn kho, mô tả). |
-| **Thành viên 2** | **Giỏ hàng, Thanh toán, Đơn hàng & User Profile** | - Logic giỏ hàng: Thêm vào giỏ, Mua ngay, tăng/giảm số lượng (kiểm tra tồn kho tối đa), xóa món hàng.<br>- Tính toán tạm tính, miễn phí vận chuyển và tổng tiền thanh toán.<br>- **Sinh mã đơn hàng chuẩn 11 ký tự**: Bắt đầu bằng `#` kết hợp chữ in hoa (A-Z) và số (0-9) ngẫu nhiên.<br>- Đặt hàng gửi lên `orders` trên JSON-Server và **tự động trừ số lượng tồn kho** (`PATCH /products/:id`).<br>- Màn hình cảm ơn và xem lịch sử đơn hàng của người dùng.<br>- Quản lý tài khoản: Đăng nhập, Đăng ký, Đổi mật khẩu và **chức năng User tự sửa thông tin cá nhân** (Họ tên, SĐT, Địa chỉ).<br>- **Tự động chuyển hướng Admin**: Đăng nhập tài khoản Admin tự động chuyển sang trang quản trị `admin.html`. |
-| **Thành viên 3** | **Quản trị Hệ thống & Thống kê KPI (Admin Dashboard)** | - Xây dựng trang Admin độc lập quản lý toàn diện hệ thống theo kiến trúc SPA (Single Page App).<br>- **Cơ chế CRUD không reload trang**: Mọi thao tác Thêm, Sửa, Xóa sản phẩm/danh mục/đơn hàng đều cập nhật trực tiếp trên DOM, bảo toàn tab đang chọn bằng `sessionStorage`.<br>- **Thuật toán tự động tăng ID sản phẩm (+1)**: Tự động tính toán ID kế tiếp (`taoIdSanPhamMoi()`) khi thêm mới.<br>- Tích hợp tải ảnh sản phẩm từ máy tính (`FileReader` Base64) có xem trước.<br>- Quản lý danh mục thương hiệu (có kiểm tra ràng buộc toàn vẹn dữ liệu khi xóa).<br>- Quản lý đơn hàng: Cập nhật trực tiếp 4 trạng thái ("Đang xử lý", "Đang giao hàng", "Đã giao hàng", "Đã hủy"), xem Modal chi tiết các món hàng khách mua.<br>- Thống kê KPI tự động: Doanh thu thực tế, Tổng sản phẩm đã bán, Hàng tồn kho và Tổng đơn hàng.<br>- Thanh điều hướng chuyển đổi 2 chiều mượt mà giữa Shop (`index.html`) và Quản trị (`admin.html`). |
+**SmartStore** là giải pháp website thương mại điện tử chuyên biệt dành cho thị trường điện thoại thông minh và dòng gaming phone đỉnh cao. Hệ thống được xây dựng trên kiến trúc **Single Page Application (SPA)** mượt mà, kết hợp với bảng quản trị **Admin Dashboard** chuyên nghiệp và cơ sở dữ liệu giả lập chuẩn RESTful API qua `json-server`.
 
----
-
-## 🛠️ 2. CÔNG NGHỆ VÀ KỸ THUẬT ÁP DỤNG
-- **Ngôn ngữ:** HTML5, CSS3 hiện đại (Flexbox, CSS Grid, Responsive Design), Vanilla JavaScript (ES6+ chuẩn mực).
-- **Kỹ thuật JavaScript nâng cao nổi bật:**
-  - `fetch()` kết hợp `async/await` giao tiếp bất đồng bộ với REST API chuẩn RESTful.
-  - Kiến trúc ứng dụng đơn trang (SPA): Điều hướng các view và thao tác CRUD mượt mà không reload trang.
-  - `FileReader` API: Đọc tệp hình ảnh từ máy tính chuyển thành chuỗi Base64 lưu trực tiếp vào database.
-  - `localStorage` & `sessionStorage`: Lưu giỏ hàng, thông tin phiên đăng nhập và ghi nhớ tab quản trị đang hoạt động.
-  - Các hàm xử lý mảng nâng cao: `map()`, `filter()`, `find()`, `reduce()`, `some()`, `slice()`.
-  - Hàm định dạng tiền tệ quốc tế `Intl.NumberFormat('vi-VN')`.
-  - Cơ chế phòng vệ chống XSS bằng hàm mã hóa HTML entities.
-  - Xử lý lỗi hình ảnh (`onerror`) tự động thế ảnh placeholder dự phòng chống vỡ giao diện.
-- **Backend / Mock API:** `json-server` (Cung cấp đầy đủ REST endpoints GET, POST, PUT, PATCH, DELETE trên cổng `3000`).
-- **Biểu tượng:** Font Awesome 6.5.1.
+### 🚀 Điểm Nhấn Kiến Trúc & Công Nghệ
+- **100% Thuần JavaScript ES6+**: Sử dụng `fetch`, `async/await`, `Intl.NumberFormat`, `FileReader API` để tải ảnh trực tiếp từ máy tính dạng Base64.
+- **Kiến trúc SPA 12 Phân Vùng Giao Diện**: Chuyển trang tức thì không giật lag, giữ trọn vẹn trạng thái ứng dụng.
+- **Chuẩn Hóa 10 Thông Số Kỹ Thuật (Specs)**: Xây dựng chuẩn theo thông số kỹ thuật của Thế Giới Di Động & CellphoneS phục vụ chức năng Xem Chi Tiết và So Sánh 3 Máy cùng lúc.
+- **Tự Động Trừ Tồn Kho Khi Đặt Hàng**: Áp dụng phương thức `PATCH` lên RESTful API để trừ số lượng trong kho và cộng dồn số lượng máy đã bán.
+- **Tự Tăng ID An Toàn (+1 ID)**: Thuật toán `Math.max(...ids) + 1` loại bỏ hoàn toàn nguy cơ trùng lặp mã sản phẩm/khách hàng.
 
 ---
 
-## 📁 3. CẤU TRÚC THƯ MỤC DỰ ÁN
+## 🏷️ 2. QUY MÔ DỮ LIỆU ĐÃ TÍCH HỢP SẴN (`db.json`)
+
+Hệ thống được nạp sẵn toàn bộ dữ liệu mẫu thực tế bao gồm **8 thương hiệu hàng đầu thế giới** và **40 sản phẩm chi tiết**:
+
+| STT | Tên Thương Hiệu | ID Danh Mục | Số Lượng Máy | Dòng Máy Tiêu Biểu |
+| :---: | :--- | :---: | :---: | :--- |
+| **1** | **Apple (iPhone)** | `1` | 5 máy | iPhone 16 Pro Max, iPhone 16, iPhone 15 Pro, iPhone 15 Plus, iPhone 13 |
+| **2** | **Samsung Galaxy** | `2` | 5 máy | Galaxy S25 Ultra, Z Fold6, Z Flip6, S24 FE, Galaxy A55 |
+| **3** | **Xiaomi & POCO** | `3` | 5 máy | Xiaomi 15 Pro Leica, 14T Pro, Redmi Note 14 Pro+, POCO F6 Pro, POCO X6 Pro |
+| **4** | **OPPO** | `4` | 5 máy | Find X8 Pro, Find N3 Flip, Reno 12 Pro, Reno 12F, OPPO A79 |
+| **5** | **vivo** | `5` | 5 máy | vivo X100 Pro ZEISS, V40 5G, V40 Lite, vivo Y200, vivo Y100 |
+| **6** | **realme** | `6` | 5 máy | realme GT 7 Pro, realme 13 Pro+, realme 12+, realme C67, realme C65 |
+| **7** | **ASUS ROG Phone** | `7` | 5 máy | ROG Phone 9 Pro, ROG Phone 8 Pro, ROG Phone 8, ROG Phone 7 Ultimate, ROG 7 |
+| **8** | **Nubia RedMagic** | `8` | 5 máy | RedMagic 10 Pro+, RedMagic 9S Pro, RedMagic 9 Pro, RedMagic 8S Pro, Nubia Neo 2 |
+
+---
+
+## 📑 3. DANH SÁCH 13 PHÂN VÙNG GIAO DIỆN & TÍNH NĂNG
+
+### Phía Người Dùng (Client SPA - `index.html`)
+1. **Trang Chủ (`#view-home`)**: Banner Cyber Gaming, 4 cam kết vàng, danh mục 8 hãng dạng pills cuộn ngang, khối Gaming Phone nổi bật, khối Điện thoại bán chạy nhất.
+2. **Cửa Hàng (`#view-shop`)**: Thanh tìm kiếm đa năng (tên máy, chip, mô tả), bộ lọc 8 hãng, lọc 4 khoảng giá, sắp xếp theo giá & tên, phân trang 8 sản phẩm/trang.
+3. **Xem Chi Tiết Sản Phẩm (`#view-detail`)**: Ảnh độ phân giải cao, giá bán, bảng cấu hình chi tiết 10 thông số (Màn hình, CPU, GPU, RAM, ROM, Camera sau, Camera trước, Pin, OS, Tính năng đặc biệt), nút tăng giảm số lượng, Thêm vào giỏ, Mua ngay, khối sản phẩm liên quan cùng hãng.
+4. **Giỏ Hàng (`#view-cart`)**: Bảng danh sách sản phẩm, tăng giảm số lượng (tự khống chế không vượt quá tồn kho), xóa từng món, nút dọn sạch giỏ hàng, bảng tính tạm tính và miễn phí ship.
+5. **Thanh Toán & Đặt Hàng (`#view-checkout`)**: Nhập thông tin giao hàng (tự động điền nếu đã đăng nhập), 3 hình thức thanh toán (COD, VietQR, Ví điện tử), xác thực form chặt chẽ.
+6. **Màn Hình Cảm Ơn (`#view-thankyou`)**: Sinh mã đơn hàng chuẩn mực 11 ký tự (Ví dụ `#DH883921094`), tiến trình trạng thái 4 bước (Đã đặt -> Chuẩn bị -> Đang giao -> Hoàn tất).
+7. **Đăng Nhập & Đăng Ký (`#view-auth`)**: Chuyển đổi tab linh hoạt, đăng ký lưu vào CSDL, đăng nhập tự động nhận diện quyền Quản trị viên để chuyển hướng.
+8. **Thông Tin Cá Nhân (`#view-profile`)**: Khách hàng tự do chỉnh sửa Họ tên, SĐT, Địa chỉ, Mật khẩu mới, xem lại lịch sử các đơn hàng đã đặt kèm trạng thái.
+9. **Tra Cứu Đơn Hàng (`#view-tracking`)**: Tra cứu tức thì theo mã đơn hàng hoặc số điện thoại, hiển thị sơ đồ timeline tiến độ giao hàng.
+10. **So Sánh Điện Thoại (`#view-compare`)**: Cho phép chọn tối đa 3 mẫu máy bất kỳ từ cửa hàng để đưa lên bàn cân đối chiếu trực tiếp 10 thông số kỹ thuật.
+11. **Giới Thiệu (`#view-about`)**: Giới thiệu sứ mệnh, hệ sinh thái gaming phone và thông tin đồ án.
+12. **Liên Hệ (`#view-contact`)**: Thông tin trụ sở, showroom, số hotline và form gửi tin nhắn có phản hồi thông báo toast.
+
+### Phía Quản Trị Viên (Admin Dashboard - `admin.html`)
+13. **Trang Quản Trị Admin**:
+    - **Bảo mật truy cập**: Chặn người dùng thường, chỉ tài khoản có role `admin` mới được vào.
+    - **4 Thẻ Thống Kê KPI Tự Động**: Doanh thu thực tế, Tổng số máy đã bán, Tổng số máy tồn kho, Tổng số đơn hàng.
+    - **Quản lý Sản phẩm (CRUD)**: Thêm mới (+1 ID tự tăng), chọn ảnh từ máy qua `FileReader` sang Base64 hoặc dán URL, nhập đủ 10 thông số kỹ thuật, chỉnh sửa, xóa có hộp thoại xác nhận.
+    - **Quản lý Khách hàng (CRUD)**: Xem danh sách, thêm khách hàng mới, sửa thông tin, phân quyền Admin/User, xóa tài khoản.
+    - **Quản lý Đơn hàng**: Xem danh sách đơn, xem chi tiết từng đơn hàng (các sản phẩm đặt mua, số lượng, địa chỉ giao), cập nhật 4 trạng thái (Chờ xử lý, Đang giao, Đã giao, Đã hủy).
+
+---
+
+## ⚡ 4. HƯỚNG DẪN KHỞI CHẠY HỆ THỐNG
+
+### Cách 1: Khởi Chạy Tự Động 1-Click (Khuyên Dùng)
+Chỉ cần nhấp đúp chuột vào tệp:
+```plaintext
+chay_server.bat
 ```
-website-gaming-phone/
-├── chay_server.bat       # Phím tắt 1-click khởi động JSON Server cổng 3000 & mở ứng dụng
-├── index.html            # Giao diện Cửa hàng dành cho Khách hàng (Client Shop)
-├── admin.html            # Giao diện Bảng điều khiển Quản trị viên (Admin Dashboard)
-├── db.json               # Cơ sở dữ liệu Mock API (products, categories, orders, users)
-├── README.md             # Tài liệu mô tả chức năng, phân công & hướng dẫn chạy dự án
-├── .vscode/
-│   └── settings.json     # Cấu hình VS Code Live Server bỏ qua db.json (chống reload khi CRUD)
-├── styles/
-│   └── style.css         # Toàn bộ CSS phong cách Gaming hiện đại, Responsive
-└── js/
-    ├── app.js            # Logic Client (REST API, giỏ hàng, đặt hàng, phân trang, auth)
-    └── admin.js          # Logic Admin (CRUD sản phẩm/danh mục/đơn hàng, KPI, SPA tab)
-```
+*Tệp batch sẽ tự động quét và giải phóng cổng 3000 nếu đang bị ứng dụng khác chiếm giữ, sau đó tự động mở trình duyệt web và khởi động máy chủ API.*
 
----
-
-## 🚀 4. HƯỚNG DẪN CÀI ĐẶT VÀ KHỞI CHẠY DỰ ÁN
-
-### Cách 1: Khởi động 1-Click với file `chay_server.bat` (Khuyên dùng nhất ⭐)
-1. Nhấp đúp chuột vào file **`chay_server.bat`** trong thư mục `website-gaming-phone`.
-2. Tệp batch sẽ tự động:
-   - Giải phóng cổng `3000` nếu có tiến trình cũ đang chiếm giữ.
-   - Khởi động máy chủ `json-server` phục vụ đồng thời cả REST API và Web tĩnh (`-s .`).
-   - Tự động mở trình duyệt web tại địa chỉ: **`http://localhost:3000`**.
-3. **Ưu điểm vượt trội:** Khi chạy trực tiếp qua `http://localhost:3000`, mọi thao tác CRUD (Thêm, Sửa, Xóa, Đổi trạng thái) đều diễn ra tức thì, **hoàn toàn không bị reload trang**.
-
-### Cách 2: Khởi động bằng Terminal / PowerShell
-Mở cửa sổ dòng lệnh tại thư mục `website-gaming-phone` và chạy lệnh sau:
+### Cách 2: Khởi Chạy Bằng Dòng Lệnh Terminal / PowerShell
+Tại thư mục dự án `website-gaming-phone`, thực hiện lệnh:
 ```bash
 npx json-server -s . db.json -p 3000
 ```
-Sau đó truy cập trình duyệt tại:
-- **Trang Cửa Hàng (Khách hàng):** `http://localhost:3000` (hoặc `http://localhost:3000/index.html`)
-- **Trang Quản Trị (Admin):** `http://localhost:3000/admin.html`
-
-> [!NOTE]
-> **Lưu ý khi mở bằng tiện ích VS Code Live Server (cổng 5500):**  
-> Dự án đã được cấu hình sẵn tệp `.vscode/settings.json` chứa khai báo `"liveServer.settings.ignoreFiles": ["**/db.json"]`. Nhờ đó, tiện ích Live Server sẽ không tự động reload trang mỗi khi JSON Server ghi dữ liệu vào tệp `db.json`.
+Sau đó truy cập:
+- **Giao diện Cửa hàng (Client):** [http://localhost:3000/index.html](http://localhost:3000/index.html)
+- **Giao diện Quản trị viên (Admin):** [http://localhost:3000/admin.html](http://localhost:3000/admin.html)
 
 ---
 
-## 🔐 5. TÀI KHOẢN KIỂM THỬ HỆ THỐNG
+## 🔑 5. DANH SÁCH TÀI KHOẢN TRẢI NGHIỆM DEMO
 
-| Vai trò | Email đăng nhập | Mật khẩu | Quyền hạn & Chức năng |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | `admin@smartstore.vn` | `admin` | - Đăng nhập tại `index.html` tự động chuyển hướng sang `admin.html`.<br>- Toàn quyền quản trị CRUD sản phẩm, danh mục, đổi trạng thái đơn hàng, theo dõi báo cáo doanh thu KPI. |
-| **Khách hàng (Customer)** | `hung@gmail.com` | `123456` | - Xem sản phẩm, lọc theo giá/hãng, thêm vào giỏ, đặt hàng, xem lịch sử đơn hàng.<br>- Tự chỉnh sửa thông tin cá nhân và đổi mật khẩu trong trang cá nhân. |
-| **Khách vãng lai** | *(Không cần đăng nhập)* | *(Trống)* | - Xem sản phẩm, tìm kiếm, xem chi tiết và thêm vào giỏ hàng bình thường. |
+| Vai Trò | Email Đăng Nhập | Mật Khẩu | Quyền Hạn |
+| :--- | :--- | :---: | :--- |
+| **Quản Trị Viên (Admin)** | `admin@smartstore.vn` | `admin` | Truy cập toàn bộ Admin Dashboard, CRUD Sản phẩm, Khách hàng, Đơn hàng. |
+| **Khách Hàng (User 1)** | `hung.nv@gmail.com` | `123` | Mua hàng, sửa thông tin cá nhân, tra cứu đơn, so sánh điện thoại. |
+| **Khách Hàng (User 2)** | `mai.tran@gmail.com` | `123` | Mua hàng, sửa thông tin cá nhân, kiểm tra lịch sử mua hàng. |
 
 ---
 
-## ✨ 6. CÁC ĐIỂM SÁNG NÂNG CAO ĐÃ HOÀN THIỆN
-1. **Tự động tăng ID (+1) cho sản phẩm mới**: Hàm `taoIdSanPhamMoi()` tự động tính `Math.max()` của danh sách ID hiện có rồi cộng thêm 1, giúp mã sản phẩm tăng dần liên tục và chuẩn mực theo chuẩn REST API.
-2. **Mã đơn hàng chuẩn 11 ký tự**: Hàm `taoMaDonHang()` tạo mã đơn hàng dạng `#XXXXXXXXXX` (1 ký tự `#` ở đầu + 10 ký tự gồm chữ IN HOA và số ngẫu nhiên), loại bỏ hoàn toàn ký tự đặc biệt.
-3. **Cơ chế chuyển đổi 2 chiều Shop ↔ Admin mượt mà**:
-   - Khi Admin ở `admin.html`: Nút `[🏪 Xem Cửa Hàng (Shop)]` mở trang shop ngay trên cùng cửa sổ.
-   - Khi Admin ở `index.html`: Nút `[🛡️ Trang Quản Trị]` màu vàng hổ phách nổi bật trên thanh Header cho phép quay lại trang quản trị bất cứ lúc nào.
-4. **Trải nghiệm Single Page Application (SPA)**: Các thao tác Thêm, Sửa, Xóa đều thao tác trực tiếp trên DOM mà không load lại trang, giữ nguyên vị trí cuộn và ghi nhớ tab đang làm việc bằng `sessionStorage`.
+## 👥 6. BẢNG PHÂN CHIA CÔNG VIỆC NHÓM (CHUẨN BÁO CÁO ASM)
+
+| Thành Viên | Nhiệm Vụ Đảm Nhận | Tỷ Lệ Hoàn Thành |
+| :--- | :--- | :---: |
+| **Thành viên 1** (Trưởng nhóm) | Thiết kế CSDL `db.json` (40 sản phẩm, 8 danh mục), viết logic Admin Dashboard (`admin.html` + `js/admin.js`), thuật toán +1 ID và FileReader Base64. | **100%** |
+| **Thành viên 2** | Xây dựng giao diện CSS toàn cục (`styles/style.css`), thiết kế bố cục Client SPA (`index.html`), phân vùng Giỏ hàng, Đặt hàng, Màn hình Cảm ơn. | **100%** |
+| **Thành viên 3** | Viết mã nguồn Client logic (`js/app.js`), tích hợp Fetch API, bộ lọc 8 hãng, tìm kiếm, phân trang, thuật toán trừ kho và bảng so sánh 10 thông số. | **100%** |
+
+---
+*Bản quyền © 2026 SmartStore. Dự án Assignment môn Lập trình JavaScript Nâng Cao - FPT Polytechnic.*
