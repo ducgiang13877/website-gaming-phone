@@ -1122,30 +1122,6 @@
       "status": "delivered",
       "createdAt": "2026-10-16T14:49:21.625Z",
       "id": "YpnvFcMQiyk"
-    },
-    {
-      "orderCode": "#DH204679942",
-      "userId": "1",
-      "customerName": "Quản Trị Viên (Admin)",
-      "customerPhone": "0988888888",
-      "customerEmail": "admin@smartstore.vn",
-      "customerAddress": "Hà Nội",
-      "note": "",
-      "paymentMethod": "COD",
-      "items": [
-        {
-          "id": "1",
-          "name": "iPhone 16 Pro Max 256GB",
-          "price": 34990000,
-          "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max.png",
-          "quantity": 1,
-          "stock": 15
-        }
-      ],
-      "totalAmount": 34990000,
-      "status": "delivered",
-      "createdAt": "2026-10-17T02:37:59.942Z",
-      "id": "8zsQ9r2mOzg"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

@@ -741,6 +741,18 @@ async function thucHienXoa() {
  * ⚙️ Hàm có sẵn: fetch (PATCH), Array.prototype.findIndex
  */
 async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
+  const donCu = dsDonHang.find(d => d.id == idDon);
+  if (!donCu) return;
+  const trangThaiCu = donCu.status;
+
+  if (trangThaiCu === trangThaiMoi) return;
+
+  // 🛡️ FINITE STATE MACHINE (FSM): Cảnh báo nếu chuyển đổi từ trạng thái kết thúc (cancelled)
+  if (trangThaiCu === 'cancelled' && !confirm('Đơn hàng này đã bị HỦY trước đó. Bạn có chắc chắn muốn kích hoạt lại đơn hàng và trừ lại tồn kho không?')) {
+    if (selectEl) selectEl.value = trangThaiCu;
+    return;
+  }
+
   try {
     const res = await fetch(`${API_URL}/orders/${idDon}`, {
       method: 'PATCH',
@@ -751,6 +763,51 @@ async function doiTrangThaiDonHangTrucTiep(idDon, trangThaiMoi, selectEl) {
 
     const viTri = dsDonHang.findIndex(d => d.id == idDon);
     if (viTri > -1) dsDonHang[viTri] = donCapNhat;
+
+    // 📦 ĐỒNG BỘ TỒN KHO THEO CHUẨN TMĐT:
+    // Trường hợp 1: Chuyển sang "cancelled" -> Tự động hoàn trả tồn kho và giảm đã bán
+    if (trangThaiCu !== 'cancelled' && trangThaiMoi === 'cancelled') {
+      const restorePromises = (donCapNhat.items || []).map(async item => {
+        const sp = dsSanPham.find(p => p.id == item.id);
+        if (sp) {
+          const khoMoi = (Number(sp.stock) || 0) + (Number(item.quantity) || 0);
+          const daBanMoi = Math.max(0, (Number(sp.sold) || 0) - (Number(item.quantity) || 0));
+          sp.stock = khoMoi;
+          sp.quantity = khoMoi;
+          sp.sold = daBanMoi;
+
+          return fetch(`${API_URL}/products/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: khoMoi, quantity: khoMoi, sold: daBanMoi })
+          });
+        }
+      });
+      await Promise.all(restorePromises);
+      hienThongBao(`Đơn #${donCapNhat.orderCode} đã hủy: Tồn kho đã được hoàn trả tự động!`, 'info');
+      renderBangSanPham();
+    }
+    // Trường hợp 2: Chuyển từ "cancelled" sang trạng thái khác -> Trừ lại kho
+    else if (trangThaiCu === 'cancelled' && trangThaiMoi !== 'cancelled') {
+      const deductPromises = (donCapNhat.items || []).map(async item => {
+        const sp = dsSanPham.find(p => p.id == item.id);
+        if (sp) {
+          const khoMoi = Math.max(0, (Number(sp.stock) || 0) - (Number(item.quantity) || 0));
+          const daBanMoi = (Number(sp.sold) || 0) + (Number(item.quantity) || 0);
+          sp.stock = khoMoi;
+          sp.quantity = khoMoi;
+          sp.sold = daBanMoi;
+
+          return fetch(`${API_URL}/products/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: khoMoi, quantity: khoMoi, sold: daBanMoi })
+          });
+        }
+      });
+      await Promise.all(deductPromises);
+      renderBangSanPham();
+    }
 
     if (selectEl) {
       selectEl.className = `order-status-select status-${trangThaiMoi}`;
@@ -873,6 +930,18 @@ async function capNhatTrangThaiDon() {
   if (!donHangDangXem) return;
   const selectStatus = document.getElementById('order-status-update-select');
   const trangThaiMoi = selectStatus.value;
+  const trangThaiCu = donHangDangXem.status;
+
+  if (trangThaiCu === trangThaiMoi) {
+    dongModal('order-detail-modal');
+    return;
+  }
+
+  // 🛡️ FINITE STATE MACHINE (FSM): Cảnh báo nếu chuyển đổi từ trạng thái kết thúc (cancelled)
+  if (trangThaiCu === 'cancelled' && !confirm('Đơn hàng này đã bị HỦY trước đó. Bạn có chắc chắn muốn kích hoạt lại đơn hàng và trừ lại tồn kho không?')) {
+    selectStatus.value = trangThaiCu;
+    return;
+  }
 
   try {
     const res = await fetch(`${API_URL}/orders/${donHangDangXem.id}`, {
@@ -884,6 +953,51 @@ async function capNhatTrangThaiDon() {
 
     const viTri = dsDonHang.findIndex(d => d.id == donCapNhat.id);
     if (viTri > -1) dsDonHang[viTri] = donCapNhat;
+
+    // 📦 ĐỒNG BỘ TỒN KHO THEO CHUẨN TMĐT:
+    // Trường hợp 1: Chuyển sang "cancelled" -> Tự động hoàn trả tồn kho và giảm đã bán
+    if (trangThaiCu !== 'cancelled' && trangThaiMoi === 'cancelled') {
+      const restorePromises = (donCapNhat.items || []).map(async item => {
+        const sp = dsSanPham.find(p => p.id == item.id);
+        if (sp) {
+          const khoMoi = (Number(sp.stock) || 0) + (Number(item.quantity) || 0);
+          const daBanMoi = Math.max(0, (Number(sp.sold) || 0) - (Number(item.quantity) || 0));
+          sp.stock = khoMoi;
+          sp.quantity = khoMoi;
+          sp.sold = daBanMoi;
+
+          return fetch(`${API_URL}/products/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: khoMoi, quantity: khoMoi, sold: daBanMoi })
+          });
+        }
+      });
+      await Promise.all(restorePromises);
+      hienThongBao(`Đơn #${donCapNhat.orderCode} đã hủy: Tồn kho đã được hoàn trả tự động!`, 'info');
+      renderBangSanPham();
+    }
+    // Trường hợp 2: Chuyển từ "cancelled" sang trạng thái khác -> Trừ lại kho
+    else if (trangThaiCu === 'cancelled' && trangThaiMoi !== 'cancelled') {
+      const deductPromises = (donCapNhat.items || []).map(async item => {
+        const sp = dsSanPham.find(p => p.id == item.id);
+        if (sp) {
+          const khoMoi = Math.max(0, (Number(sp.stock) || 0) - (Number(item.quantity) || 0));
+          const daBanMoi = (Number(sp.sold) || 0) + (Number(item.quantity) || 0);
+          sp.stock = khoMoi;
+          sp.quantity = khoMoi;
+          sp.sold = daBanMoi;
+
+          return fetch(`${API_URL}/products/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stock: khoMoi, quantity: khoMoi, sold: daBanMoi })
+          });
+        }
+      });
+      await Promise.all(deductPromises);
+      renderBangSanPham();
+    }
 
     hienThongBao(`Đã đổi trạng thái đơn ${donCapNhat.orderCode}`, 'success');
     dongModal('order-detail-modal');
