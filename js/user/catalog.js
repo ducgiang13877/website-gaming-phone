@@ -440,9 +440,9 @@ function hienThiChiTiet(idSP) {
         <div class="detail-qty-control">
           <span>Số lượng:</span>
           <div class="qty-btn-group">
-            <button type="button" onclick="tangGiamSoLuongChiTiet(-1)">-</button>
+            <button type="button" onclick="tangGiamSoLuongChiTiet(-1)" title="Giảm số lượng">-</button>
             <input type="number" id="detail-qty-input" value="1" min="1" max="${tonKho}" readonly>
-            <button type="button" onclick="tangGiamSoLuongChiTiet(1)">+</button>
+            <button type="button" onclick="tangGiamSoLuongChiTiet(1)" title="Tăng số lượng">+</button>
           </div>
         </div>
 
@@ -451,7 +451,7 @@ function hienThiChiTiet(idSP) {
           <button class="btn-primary" onclick="themVaoGio('${sp.id}', laySoLuongChiTiet())" ${hetHang ? 'disabled style="opacity: 0.5;"' : ''}>
             <i class="fa-solid fa-cart-plus"></i> Thêm Vào Giỏ
           </button>
-          <button class="btn-success" onclick="muaNgay('${sp.id}')" ${hetHang ? 'disabled style="opacity: 0.5;"' : ''}>
+          <button class="btn-success btn-buy-now" onclick="muaNgay('${sp.id}')" ${hetHang ? 'disabled style="opacity: 0.5;"' : ''}>
             <i class="fa-solid fa-bolt"></i> Mua Ngay
           </button>
           <button class="btn-secondary" onclick="batTatSoSanh('${sp.id}')">

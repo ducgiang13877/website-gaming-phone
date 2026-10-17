@@ -140,10 +140,10 @@ function hienThiGioHang() {
           </td>
           <td style="font-weight: 700;">${dinhDangTien(item.price)}</td>
           <td>
-            <div class="qty-btn-group" style="width: 100px;">
-              <button onclick="doiSoLuongGioHang('${item.id}', -1)">-</button>
+            <div class="qty-btn-group">
+              <button type="button" onclick="doiSoLuongGioHang('${item.id}', -1)" title="Giảm số lượng">-</button>
               <input type="number" value="${item.quantity}" readonly>
-              <button onclick="doiSoLuongGioHang('${item.id}', 1)">+</button>
+              <button type="button" onclick="doiSoLuongGioHang('${item.id}', 1)" title="Tăng số lượng">+</button>
             </div>
           </td>
           <td style="font-weight: 800; color: var(--accent);">${dinhDangTien(thanhTien)}</td>

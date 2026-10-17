@@ -1355,6 +1355,32 @@ button, input, select, textarea {
   color: #ffffff;
 }
 
+/* Nút Mua Ngay & Hành động Thành Công (CTA Buy Now Button) */
+.btn-success,
+.btn-buy-now {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.btn-success:hover,
+.btn-buy-now:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.45);
+}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;
@@ -1559,34 +1585,95 @@ button, input, select, textarea {
   border: 1px solid var(--border);
 }
 
+/* ==========================================================================
+   BỘ ĐIỀU KHIỂN TĂNG GIẢM SỐ LƯỢNG (QUANTITY BUTTON GROUP)
+   ========================================================================== */
+.qty-btn-group,
 .qty-control {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  height: 36px;
+  width: fit-content;
+  max-width: 120px;
 }
 
+.qty-btn-group button,
+.qty-control button,
 .qty-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px !important;
+  height: 36px !important;
   background: #f8fafc;
   border: none;
-  cursor: pointer;
+  color: var(--text);
+  font-size: 16px;
   font-weight: 700;
-  display: flex;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  transition: all 0.2s ease;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0;
 }
 
-.qty-btn:hover { background: #e2e8f0; }
+.qty-btn-group button:hover,
+.qty-control button:hover,
+.qty-btn:hover {
+  background: #e2e8f0;
+  color: var(--primary);
+}
 
+.qty-btn-group button:active,
+.qty-control button:active,
+.qty-btn:active {
+  background: #cbd5e1;
+}
+
+.qty-btn-group input,
+.qty-control input,
 .qty-val {
-  width: 40px;
+  width: 44px !important;
+  height: 36px !important;
+  border: none !important;
+  border-left: 1px solid var(--border) !important;
+  border-right: 1px solid var(--border) !important;
   text-align: center;
-  font-weight: 700;
   font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  background: #ffffff;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block;
+  box-shadow: none !important;
+}
+
+.qty-btn-group input::-webkit-outer-spin-button,
+.qty-btn-group input::-webkit-inner-spin-button,
+.qty-control input::-webkit-outer-spin-button,
+.qty-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Khối số lượng trong trang xem chi tiết sản phẩm */
+.detail-qty-control {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* Hộp tổng tiền giỏ hàng */
