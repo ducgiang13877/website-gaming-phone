@@ -1153,6 +1153,7 @@ function hienThiGioHang() {
 
 /**
  * 🎯 Mục đích: Hiển thị màn hình Thanh Toán (Checkout) và tự động điền thông tin nếu đã đăng nhập
+ * 🛡️ Bảo vệ nghiệp vụ: Kiểm tra quyền Admin -> Nếu là Admin thì hiển thị cảnh báo đỏ và khóa nút đặt hàng
  */
 function hienThiThanhToan() {
   if (gioHang.length === 0) {
@@ -1185,19 +1186,76 @@ function hienThiThanhToan() {
 
   document.getElementById('checkout-subtotal').textContent = dinhDangTien(tongTien);
   document.getElementById('checkout-grand-total').textContent = dinhDangTien(tongTien);
+
+  // 🛡️ BẢO VỆ NGHIỆP VỤ (HARD BLOCK ADMIN): Kiểm tra và xử lý trạng thái đặt hàng của tài khoản Quản trị viên
+  const warningBox = document.getElementById('admin-checkout-warning-box');
+  const btnSubmit = document.getElementById('btn-submit-order');
+  const laAdmin = nguoiDungHienTai && nguoiDungHienTai.role === 'admin';
+
+  if (laAdmin) {
+    if (!warningBox) {
+      const box = document.createElement('div');
+      box.id = 'admin-checkout-warning-box';
+      box.style.cssText = 'background: #fff1f2; border: 1.5px solid #f43f5e; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; color: #9f1239; box-shadow: 0 4px 12px rgba(244,63,94,0.12);';
+      box.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 22px; color: #e11d48; margin-top: 2px;"></i>
+        <div>
+          <strong style="font-size: 14px; display: block; margin-bottom: 4px; color: #e11d48; font-weight: 800;">
+            ⚠️ HẠN CHẾ QUYỀN HẠN QUẢN TRỊ VIÊN (ADMIN)
+          </strong>
+          <span style="font-size: 13px; line-height: 1.5; font-weight: 500;">
+            Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!
+          </span>
+        </div>
+      `;
+      const form = document.getElementById('checkout-form');
+      if (form) form.prepend(box);
+    } else {
+      warningBox.style.display = 'flex';
+    }
+
+    if (btnSubmit) {
+      btnSubmit.classList.add('btn-disabled');
+      btnSubmit.style.opacity = '0.6';
+      btnSubmit.style.cursor = 'not-allowed';
+      btnSubmit.style.background = '#94a3b8';
+      btnSubmit.style.borderColor = '#94a3b8';
+      btnSubmit.innerHTML = '<i class="fa-solid fa-ban"></i> Đặt Hàng Bị Khóa (Tài Khoản Admin)';
+      btnSubmit.title = 'Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!';
+    }
+  } else {
+    if (warningBox) warningBox.style.display = 'none';
+    if (btnSubmit) {
+      btnSubmit.classList.remove('btn-disabled');
+      btnSubmit.style.opacity = '1';
+      btnSubmit.style.cursor = 'pointer';
+      btnSubmit.style.background = '';
+      btnSubmit.style.borderColor = '';
+      btnSubmit.innerHTML = '<i class="fa-solid fa-lock"></i> Xác Nhận Đặt Hàng Ngay';
+      btnSubmit.title = '';
+    }
+  }
 }
 
 /**
  * 🎯 Mục đích: Xử lý đặt hàng, lưu đơn vào API và tự động trừ kho sản phẩm
+ * 🛡️ Bảo vệ nghiệp vụ: Chặn tuyệt đối tài khoản Quản trị viên (Admin)
  * ⚙️ Hàm có sẵn: fetch (POST, PATCH), Promise.all, Array.prototype.reduce, Date.now
  * 🔄 Luồng chạy:
- *   1. Validate thông tin người nhận (Họ tên, SĐT, Địa chỉ)
- *   2. Tính tổng tiền và sinh mã đơn hàng chuẩn (#DH + 9 số ngẫu nhiên)
- *   3. Gửi POST /orders lưu đơn hàng mới
- *   4. Gọi song song PATCH /products/:id trừ tồn kho (stock) và tăng đã bán (sold)
- *   5. Làm trống giỏ hàng và chuyển sang trang Cảm Ơn.
+ *   1. Kiểm tra quyền Admin -> Chặn và thông báo nếu là Admin
+ *   2. Validate thông tin người nhận (Họ tên, SĐT, Địa chỉ)
+ *   3. Tính tổng tiền và sinh mã đơn hàng chuẩn (#DH + 9 số ngẫu nhiên)
+ *   4. Gửi POST /orders lưu đơn hàng mới
+ *   5. Gọi song song PATCH /products/:id trừ tồn kho (stock) và tăng đã bán (sold)
+ *   6. Làm trống giỏ hàng và chuyển sang trang Cảm Ơn.
  */
 async function xuLyDatHang() {
+  // 🎯 BẢO VỆ NGHIỆP VỤ (HARD BLOCK ADMIN): Chặn hoàn toàn nếu tài khoản đang đăng nhập là Admin
+  if (nguoiDungHienTai && nguoiDungHienTai.role === 'admin') {
+    hienThongBao('Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!', 'error');
+    return;
+  }
+
   const ten = document.getElementById('checkout-name').value.trim();
   const sdt = document.getElementById('checkout-phone').value.trim();
   const email = document.getElementById('checkout-email').value.trim();
@@ -1761,10 +1819,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // 6. Xóa giỏ hàng
   document.getElementById('btn-clear-cart')?.addEventListener('click', xoaSachGioHang);
 
-  // 7. Form Đặt hàng
+  // 7. Form Đặt hàng & Chặn tài khoản Quản trị viên (Admin)
   document.getElementById('checkout-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     xuLyDatHang();
+  });
+
+  document.getElementById('btn-submit-order')?.addEventListener('click', (e) => {
+    if (nguoiDungHienTai && nguoiDungHienTai.role === 'admin') {
+      e.preventDefault();
+      hienThongBao('Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!', 'error');
+    }
   });
 
   // 8. Form Đăng nhập
