@@ -583,6 +583,15 @@
          ------------------------------------------------------------------------ -->
     <section id="view-auth" class="view-panel">
       <div class="auth-wrapper">
+        <!-- Banner Nhắc Nhở Đăng Nhập Để Thanh Toán (Checkout Auth Interceptor Banner) -->
+        <div id="auth-checkout-prompt-banner" style="display: none; background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px; align-items: flex-start; gap: 12px; color: #1e40af; box-shadow: 0 4px 12px rgba(59,130,246,0.12);">
+          <i class="fa-solid fa-cart-shopping" style="font-size: 20px; color: #2563eb; margin-top: 2px;"></i>
+          <div style="font-size: 13px; line-height: 1.5;">
+            <strong style="display: block; font-size: 14px; margin-bottom: 3px; color: #1d4ed8;">🛒 BƯỚC XÁC THỰC THANH TOÁN</strong>
+            Quý khách vui lòng <strong>Đăng Nhập</strong> hoặc <strong>Đăng Ký</strong> tài khoản để hoàn tất đơn hàng trong giỏ, kích hoạt bảo hành điện tử chính hãng và theo dõi lộ trình đơn hàng.
+          </div>
+        </div>
+
         <!-- Chuyển Đổi Tab Đăng Nhập / Đăng Ký -->
         <div class="auth-tabs">
           <button class="auth-tab-btn active" id="tab-btn-login" onclick="window.authModule.switchTab('login')">

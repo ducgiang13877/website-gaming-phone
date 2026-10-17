@@ -252,8 +252,28 @@ function chuyenTrang(tenTrang, thamSo = {}) {
   else if (tenTrang === 'shop') hienThiCuaHang();
   else if (tenTrang === 'detail') hienThiChiTiet(thamSo.id);
   else if (tenTrang === 'cart') hienThiGioHang();
-  else if (tenTrang === 'checkout') hienThiThanhToan();
+  else if (tenTrang === 'checkout') {
+    // 🛡️ CHẶN XÁC THỰC BƯỚC THANH TOÁN (CHECKOUT AUTH GUARD CHUẨN TMĐT):
+    // Khách vãng lai thoải mái thêm giỏ hàng, nhưng khi tiến hành thanh toán BẮT BUỘC phải đăng nhập/đăng ký
+    if (!nguoiDungHienTai) {
+      sessionStorage.setItem('smartstore_auth_redirect', 'checkout');
+      hienThongBao('Quý khách vui lòng Đăng Nhập hoặc Đăng Ký để tiếp tục thanh toán đơn hàng!', 'warning');
+      chuyenTrang('auth');
+      return;
+    }
+    hienThiThanhToan();
+  }
   else if (tenTrang === 'thankyou') hienThiCamOn();
+  else if (tenTrang === 'auth') {
+    if (thamSo.fromHeader) {
+      sessionStorage.removeItem('smartstore_auth_redirect');
+    }
+    const banner = document.getElementById('auth-checkout-prompt-banner');
+    const isFromCheckout = sessionStorage.getItem('smartstore_auth_redirect') === 'checkout';
+    if (banner) {
+      banner.style.display = isFromCheckout ? 'flex' : 'none';
+    }
+  }
   else if (tenTrang === 'profile') {
     if (!nguoiDungHienTai) {
       hienThongBao('Vui lòng đăng nhập để xem thông tin cá nhân!', 'warning');
@@ -322,11 +342,11 @@ function capNhatNguoiDungHeader() {
           <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
         </button>
         <div class="user-dropdown-menu">
-          <button class="user-dropdown-item" onclick="chuyenTrang('auth'); window.authModule.switchTab('login')">
+          <button class="user-dropdown-item" onclick="chuyenTrang('auth', { fromHeader: true }); window.authModule.switchTab('login')">
             <i class="fa-solid fa-right-to-bracket" style="color: var(--primary);"></i>
             <span>Đăng Nhập</span>
           </button>
-          <button class="user-dropdown-item" onclick="chuyenTrang('auth'); window.authModule.switchTab('register')">
+          <button class="user-dropdown-item" onclick="chuyenTrang('auth', { fromHeader: true }); window.authModule.switchTab('register')">
             <i class="fa-solid fa-user-plus" style="color: var(--success);"></i>
             <span>Đăng Ký</span>
           </button>

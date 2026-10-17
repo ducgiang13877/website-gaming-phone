@@ -171,6 +171,15 @@ function hienThiThanhToan() {
     return;
   }
 
+  // 🛡️ CHẶN XÁC THỰC BƯỚC THANH TOÁN (CHECKOUT AUTH GUARD CHUẨN TMĐT):
+  // Khách vãng lai thoải mái thêm giỏ, nhưng BẮT BUỘC đăng nhập/đăng ký khi tiến hành thanh toán
+  if (!nguoiDungHienTai) {
+    sessionStorage.setItem('smartstore_auth_redirect', 'checkout');
+    hienThongBao('Quý khách vui lòng Đăng Nhập hoặc Đăng Ký để tiếp tục thanh toán đơn hàng!', 'warning');
+    chuyenTrang('auth');
+    return;
+  }
+
   if (nguoiDungHienTai) {
     document.getElementById('checkout-name').value = nguoiDungHienTai.fullName || nguoiDungHienTai.name || '';
     document.getElementById('checkout-phone').value = nguoiDungHienTai.phone || '';
@@ -259,6 +268,14 @@ function hienThiThanhToan() {
  *   6. Làm trống giỏ hàng và chuyển sang trang Cảm Ơn.
  */
 async function xuLyDatHang() {
+  // 🛡️ CHẶN XÁC THỰC BƯỚC THANH TOÁN (CHECKOUT AUTH GUARD CHUẨN TMĐT):
+  if (!nguoiDungHienTai) {
+    sessionStorage.setItem('smartstore_auth_redirect', 'checkout');
+    hienThongBao('Quý khách cần Đăng Nhập hoặc Đăng Ký tài khoản để hoàn tất đặt hàng!', 'warning');
+    chuyenTrang('auth');
+    return;
+  }
+
   // 🎯 BẢO VỆ NGHIỆP VỤ (HARD BLOCK ADMIN): Chặn hoàn toàn nếu tài khoản đang đăng nhập là Admin
   if (nguoiDungHienTai && nguoiDungHienTai.role === 'admin') {
     hienThongBao('Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!', 'error');

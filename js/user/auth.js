@@ -8,8 +8,25 @@
  */
 
 // ============================================================================
-// 1. NGHIỆP VỤ ĐĂNG NHẬP & ĐĂNG XUẤT
+// 1. NGHIỆP VỤ ĐĂNG NHẬP, ĐĂNG KÝ & ĐIỀU HƯỚNG THÔNG MINH (AUTH & SMART REDIRECT)
 // ============================================================================
+
+/**
+ * 🎯 Mục đích: Điều hướng thông minh sau khi đăng nhập hoặc đăng ký thành công
+ * 🛒 Luồng TMĐT: Nếu trước đó khách đang tiến hành thanh toán giỏ hàng (Checkout) -> Chuyển thẳng về Checkout
+ *               Ngược lại (đăng nhập thông thường) -> Chuyển về Trang Chủ.
+ */
+function dieuHuongSauXacThuc() {
+  const redirectTarget = sessionStorage.getItem('smartstore_auth_redirect');
+  sessionStorage.removeItem('smartstore_auth_redirect');
+
+  if (redirectTarget === 'checkout' && gioHang.length > 0) {
+    hienThongBao('Đang chuyển đến màn hình Thanh toán đơn hàng của bạn...', 'info');
+    chuyenTrang('checkout');
+  } else {
+    chuyenTrang('home');
+  }
+}
 
 /**
  * 🎯 Mục đích: Xử lý đăng nhập tài khoản người dùng
@@ -17,7 +34,7 @@
  * 🔄 Luồng chạy:
  *   1. Lấy toàn bộ danh sách users từ API CSDL.
  *   2. Tìm user khớp email (hoặc username) và so khớp mật khẩu bằng chuỗi JS (tránh lỗi ép kiểu json-server).
- *   3. Nếu đúng: Lưu vào LocalStorage, cập nhật Header, thông báo thành công và chuyển về Trang Chủ.
+ *   3. Nếu đúng: Lưu vào LocalStorage, cập nhật Header, thông báo thành công và chuyển hướng thông minh.
  */
 async function xuLyDangNhap(email, matKhau) {
   if (!email || !matKhau) {
@@ -41,7 +58,7 @@ async function xuLyDangNhap(email, matKhau) {
       localStorage.setItem('smartstore_user', JSON.stringify(user));
       capNhatNguoiDungHeader();
       hienThongBao(`Chào mừng ${user.fullName || user.name || 'bạn'} đã đăng nhập!`, 'success');
-      chuyenTrang('home');
+      dieuHuongSauXacThuc();
     } else {
       hienThongBao('Sai Email hoặc Mật khẩu đăng nhập!', 'error');
     }
@@ -83,7 +100,7 @@ async function xuLyDangKy(ten, email, sdt, diaChi, matKhau) {
         localStorage.setItem('smartstore_user', JSON.stringify(userDaCo));
         capNhatNguoiDungHeader();
         hienThongBao(`Tài khoản đã tồn tại - Tự động đăng nhập thành công cho ${userDaCo.fullName || userDaCo.name}!`, 'success');
-        chuyenTrang('home');
+        dieuHuongSauXacThuc();
         return;
       }
 
@@ -133,7 +150,7 @@ async function xuLyDangKy(ten, email, sdt, diaChi, matKhau) {
     localStorage.setItem('smartstore_user', JSON.stringify(userDaLuu));
     capNhatNguoiDungHeader();
     hienThongBao('Đăng ký tài khoản mới thành công! Chào mừng bạn.', 'success');
-    chuyenTrang('home');
+    dieuHuongSauXacThuc();
   } catch (loi) {
     console.error(loi);
     hienThongBao('Lỗi khi đăng ký tài khoản!', 'error');
@@ -158,7 +175,7 @@ function xuLySmartLoginSubmit() {
     capNhatNguoiDungHeader();
     hienThongBao(`Đăng nhập thành công! Chào mừng ${pendingSmartUser.fullName || pendingSmartUser.name}.`, 'success');
     huySmartLogin();
-    chuyenTrang('home');
+    dieuHuongSauXacThuc();
   } else {
     hienThongBao('Mật khẩu không chính xác, vui lòng thử lại!', 'error');
   }
