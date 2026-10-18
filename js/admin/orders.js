@@ -391,3 +391,311 @@ async function capNhatTrangThaiDon() {
     hienThongBao('Lỗi cập nhật trạng thái đơn!', 'error');
   }
 }
+
+/**
+ * 🎯 Mục đích: In hóa đơn bán hàng cho đơn hàng đang được xem trong Modal Quản trị (Admin)
+ * 🔄 Luồng bảo vệ đồ án ASM (6 BƯỚC CHUẨN MỰC TỪ FRONTEND ĐẾN BACKEND):
+ *   1. Trigger UI: Quản trị viên bấm nút "In Hóa Đơn" trong Modal Chi Tiết Đơn Hàng.
+ *   2. Bắt sự kiện: window.adminCtrl.printInvoice() gọi hàm inHoaDonAdmin().
+ *   3. Kiểm tra dữ liệu: Lấy đơn hàng hiện tại trong biến state `donHangDangXem`.
+ *   4. Render Template Hóa Đơn Chuẩn Bán Lẻ A4/A5: Tạo popup window chứa cấu trúc Hóa đơn kèm CSS chuyên dụng cho máy in nhiệt / máy in A4/A5.
+ *   5. Nạp nội dung & kích hoạt lệnh in: Ghi mã HTML vào popup và gọi window.print().
+ *   6. Phản hồi: Thông báo Toast cho Quản trị viên.
+ */
+function inHoaDonAdmin() {
+  if (!donHangDangXem) {
+    hienThongBao('Vui lòng mở một đơn hàng để in hóa đơn!', 'warning');
+    return;
+  }
+
+  const d = donHangDangXem;
+  const ngayDat = new Date(d.createdAt || Date.now()).toLocaleString('vi-VN');
+  const giamGia = Number(d.discountAmount) || 0;
+  const tamTinh = d.subtotal || ((d.items || []).reduce((s, i) => s + (i.price * i.quantity), 0)) || d.totalAmount;
+  const tongTien = d.totalAmount || tamTinh;
+
+  const popup = window.open('', '_blank', 'width=850,height=900,menubar=no,toolbar=no,location=no,status=no');
+  if (!popup) {
+    hienThongBao('Trình duyệt đã chặn cửa sổ bật lên (Popup)! Vui lòng cho phép popup để in hóa đơn.', 'error');
+    return;
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hóa Đơn Bán Hàng - SmartStore ${d.orderCode}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      padding: 30px;
+      color: #1e293b;
+      background: #ffffff;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .invoice-container {
+      max-width: 780px;
+      margin: 0 auto;
+      border: 1px solid #e2e8f0;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    .header-table {
+      width: 100%;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .invoice-title {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .invoice-title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+    }
+    .invoice-title p {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      background: #f8fafc;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .info-line { margin-bottom: 4px; }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .items-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #cbd5e1;
+      font-size: 12px;
+    }
+    .items-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+    }
+    .summary-box {
+      float: right;
+      width: 340px;
+      margin-bottom: 25px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .summary-row.total {
+      border-top: 2px solid #2563eb;
+      padding-top: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #ef4444;
+    }
+    .clear { clear: both; }
+    .policy-box {
+      background: #eff6ff;
+      border: 1px dashed #3b82f6;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 11.5px;
+      color: #1e40af;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      margin-top: 20px;
+      padding: 0 40px;
+    }
+    .sig-block {
+      width: 220px;
+    }
+    .sig-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .sig-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 60px;
+    }
+    .sig-name {
+      font-weight: 600;
+      font-size: 12px;
+      border-top: 1px dotted #94a3b8;
+      padding-top: 6px;
+    }
+    @media print {
+      body { padding: 0; }
+      .invoice-container { border: none; padding: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="text-align: center; margin-bottom: 16px; display: flex; justify-content: center; gap: 10px;">
+    <button onclick="window.print()" style="padding: 10px 24px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px;">
+      🖨️ IN HÓA ĐƠN NGAY
+    </button>
+    <button onclick="window.close()" style="padding: 10px 20px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+      Đóng Cửa Sổ
+    </button>
+  </div>
+
+  <div class="invoice-container">
+    <table class="header-table">
+      <tr>
+        <td style="vertical-align: top;">
+          <div class="brand-title">⚡ SMARTSTORE</div>
+          <div class="brand-sub">Hệ Thống Bán Lẻ Smartphone & Gaming Phone Chính Hãng Hàng Đầu</div>
+          <div class="brand-sub">📍 Địa chỉ: Trịnh Văn Bô, Nam Từ Liêm, Hà Nội (FPT Polytechnic)</div>
+          <div class="brand-sub">📞 Hotline: 1800.2026 (Miễn phí) - Website: smartstore.vn</div>
+        </td>
+        <td style="vertical-align: top; text-align: right;">
+          <div style="font-size: 14px; font-weight: 700; color: #2563eb;">MÃ ĐƠN HÀNG:</div>
+          <div style="font-size: 18px; font-weight: 800; color: #0f172a;">${d.orderCode}</div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Ngày lập: ${ngayDat}</div>
+          <div style="font-size: 12px; color: #10b981; font-weight: 700; margin-top: 4px;">✓ Đã xác thực bảo hành</div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="invoice-title">
+      <h1>HÓA ĐƠN BÁN HÀNG KIÊM PHIẾU BẢO HÀNH ĐIỆN TỬ</h1>
+      <p>(Bản in lưu trữ đối soát khách hàng & bảo hành chính hãng SmartStore)</p>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <div class="info-line"><strong>Khách hàng:</strong> ${d.customerName}</div>
+        <div class="info-line"><strong>Điện thoại:</strong> ${d.customerPhone}</div>
+        <div class="info-line"><strong>Email:</strong> ${d.customerEmail || 'Chưa cung cấp'}</div>
+      </div>
+      <div>
+        <div class="info-line"><strong>Địa chỉ nhận:</strong> ${d.customerAddress}</div>
+        <div class="info-line"><strong>Phương thức TT:</strong> ${d.paymentMethod === 'COD' ? 'Tiền mặt khi nhận hàng (COD)' : (d.paymentMethod === 'BANK' ? 'Chuyển khoản VietQR' : 'VNPAY / Thẻ tín dụng')}</div>
+        <div class="info-line"><strong>Ghi chú đơn:</strong> ${d.note || 'Giao hàng tiêu chuẩn'}</div>
+      </div>
+    </div>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">STT</th>
+          <th>Tên Sản Phẩm / Thiết Bị</th>
+          <th style="width: 110px; text-align: right;">Đơn Giá</th>
+          <th style="width: 70px; text-align: center;">SL</th>
+          <th style="width: 130px; text-align: right;">Thành Tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(d.items || []).map((item, idx) => `
+          <tr>
+            <td style="text-align: center; color: #64748b;">${idx + 1}</td>
+            <td>
+              <strong style="color: #0f172a;">${item.name}</strong>
+              <div style="font-size: 11px; color: #64748b;">Bảo hành chính hãng 12 tháng tại SmartStore</div>
+            </td>
+            <td style="text-align: right;">${Number(item.price).toLocaleString('vi-VN')} đ</td>
+            <td style="text-align: center; font-weight: 700;">${item.quantity}</td>
+            <td style="text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')} đ</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <div class="summary-box">
+      <div class="summary-row">
+        <span>Tạm tính tổng sản phẩm:</span>
+        <strong>${Number(tamTinh).toLocaleString('vi-VN')} đ</strong>
+      </div>
+      ${d.voucherCode ? `
+        <div class="summary-row" style="color: #ef4444;">
+          <span>Giảm giá Voucher [${d.voucherCode}]:</span>
+          <strong>-${Number(giamGia).toLocaleString('vi-VN')} đ</strong>
+        </div>
+      ` : ''}
+      <div class="summary-row">
+        <span>Phí vận chuyển giao tận nhà:</span>
+        <strong style="color: #10b981;">0 đ (Miễn Phí)</strong>
+      </div>
+      <div class="summary-row total">
+        <span>TỔNG THANH TOÁN:</span>
+        <span>${Number(tongTien).toLocaleString('vi-VN')} đ</span>
+      </div>
+    </div>
+    <div class="clear"></div>
+
+    <div class="policy-box">
+      <strong>CHÍNH SÁCH BẢO HÀNH & ĐỔI TRẢ SMARTSTORE VIỆT NAM:</strong><br>
+      • Đổi mới 100% trong 30 ngày đầu tiên nếu máy phát sinh lỗi phần cứng từ nhà sản xuất.<br>
+      • Bảo hành chính hãng 12 tháng toàn diện bao gồm cả Nguồn & Màn hình cảm ứng.<br>
+      • Quý khách vui lòng giữ lại hóa đơn này hoặc tra cứu mã đơn <strong>${d.orderCode}</strong> trên website để được tiếp nhận bảo hành nhanh chóng.
+    </div>
+
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-title">KHÁCH HÀNG NHẬN HÀNG</div>
+        <div class="sig-sub">(Ký & ghi rõ họ tên)</div>
+        <div class="sig-name">${d.customerName}</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-title">ĐẠI DIỆN SMARTSTORE</div>
+        <div class="sig-sub">(Ký duyệt, đóng dấu & xuất kho)</div>
+        <div class="sig-name">Bộ Phận Kho Vận & Tài Chính</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+      }, 300);
+    };
+  <\/script>
+</body>
+</html>
+  `;
+
+  popup.document.open();
+  popup.document.write(html);
+  popup.document.close();
+}

@@ -23,7 +23,10 @@ window.cartModule = {
   add: themVaoGio,
   changeQty: doiSoLuongGioHang,
   remove: xoaKhoiGio,
-  clear: xoaSachGioHang
+  clear: xoaSachGioHang,
+  applyVoucher: apDungVoucher,
+  cancelVoucher: huyVoucher,
+  printInvoice: () => inHoaDonDonHang(donHangVuaDat)
 };
 
 window.detailModule = {
@@ -129,6 +132,23 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       hienThongBao('Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!', 'error');
     }
+  });
+
+  // Sự kiện Áp dụng Voucher Khuyến Mãi
+  document.getElementById('btn-apply-voucher')?.addEventListener('click', () => {
+    apDungVoucher();
+  });
+
+  document.getElementById('input-voucher-code')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      apDungVoucher();
+    }
+  });
+
+  // Sự kiện In Hóa Đơn Bán Lẻ trang Cảm Ơn
+  document.getElementById('btn-print-thankyou-order')?.addEventListener('click', () => {
+    inHoaDonDonHang(donHangVuaDat);
   });
 
   // 8. Form Đăng nhập

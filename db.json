@@ -56,7 +56,7 @@
       "cate_id": "1",
       "brand": "Apple (iPhone)",
       "price": 34990000,
-      "quantity": 14,
+      "quantity": 13,
       "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max.png",
       "detail": "Khung titan cấp 5 siêu nhẹ, nút Camera Control thế hệ mới, hỗ trợ Apple Intelligence toàn diện.",
       "specs": {
@@ -72,8 +72,8 @@
         "special": "Khung Titan, Nút Camera Control, Apple Intelligence, Kháng nước IP68"
       },
       "categoryId": 1,
-      "stock": 14,
-      "sold": 1,
+      "stock": 13,
+      "sold": 2,
       "description": ""
     },
     {
@@ -1122,6 +1122,80 @@
       "status": "delivered",
       "createdAt": "2026-10-16T14:49:21.625Z",
       "id": "YpnvFcMQiyk"
+    },
+    {
+      "orderCode": "#DH210399066",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "1",
+          "name": "iPhone 16 Pro Max 256GB",
+          "price": 34990000,
+          "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max.png",
+          "quantity": 1,
+          "stock": 14
+        }
+      ],
+      "totalAmount": 34990000,
+      "status": "delivered",
+      "createdAt": "2026-10-17T04:13:19.066Z",
+      "id": "z_xcjdxSBTc"
+    }
+  ],
+  "vouchers": [
+    {
+      "id": "1",
+      "code": "GAMING2026",
+      "name": "Đặc Quyền Game Thủ 2026",
+      "description": "Giảm ngay 500.000 đ cho đơn từ 15 triệu",
+      "type": "fixed",
+      "discount": 500000,
+      "minOrder": 15000000,
+      "maxDiscount": 500000,
+      "usageLeft": 10,
+      "icon": "fa-solid fa-gamepad"
+    },
+    {
+      "id": "2",
+      "code": "FLAGSHIP10",
+      "name": "Ưu Đãi Flagship Đỉnh Cao",
+      "description": "Giảm 10% tối đa 2.000.000 đ cho đơn từ 25 triệu",
+      "type": "percent",
+      "discount": 10,
+      "minOrder": 25000000,
+      "maxDiscount": 2000000,
+      "usageLeft": 5,
+      "icon": "fa-solid fa-crown"
+    },
+    {
+      "id": "3",
+      "code": "FPTSTUDENT",
+      "name": "Đặc Quyền Sinh Viên FPT",
+      "description": "Giảm 300.000 đ cho sinh viên FPT Poly (đơn từ 5 triệu)",
+      "type": "fixed",
+      "discount": 300000,
+      "minOrder": 5000000,
+      "maxDiscount": 300000,
+      "usageLeft": 20,
+      "icon": "fa-solid fa-graduation-cap"
+    },
+    {
+      "id": "4",
+      "code": "FREESHIP",
+      "name": "Miễn Phí Vận Chuyển Toàn Quốc",
+      "description": "Hỗ trợ 150.000 đ phí vận chuyển cho đơn từ 3 triệu",
+      "type": "fixed",
+      "discount": 150000,
+      "minOrder": 3000000,
+      "maxDiscount": 150000,
+      "usageLeft": 50,
+      "icon": "fa-solid fa-truck-fast"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

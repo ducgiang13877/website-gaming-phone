@@ -26,7 +26,8 @@ window.adminCtrl = {
   executeDelete: thucHienXoa,
   openOrderDetail: moXemDonHang,
   updateOrderStatus: capNhatTrangThaiDon,
-  inlineUpdateOrderStatus: doiTrangThaiDonHangTrucTiep
+  inlineUpdateOrderStatus: doiTrangThaiDonHangTrucTiep,
+  printInvoice: inHoaDonAdmin
 };
 
 // ============================================================================

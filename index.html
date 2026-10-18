@@ -359,6 +359,11 @@
         <p style="font-size: 14px; color: var(--text-muted);">Kiểm tra lại số lượng các dòng smartphone trước khi tiến hành thanh toán</p>
       </div>
 
+      <!-- Thanh Tiến Trình Quà Tặng Độc Quyền (Gamification Reward Bar) -->
+      <div id="cart-reward-bar" class="cart-reward-box" style="margin-bottom: 24px;">
+        <!-- Render tự động theo giá trị giỏ hàng -->
+      </div>
+
       <div class="cart-layout" id="cart-content-wrapper">
         <!-- Bảng Danh Sách Món Trong Giỏ -->
         <div class="cart-table-box">
@@ -507,9 +512,38 @@
           <div id="checkout-items-list" style="max-height: 280px; overflow-y: auto; margin-bottom: 16px;">
             <!-- Render danh sách rút gọn các món hàng -->
           </div>
+
+          <!-- KHỐI MÃ GIẢM GIÁ (VOUCHER ENGINE) -->
+          <div class="voucher-box" style="margin-bottom: 16px; padding: 14px; background: #f8fafc; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+            <label class="form-label" style="font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; color: var(--text);">
+              <i class="fa-solid fa-ticket" style="color: var(--primary);"></i> Mã Giảm Giá / Khuyến Mãi
+            </label>
+            <div class="voucher-input-group" style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" id="input-voucher-code" class="form-input" placeholder="Nhập mã voucher..." style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; font-size: 13px;">
+              <button type="button" id="btn-apply-voucher" class="btn-primary" style="white-space: nowrap; padding: 0 16px; font-size: 13px;">
+                Áp Dụng
+              </button>
+            </div>
+            
+            <!-- Gợi ý voucher bấm nhanh -->
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Mã HOT gợi ý (chạm để chọn nhanh):</div>
+            <div id="quick-voucher-chips" class="voucher-chips-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+              <!-- Render động các chip mã -->
+            </div>
+
+            <!-- Khung báo voucher đã áp dụng -->
+            <div id="applied-voucher-alert" class="applied-voucher-alert" style="display: none;">
+              <!-- Thông tin voucher áp dụng thành công -->
+            </div>
+          </div>
+
           <div class="summary-row">
             <span>Tạm tính:</span>
             <strong id="checkout-subtotal">0 đ</strong>
+          </div>
+          <div class="summary-row" id="checkout-discount-row" style="display: none; color: var(--accent);">
+            <span>Giảm giá Voucher:</span>
+            <strong id="checkout-discount-amount">-0 đ</strong>
           </div>
           <div class="summary-row">
             <span>Vận chuyển:</span>
@@ -568,6 +602,9 @@
         </div>
 
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn-success" id="btn-print-thankyou-order" onclick="window.cartModule.printInvoice()">
+            <i class="fa-solid fa-print"></i> In Hóa Đơn Bán Lẻ
+          </button>
           <button class="btn-primary" onclick="window.appNav.goTo('shop')">
             <i class="fa-solid fa-bag-shopping"></i> Tiếp Tục Mua Sắm
           </button>

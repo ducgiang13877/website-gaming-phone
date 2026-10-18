@@ -12,6 +12,136 @@
 // ============================================================================
 
 /**
+ * 🎯 Biến trạng thái lưu trữ Voucher đang được áp dụng trong phiên thanh toán hiện tại
+ */
+var voucherDangApDung = null;
+
+/**
+ * 🎯 Mục đích: Render Thanh Tiến Trình Quà Tặng Độc Quyền (Gamification Progress Bar)
+ * 🔄 Luồng chạy: Nhận tổng tiền giỏ hàng -> Xác định mốc thưởng (10 triệu: Sạc 67W, 20 triệu: Balo + Tai nghe Gaming)
+ *              -> Tính toán % thanh tiến trình và thông điệp thúc đẩy giá trị giỏ hàng (AOV).
+ */
+function renderRewardBar(tongTien) {
+  const rewardEl = document.getElementById('cart-reward-bar');
+  if (!rewardEl) return;
+
+  if (tongTien <= 0) {
+    rewardEl.innerHTML = '';
+    rewardEl.style.display = 'none';
+    return;
+  }
+  rewardEl.style.display = 'block';
+
+  const moc1 = 10000000; // Mốc 1: 10 triệu đồng
+  const moc2 = 20000000; // Mốc 2: 20 triệu đồng
+
+  let phanTram = 0;
+  let thongDiep = '';
+  let badgeText = '';
+
+  if (tongTien < moc1) {
+    phanTram = Math.min(100, Math.round((tongTien / moc1) * 50));
+    const thieu = moc1 - tongTien;
+    thongDiep = `Mua thêm <strong style="color:var(--accent); font-weight:800;">${dinhDangTien(thieu)}</strong> để nhận ngay <strong>Củ Sạc Nhanh 67W</strong> trị giá 350.000 đ!`;
+    badgeText = 'Mốc Quà 1 (Đơn từ 10tr)';
+  } else if (tongTien < moc2) {
+    phanTram = 50 + Math.min(50, Math.round(((tongTien - moc1) / (moc2 - moc1)) * 50));
+    const thieu = moc2 - tongTien;
+    thongDiep = `🎉 Đã nhận Củ Sạc 67W! Mua thêm <strong style="color:var(--accent); font-weight:800;">${dinhDangTien(thieu)}</strong> để nhận <strong>Tai Nghe Gaming Type-C & Balo Độc Quyền</strong> trị giá 790.000 đ!`;
+    badgeText = 'Mốc Quà 2 (Đơn từ 20tr)';
+  } else {
+    phanTram = 100;
+    thongDiep = `🎉 <strong>CHÚC MỪNG BẠN!</strong> Đã mở khóa trọn bộ <strong>Combo Quà Tặng Gaming VIP</strong> (Củ sạc 120W + Tai nghe Type-C + Quạt tản nhiệt cơ học)!`;
+    badgeText = 'ĐÃ MỞ KHÓA TOÀN BỘ QUÀ VIP';
+  }
+
+  rewardEl.innerHTML = `
+    <div class="cart-reward-header">
+      <div class="cart-reward-title">
+        <div class="cart-reward-icon"><i class="fa-solid fa-gift"></i></div>
+        <div>${thongDiep}</div>
+      </div>
+      <span class="cart-reward-badge">${badgeText}</span>
+    </div>
+    <div class="cart-reward-track">
+      <div class="cart-reward-fill" style="width: ${phanTram}%;"></div>
+    </div>
+    <div class="cart-reward-milestones">
+      <span class="cart-reward-milestone-point ${tongTien >= 0 ? 'achieved' : ''}">0 đ (Bắt đầu)</span>
+      <span class="cart-reward-milestone-point ${tongTien >= moc1 ? 'achieved' : ''}">10 Triệu (Sạc 67W)</span>
+      <span class="cart-reward-milestone-point ${tongTien >= moc2 ? 'achieved' : ''}">20 Triệu (Combo Gaming VIP)</span>
+    </div>
+  `;
+}
+
+/**
+ * 🎯 Mục đích: Render bảng giỏ hàng kèm tổng tiền tạm tính và thành tiền
+ */
+function hienThiGioHang() {
+  const emptyBox = document.getElementById('cart-empty-state');
+  const contentBox = document.getElementById('cart-content-wrapper');
+  const tbody = document.getElementById('cart-table-tbody');
+  const subtotalEl = document.getElementById('cart-subtotal');
+  const totalEl = document.getElementById('cart-grand-total');
+  const rewardEl = document.getElementById('cart-reward-bar');
+
+  if (gioHang.length === 0) {
+    if (emptyBox) emptyBox.style.display = 'block';
+    if (contentBox) contentBox.style.display = 'none';
+    if (rewardEl) {
+      rewardEl.innerHTML = '';
+      rewardEl.style.display = 'none';
+    }
+    return;
+  }
+
+  if (emptyBox) emptyBox.style.display = 'none';
+  if (contentBox) contentBox.style.display = 'grid';
+
+  let tongTien = 0;
+  if (tbody) {
+    tbody.innerHTML = gioHang.map(item => {
+      const thanhTien = item.price * item.quantity;
+      tongTien += thanhTien;
+
+      return `
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border);">
+              <div>
+                <strong style="font-size: 14px; color: var(--text);">${item.name}</strong>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Còn sẵn ${item.stock} máy</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-weight: 700;">${dinhDangTien(item.price)}</td>
+          <td>
+            <div class="qty-btn-group">
+              <button type="button" onclick="doiSoLuongGioHang('${item.id}', -1)" title="Giảm số lượng">-</button>
+              <input type="number" value="${item.quantity}" readonly>
+              <button type="button" onclick="doiSoLuongGioHang('${item.id}', 1)" title="Tăng số lượng">+</button>
+            </div>
+          </td>
+          <td style="font-weight: 800; color: var(--accent);">${dinhDangTien(thanhTien)}</td>
+          <td style="text-align: center;">
+            <button class="btn-danger btn-sm" onclick="xoaKhoiGio('${item.id}')" title="Xóa món này">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  if (subtotalEl) subtotalEl.textContent = dinhDangTien(tongTien);
+  if (totalEl) totalEl.textContent = dinhDangTien(tongTien);
+
+  // Kích hoạt cập nhật Thanh Tiến Trình Quà Tặng theo tổng tiền giỏ hàng
+  renderRewardBar(tongTien);
+}
+
+/**
  * 🎯 Mục đích: Thêm một sản phẩm vào giỏ hàng và kiểm tra giới hạn tồn kho
  * ⚙️ Hàm có sẵn: Array.prototype.find, Array.prototype.push, Math.max, Math.min
  * 🔄 Luồng chạy: Tìm sản phẩm trong dsSanPham -> Kiểm tra tồn kho -> Nếu đã có trong giỏ thì tăng quantity (không vượt stock), nếu chưa có thì push -> Ghi LocalStorage.
@@ -102,68 +232,181 @@ function xoaSachGioHang() {
   }
 }
 
-/**
- * 🎯 Mục đích: Render bảng giỏ hàng kèm tổng tiền tạm tính và thành tiền
- */
-function hienThiGioHang() {
-  const emptyBox = document.getElementById('cart-empty-state');
-  const contentBox = document.getElementById('cart-content-wrapper');
-  const tbody = document.getElementById('cart-table-tbody');
-  const subtotalEl = document.getElementById('cart-subtotal');
-  const totalEl = document.getElementById('cart-grand-total');
+// ============================================================================
+// 2. HỆ THỐNG MÃ GIẢM GIÁ (VOUCHER ENGINE) & THANH TOÁN (CHECKOUT)
+// ============================================================================
 
-  if (gioHang.length === 0) {
-    if (emptyBox) emptyBox.style.display = 'block';
-    if (contentBox) contentBox.style.display = 'none';
+/**
+ * 🎯 Mục đích: Render danh sách các chip mã giảm giá HOT gợi ý cho khách hàng bấm chọn nhanh
+ * 🔄 Luồng chạy: Nạp danh sách mã ưu đãi -> Sinh HTML các chip -> Gắn sự kiện click gọi apDungVoucher(code)
+ */
+function renderQuickVoucherChips() {
+  const container = document.getElementById('quick-voucher-chips');
+  if (!container) return;
+
+  const hotVouchers = [
+    { code: 'GAMING2026', title: 'Game Thủ -500k', icon: 'fa-gamepad' },
+    { code: 'FLAGSHIP10', title: 'Flagship -10%', icon: 'fa-crown' },
+    { code: 'FPTSTUDENT', title: 'SV FPT -300k', icon: 'fa-graduation-cap' },
+    { code: 'FREESHIP', title: 'Freeship -150k', icon: 'fa-truck-fast' }
+  ];
+
+  container.innerHTML = hotVouchers.map(v => `
+    <span class="voucher-chip-item" onclick="window.cartModule.applyVoucher('${v.code}')" title="Bấm để áp dụng ngay mã ${v.code}">
+      <i class="fa-solid ${v.icon}"></i>
+      <span>${v.code} (${v.title})</span>
+    </span>
+  `).join('');
+}
+
+/**
+ * 🎯 Mục đích: Kiểm tra và áp dụng Mã Giảm Giá (Voucher) vào đơn hàng
+ * 🔄 Luồng bảo vệ đồ án ASM (6 BƯỚC CHUẨN MỰC TỪ FRONTEND ĐẾN BACKEND):
+ *   1. Trigger UI: Khách bấm nút "Áp Dụng" hoặc chạm vào Chip Voucher gợi ý.
+ *   2. Bắt sự kiện: Event listener bắt mã voucher từ input hoặc tham số hàm.
+ *   3. Gửi HTTP Request: Gọi GET /vouchers lên máy chủ API để tra cứu mã.
+ *   4. Điều hướng Controller & Kiểm tra Nghiệp vụ (Business Rules):
+ *      - Kiểm tra mã có tồn tại không.
+ *      - Kiểm tra số lượt còn lại (usageLeft > 0).
+ *      - Kiểm tra giá trị đơn hàng tối thiểu (subtotal >= minOrder).
+ *   5. Tính toán chiết khấu (Fixed hoặc Percent với giới hạn maxDiscount) và lưu vào State.
+ *   6. Cập nhật UI & Phản hồi: Hiển thị dòng Giảm giá Voucher, tính lại Tổng thanh toán và thông báo Toast.
+ */
+async function apDungVoucher(maNhap) {
+  const inputEl = document.getElementById('input-voucher-code');
+  const code = (maNhap || (inputEl ? inputEl.value : '')).trim().toUpperCase();
+
+  if (!code) {
+    hienThongBao('Vui lòng nhập mã giảm giá trước khi áp dụng!', 'warning');
     return;
   }
 
-  if (emptyBox) emptyBox.style.display = 'none';
-  if (contentBox) contentBox.style.display = 'grid';
+  if (inputEl) inputEl.value = code;
 
-  let tongTien = 0;
-  if (tbody) {
-    tbody.innerHTML = gioHang.map(item => {
-      const thanhTien = item.price * item.quantity;
-      tongTien += thanhTien;
-
-      return `
-        <tr>
-          <td>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border);">
-              <div>
-                <strong style="font-size: 14px; color: var(--text);">${item.name}</strong>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Còn sẵn ${item.stock} máy</div>
-              </div>
-            </div>
-          </td>
-          <td style="font-weight: 700;">${dinhDangTien(item.price)}</td>
-          <td>
-            <div class="qty-btn-group">
-              <button type="button" onclick="doiSoLuongGioHang('${item.id}', -1)" title="Giảm số lượng">-</button>
-              <input type="number" value="${item.quantity}" readonly>
-              <button type="button" onclick="doiSoLuongGioHang('${item.id}', 1)" title="Tăng số lượng">+</button>
-            </div>
-          </td>
-          <td style="font-weight: 800; color: var(--accent);">${dinhDangTien(thanhTien)}</td>
-          <td style="text-align: center;">
-            <button class="btn-danger btn-sm" onclick="xoaKhoiGio('${item.id}')" title="Xóa món này">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+  const tongTien = gioHang.reduce((s, item) => s + (item.price * item.quantity), 0);
+  if (tongTien <= 0) {
+    hienThongBao('Giỏ hàng trống! Hãy thêm sản phẩm trước khi áp dụng voucher.', 'warning');
+    return;
   }
 
-  if (subtotalEl) subtotalEl.textContent = dinhDangTien(tongTien);
-  if (totalEl) totalEl.textContent = dinhDangTien(tongTien);
+  try {
+    const res = await fetch(`${API_URL}/vouchers`);
+    if (!res.ok) throw new Error('Không thể kết nối đến máy chủ khuyến mãi');
+    const vouchers = await res.json();
+
+    const voucher = vouchers.find(v => (v.code || '').toUpperCase() === code);
+
+    if (!voucher) {
+      hienThongBao(`Mã giảm giá "${code}" không hợp lệ hoặc đã kết thúc!`, 'error');
+      return;
+    }
+
+    if ((Number(voucher.usageLeft) || 0) <= 0) {
+      hienThongBao(`Mã ưu đãi "${code}" đã hết lượt sử dụng!`, 'error');
+      return;
+    }
+
+    const minOrder = Number(voucher.minOrder) || 0;
+    if (tongTien < minOrder) {
+      hienThongBao(`Đơn hàng cần tối thiểu ${dinhDangTien(minOrder)} để sử dụng mã "${code}"!`, 'warning');
+      return;
+    }
+
+    // Tính toán số tiền chiết khấu hợp lệ
+    let discountAmount = 0;
+    if (voucher.type === 'percent') {
+      const phanTram = Number(voucher.discount) || 0;
+      const tienGiamTinh = Math.round((tongTien * phanTram) / 100);
+      discountAmount = voucher.maxDiscount ? Math.min(tienGiamTinh, Number(voucher.maxDiscount)) : tienGiamTinh;
+    } else {
+      discountAmount = Math.min(Number(voucher.discount) || 0, tongTien);
+    }
+
+    voucherDangApDung = {
+      ...voucher,
+      calculatedDiscount: discountAmount
+    };
+
+    capNhatGiaCheckout(tongTien);
+    hienThongBao(`Áp dụng voucher "${voucher.code}" thành công! Tiết kiệm ${dinhDangTien(discountAmount)}`, 'success');
+  } catch (err) {
+    console.error('Lỗi kiểm tra voucher:', err);
+    hienThongBao('Lỗi khi kiểm tra mã giảm giá với máy chủ!', 'error');
+  }
 }
 
-// ============================================================================
-// 2. NGHIỆP VỤ THANH TOÁN (CHECKOUT) & HARD BLOCK ADMIN GUARD
-// ============================================================================
+/**
+ * 🎯 Mục đích: Hủy bỏ voucher đang áp dụng và khôi phục giá trị đơn hàng ban đầu
+ */
+function huyVoucher() {
+  if (!voucherDangApDung) return;
+  const maCu = voucherDangApDung.code;
+  voucherDangApDung = null;
+
+  const inputEl = document.getElementById('input-voucher-code');
+  if (inputEl) inputEl.value = '';
+
+  capNhatGiaCheckout();
+  hienThongBao(`Đã gỡ bỏ mã giảm giá "${maCu}"`, 'info');
+}
+
+/**
+ * 🎯 Mục đích: Cập nhật giao diện tiền tệ tại bước Checkout (Tạm tính, Giảm giá, Tổng thanh toán)
+ */
+function capNhatGiaCheckout(tongTien) {
+  if (tongTien === undefined) {
+    tongTien = gioHang.reduce((s, item) => s + (item.price * item.quantity), 0);
+  }
+
+  const subtotalEl = document.getElementById('checkout-subtotal');
+  const discountRow = document.getElementById('checkout-discount-row');
+  const discountAmountEl = document.getElementById('checkout-discount-amount');
+  const grandTotalEl = document.getElementById('checkout-grand-total');
+  const appliedAlert = document.getElementById('applied-voucher-alert');
+
+  if (subtotalEl) subtotalEl.textContent = dinhDangTien(tongTien);
+
+  if (voucherDangApDung) {
+    // Kiểm tra tính hợp lệ liên tục nếu số lượng món thay đổi
+    if (tongTien < (voucherDangApDung.minOrder || 0)) {
+      hienThongBao(`Đơn hàng không còn đủ điều kiện tối thiểu của mã ${voucherDangApDung.code}!`, 'warning');
+      voucherDangApDung = null;
+      if (discountRow) discountRow.style.display = 'none';
+      if (appliedAlert) appliedAlert.style.display = 'none';
+      if (grandTotalEl) grandTotalEl.textContent = dinhDangTien(tongTien);
+      return;
+    }
+
+    let discountAmount = 0;
+    if (voucherDangApDung.type === 'percent') {
+      const phanTram = Number(voucherDangApDung.discount) || 0;
+      const tienGiamTinh = Math.round((tongTien * phanTram) / 100);
+      discountAmount = voucherDangApDung.maxDiscount ? Math.min(tienGiamTinh, Number(voucherDangApDung.maxDiscount)) : tienGiamTinh;
+    } else {
+      discountAmount = Math.min(Number(voucherDangApDung.discount) || 0, tongTien);
+    }
+    voucherDangApDung.calculatedDiscount = discountAmount;
+
+    if (discountRow) discountRow.style.display = 'flex';
+    if (discountAmountEl) discountAmountEl.textContent = `-${dinhDangTien(discountAmount)}`;
+    if (grandTotalEl) grandTotalEl.textContent = dinhDangTien(Math.max(0, tongTien - discountAmount));
+
+    if (appliedAlert) {
+      appliedAlert.style.display = 'flex';
+      appliedAlert.innerHTML = `
+        <div>
+          <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 6px;"></i>
+          <strong>${voucherDangApDung.code}</strong>: Đã giảm ${dinhDangTien(discountAmount)}
+        </div>
+        <button type="button" class="btn-remove-voucher" onclick="window.cartModule.cancelVoucher()">Gỡ bỏ</button>
+      `;
+    }
+  } else {
+    if (discountRow) discountRow.style.display = 'none';
+    if (appliedAlert) appliedAlert.style.display = 'none';
+    if (grandTotalEl) grandTotalEl.textContent = dinhDangTien(tongTien);
+  }
+}
 
 /**
  * 🎯 Mục đích: Hiển thị màn hình Thanh Toán (Checkout) và tự động điền thông tin nếu đã đăng nhập
@@ -177,7 +420,6 @@ function hienThiThanhToan() {
   }
 
   // 🛡️ CHẶN XÁC THỰC BƯỚC THANH TOÁN (CHECKOUT AUTH GUARD CHUẨN TMĐT):
-  // Khách vãng lai thoải mái thêm giỏ, nhưng BẮT BUỘC đăng nhập/đăng ký khi tiến hành thanh toán
   if (!nguoiDungHienTai) {
     sessionStorage.setItem('smartstore_auth_redirect', 'checkout');
     hienThongBao('Quý khách vui lòng Đăng Nhập hoặc Đăng Ký để tiếp tục thanh toán đơn hàng!', 'warning');
@@ -207,8 +449,9 @@ function hienThiThanhToan() {
     }).join('');
   }
 
-  document.getElementById('checkout-subtotal').textContent = dinhDangTien(tongTien);
-  document.getElementById('checkout-grand-total').textContent = dinhDangTien(tongTien);
+  // Render các mã voucher gợi ý và cập nhật bảng tính tiền
+  renderQuickVoucherChips();
+  capNhatGiaCheckout(tongTien);
 
   // 🛡️ BẢO VỆ NGHIỆP VỤ (HARD BLOCK ADMIN): Kiểm tra và xử lý trạng thái đặt hàng của tài khoản Quản trị viên
   const warningBox = document.getElementById('admin-checkout-warning-box');
@@ -261,19 +504,20 @@ function hienThiThanhToan() {
 }
 
 /**
- * 🎯 Mục đích: Xử lý đặt hàng, lưu đơn vào API và tự động trừ kho sản phẩm
+ * 🎯 Mục đích: Xử lý đặt hàng, trừ tồn kho, trừ lượt voucher và xuất hóa đơn
  * 🛡️ Bảo vệ nghiệp vụ: Chặn tuyệt đối tài khoản Quản trị viên (Admin)
  * ⚙️ Hàm có sẵn: fetch (POST, PATCH), Promise.all, Array.prototype.reduce, Date.now
- * 🔄 Luồng chạy:
- *   1. Kiểm tra quyền Admin -> Chặn và thông báo nếu là Admin
- *   2. Validate thông tin người nhận (Họ tên, SĐT, Địa chỉ)
- *   3. Tính tổng tiền và sinh mã đơn hàng chuẩn (#DH + 9 số ngẫu nhiên)
- *   4. Gửi POST /orders lưu đơn hàng mới
- *   5. Gọi song song PATCH /products/:id trừ tồn kho (stock) và tăng đã bán (sold)
- *   6. Làm trống giỏ hàng và chuyển sang trang Cảm Ơn.
+ * 🔄 Luồng bảo vệ đồ án ASM (6 BƯỚC CHUẨN MỰC TỪ FRONTEND ĐẾN BACKEND):
+ *   1. Trigger UI: Khách nhấn nút "Xác Nhận Đặt Hàng Ngay" tại view-checkout.
+ *   2. Bắt sự kiện: Event Listener ngăn reload form, trích xuất dữ liệu người nhận.
+ *   3. Gửi HTTP Request: Gửi POST /orders tạo mới đơn hàng với thông tin chiết khấu voucher.
+ *   4. Xử lý tồn kho & Voucher đồng thời:
+ *      - Gọi song song Promise.all(PATCH /products/:id) để trừ stock và tăng sold.
+ *      - Gọi PATCH /vouchers/:id để giảm usageLeft của mã giảm giá đã dùng.
+ *   5. Database cập nhật: JSON-server ghi nhận bản ghi mới vào db.json.
+ *   6. Phản hồi UI: Lưu donHangVuaDat, làm trống giỏ hàng, thông báo Toast và điều hướng sang trang Cảm Ơn.
  */
 async function xuLyDatHang() {
-  // 🛡️ CHẶN XÁC THỰC BƯỚC THANH TOÁN (CHECKOUT AUTH GUARD CHUẨN TMĐT):
   if (!nguoiDungHienTai) {
     sessionStorage.setItem('smartstore_auth_redirect', 'checkout');
     hienThongBao('Quý khách cần Đăng Nhập hoặc Đăng Ký tài khoản để hoàn tất đặt hàng!', 'warning');
@@ -281,7 +525,6 @@ async function xuLyDatHang() {
     return;
   }
 
-  // 🎯 BẢO VỆ NGHIỆP VỤ (HARD BLOCK ADMIN): Chặn hoàn toàn nếu tài khoản đang đăng nhập là Admin
   if (nguoiDungHienTai && nguoiDungHienTai.role === 'admin') {
     hienThongBao('Tài khoản Quản trị viên không được phép đặt hàng thương mại. Vui lòng đăng xuất để dùng tài khoản Khách hàng!', 'error');
     return;
@@ -300,6 +543,8 @@ async function xuLyDatHang() {
   }
 
   const tongTien = gioHang.reduce((tong, item) => tong + (item.price * item.quantity), 0);
+  const giamGia = voucherDangApDung ? (voucherDangApDung.calculatedDiscount || 0) : 0;
+  const tongThanhToan = Math.max(0, tongTien - giamGia);
   const maDon = '#DH' + Date.now().toString().slice(-9);
 
   const donHangMoi = {
@@ -312,7 +557,10 @@ async function xuLyDatHang() {
     note: ghiChu,
     paymentMethod: phuongThuc,
     items: [...gioHang],
-    totalAmount: tongTien,
+    subtotal: tongTien,
+    voucherCode: voucherDangApDung ? voucherDangApDung.code : null,
+    discountAmount: giamGia,
+    totalAmount: tongThanhToan,
     status: 'processing',
     createdAt: new Date().toISOString()
   };
@@ -344,10 +592,28 @@ async function xuLyDatHang() {
       }
       return Promise.resolve();
     });
+
+    // 3. Giảm lượt sử dụng của Voucher nếu có áp dụng
+    if (voucherDangApDung && voucherDangApDung.id) {
+      try {
+        const vConLai = Math.max(0, (Number(voucherDangApDung.usageLeft) || 1) - 1);
+        updateKhoPromises.push(
+          fetch(`${API_URL}/vouchers/${voucherDangApDung.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usageLeft: vConLai })
+          })
+        );
+      } catch (vErr) {
+        console.warn('Lỗi khi trừ lượt voucher:', vErr);
+      }
+    }
+
     await Promise.all(updateKhoPromises);
 
-    // 3. Xóa sạch giỏ hàng & chuyển sang trang Cảm Ơn
+    // 4. Xóa sạch giỏ hàng & reset voucher
     gioHang = [];
+    voucherDangApDung = null;
     luuGioHang();
     hienThongBao(`Đặt hàng thành công! Mã đơn của bạn: ${maDon}`, 'success');
     chuyenTrang('thankyou');
@@ -374,14 +640,331 @@ function hienThiCamOn() {
     summaryEl.innerHTML = `
       <div><strong>Khách hàng:</strong> ${donHangVuaDat.customerName} - ${donHangVuaDat.customerPhone}</div>
       <div><strong>Địa chỉ:</strong> ${donHangVuaDat.customerAddress}</div>
-      <div><strong>Phương thức:</strong> ${donHangVuaDat.paymentMethod}</div>
-      <div><strong>Tổng tiền:</strong> <strong style="color: var(--accent); font-size: 15px;">${dinhDangTien(donHangVuaDat.totalAmount)}</strong></div>
-      <div style="margin-top: 8px;"><strong>Sản phẩm (${donHangVuaDat.items.length}):</strong></div>
+      <div><strong>Phương thức:</strong> ${donHangVuaDat.paymentMethod === 'COD' ? 'Tiền mặt khi nhận hàng (COD)' : (donHangVuaDat.paymentMethod === 'BANK' ? 'Chuyển khoản VietQR' : 'Ví VNPAY')}</div>
+      ${donHangVuaDat.voucherCode ? `
+        <div style="margin-top: 4px;">
+          <strong>Voucher áp dụng:</strong> 
+          <span style="display:inline-block; padding: 2px 8px; background: #eff6ff; color: #2563eb; border: 1px dashed #3b82f6; border-radius: 4px; font-weight: 700; font-size: 12px;">
+            ${donHangVuaDat.voucherCode} (-${dinhDangTien(donHangVuaDat.discountAmount)})
+          </span>
+        </div>
+      ` : ''}
+      <div style="margin-top: 4px;"><strong>Tổng thanh toán:</strong> <strong style="color: var(--accent); font-size: 15px;">${dinhDangTien(donHangVuaDat.totalAmount)}</strong></div>
+      <div style="margin-top: 8px;"><strong>Sản phẩm (${(donHangVuaDat.items || []).length}):</strong></div>
       <ul style="margin: 4px 0 0 16px; padding: 0;">
-        ${donHangVuaDat.items.map(i => `<li>${i.name} (x${i.quantity}) - ${dinhDangTien(i.price * i.quantity)}</li>`).join('')}
+        ${(donHangVuaDat.items || []).map(i => `<li>${i.name} (x${i.quantity}) - ${dinhDangTien(i.price * i.quantity)}</li>`).join('')}
       </ul>
     `;
   }
+}
+
+/**
+ * 🎯 Mục đích: In hóa đơn bán hàng kiêm phiếu bảo hành điện tử chuẩn CellphoneS / Thế Giới Di Động
+ * ⚙️ Hàm có sẵn: window.open, document.write, document.close, window.print
+ * 🔄 Luồng bảo vệ đồ án ASM (6 BƯỚC CHUẨN MỰC TỪ FRONTEND ĐẾN BACKEND):
+ *   1. Trigger UI: Người dùng bấm nút "In Hóa Đơn Bán Lẻ" (User) hoặc Admin bấm "In Hóa Đơn" (Admin Modal).
+ *   2. Event Listener: window.cartModule.printInvoice() hoặc window.adminCtrl.printInvoice() bắt sự kiện.
+ *   3. Kiểm tra dữ liệu: Trích xuất đối tượng đơn hàng (donHangVuaDat hoặc donHangDangXem).
+ *   4. Render Template Hóa Đơn Bán Lẻ A4/A5: Tạo trang HTML độc lập với đầy đủ CSS Print, Thông tin SmartStore (Trịnh Văn Bô), Hotline, Bảng món, Giảm giá voucher, Chữ ký.
+ *   5. Mở Popup & Nạp DOM: Gọi window.open(), document.write(html), document.close().
+ *   6. Lệnh In Trình Duyệt: popup.focus(); popup.print() mở hộp thoại in của hệ điều hành.
+ */
+function inHoaDonDonHang(donHang) {
+  const d = donHang || donHangVuaDat;
+  if (!d) {
+    hienThongBao('Không có dữ liệu đơn hàng để in hóa đơn!', 'warning');
+    return;
+  }
+
+  const ngayDat = new Date(d.createdAt || Date.now()).toLocaleString('vi-VN');
+  const giamGia = Number(d.discountAmount) || 0;
+  const tamTinh = d.subtotal || ((d.items || []).reduce((s, i) => s + (i.price * i.quantity), 0)) || d.totalAmount;
+  const tongTien = d.totalAmount || tamTinh;
+
+  const popup = window.open('', '_blank', 'width=850,height=900,menubar=no,toolbar=no,location=no,status=no');
+  if (!popup) {
+    hienThongBao('Trình duyệt đã chặn cửa sổ bật lên (Popup)! Vui lòng cho phép popup để in hóa đơn.', 'error');
+    return;
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hóa Đơn Bán Hàng - SmartStore ${d.orderCode}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      padding: 30px;
+      color: #1e293b;
+      background: #ffffff;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .invoice-container {
+      max-width: 780px;
+      margin: 0 auto;
+      border: 1px solid #e2e8f0;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    .header-table {
+      width: 100%;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .invoice-title {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .invoice-title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+    }
+    .invoice-title p {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      background: #f8fafc;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .info-line { margin-bottom: 4px; }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .items-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #cbd5e1;
+      font-size: 12px;
+    }
+    .items-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+    }
+    .summary-box {
+      float: right;
+      width: 340px;
+      margin-bottom: 25px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .summary-row.total {
+      border-top: 2px solid #2563eb;
+      padding-top: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #ef4444;
+    }
+    .clear { clear: both; }
+    .policy-box {
+      background: #eff6ff;
+      border: 1px dashed #3b82f6;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 11.5px;
+      color: #1e40af;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      margin-top: 20px;
+      padding: 0 40px;
+    }
+    .sig-block {
+      width: 220px;
+    }
+    .sig-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .sig-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 60px;
+    }
+    .sig-name {
+      font-weight: 600;
+      font-size: 12px;
+      border-top: 1px dotted #94a3b8;
+      padding-top: 6px;
+    }
+    @media print {
+      body { padding: 0; }
+      .invoice-container { border: none; padding: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="text-align: center; margin-bottom: 16px; display: flex; justify-content: center; gap: 10px;">
+    <button onclick="window.print()" style="padding: 10px 24px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px;">
+      🖨️ IN HÓA ĐƠN NGAY
+    </button>
+    <button onclick="window.close()" style="padding: 10px 20px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+      Đóng Cửa Sổ
+    </button>
+  </div>
+
+  <div class="invoice-container">
+    <table class="header-table">
+      <tr>
+        <td style="vertical-align: top;">
+          <div class="brand-title">⚡ SMARTSTORE</div>
+          <div class="brand-sub">Hệ Thống Bán Lẻ Smartphone & Gaming Phone Chính Hãng Hàng Đầu</div>
+          <div class="brand-sub">📍 Địa chỉ: Trịnh Văn Bô, Nam Từ Liêm, Hà Nội (FPT Polytechnic)</div>
+          <div class="brand-sub">📞 Hotline: 1800.2026 (Miễn phí) - Website: smartstore.vn</div>
+        </td>
+        <td style="vertical-align: top; text-align: right;">
+          <div style="font-size: 14px; font-weight: 700; color: #2563eb;">MÃ ĐƠN HÀNG:</div>
+          <div style="font-size: 18px; font-weight: 800; color: #0f172a;">${d.orderCode}</div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Ngày lập: ${ngayDat}</div>
+          <div style="font-size: 12px; color: #10b981; font-weight: 700; margin-top: 4px;">✓ Đã xác thực bảo hành</div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="invoice-title">
+      <h1>HÓA ĐƠN BÁN HÀNG KIÊM PHIẾU BẢO HÀNH ĐIỆN TỬ</h1>
+      <p>(Bản in lưu trữ đối soát khách hàng & bảo hành chính hãng SmartStore)</p>
+    </div>
+
+    <div class="info-grid">
+      <div>
+        <div class="info-line"><strong>Khách hàng:</strong> ${d.customerName}</div>
+        <div class="info-line"><strong>Điện thoại:</strong> ${d.customerPhone}</div>
+        <div class="info-line"><strong>Email:</strong> ${d.customerEmail || 'Chưa cung cấp'}</div>
+      </div>
+      <div>
+        <div class="info-line"><strong>Địa chỉ nhận:</strong> ${d.customerAddress}</div>
+        <div class="info-line"><strong>Phương thức TT:</strong> ${d.paymentMethod === 'COD' ? 'Tiền mặt khi nhận hàng (COD)' : (d.paymentMethod === 'BANK' ? 'Chuyển khoản VietQR' : 'VNPAY / Thẻ tín dụng')}</div>
+        <div class="info-line"><strong>Ghi chú đơn:</strong> ${d.note || 'Giao hàng tiêu chuẩn'}</div>
+      </div>
+    </div>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">STT</th>
+          <th>Tên Sản Phẩm / Thiết Bị</th>
+          <th style="width: 110px; text-align: right;">Đơn Giá</th>
+          <th style="width: 70px; text-align: center;">SL</th>
+          <th style="width: 130px; text-align: right;">Thành Tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(d.items || []).map((item, idx) => `
+          <tr>
+            <td style="text-align: center; color: #64748b;">${idx + 1}</td>
+            <td>
+              <strong style="color: #0f172a;">${item.name}</strong>
+              <div style="font-size: 11px; color: #64748b;">Bảo hành chính hãng 12 tháng tại SmartStore</div>
+            </td>
+            <td style="text-align: right;">${Number(item.price).toLocaleString('vi-VN')} đ</td>
+            <td style="text-align: center; font-weight: 700;">${item.quantity}</td>
+            <td style="text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')} đ</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <div class="summary-box">
+      <div class="summary-row">
+        <span>Tạm tính tổng sản phẩm:</span>
+        <strong>${Number(tamTinh).toLocaleString('vi-VN')} đ</strong>
+      </div>
+      ${d.voucherCode ? `
+        <div class="summary-row" style="color: #ef4444;">
+          <span>Giảm giá Voucher [${d.voucherCode}]:</span>
+          <strong>-${Number(giamGia).toLocaleString('vi-VN')} đ</strong>
+        </div>
+      ` : ''}
+      <div class="summary-row">
+        <span>Phí vận chuyển giao tận nhà:</span>
+        <strong style="color: #10b981;">0 đ (Miễn Phí)</strong>
+      </div>
+      <div class="summary-row total">
+        <span>TỔNG THANH TOÁN:</span>
+        <span>${Number(tongTien).toLocaleString('vi-VN')} đ</span>
+      </div>
+    </div>
+    <div class="clear"></div>
+
+    <div class="policy-box">
+      <strong>CHÍNH SÁCH BẢO HÀNH & ĐỔI TRẢ SMARTSTORE VIỆT NAM:</strong><br>
+      • Đổi mới 100% trong 30 ngày đầu tiên nếu máy phát sinh lỗi phần cứng từ nhà sản xuất.<br>
+      • Bảo hành chính hãng 12 tháng toàn diện bao gồm cả Nguồn & Màn hình cảm ứng.<br>
+      • Quý khách vui lòng giữ lại hóa đơn này hoặc tra cứu mã đơn <strong>${d.orderCode}</strong> trên website để được tiếp nhận bảo hành nhanh chóng.
+    </div>
+
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-title">KHÁCH HÀNG NHẬN HÀNG</div>
+        <div class="sig-sub">(Ký & ghi rõ họ tên)</div>
+        <div class="sig-name">${d.customerName}</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-title">ĐẠI DIỆN SMARTSTORE</div>
+        <div class="sig-sub">(Ký duyệt, đóng dấu & xuất kho)</div>
+        <div class="sig-name">Bộ Phận Kho Vận & Tài Chính</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+      }, 300);
+    };
+  <\/script>
+</body>
+</html>
+  `;
+
+  popup.document.open();
+  popup.document.write(html);
+  popup.document.close();
 }
 
 // ============================================================================

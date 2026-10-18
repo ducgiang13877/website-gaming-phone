@@ -136,15 +136,58 @@ Server trả HTTP Status (200, 201, 204, 404, 500) + JSON. Phía Client nhận P
 
 ---
 
-## 🚀 4. DANH SÁCH TÍNH NĂNG NÂNG CAO ĐỀ XUẤT TRIỂN KHAI TIẾP THEO
+### 🎯 Câu Hỏi 6: "Luồng hoạt động của Hệ Thống Mã Giảm Giá (Voucher / Coupon Engine)?"
+* **Bước 1 (Frontend Trigger):** Khách hàng nhập mã (ví dụ: `GAMING2026`) vào ô `#input-voucher-code` rồi bấm `[Áp Dụng]`, hoặc chạm nhanh vào một trong các Chip gợi ý (`#quick-voucher-chips`).
+* **Bước 2 (Event Dispatching):** Sự kiện `click` hoặc `keypress (Enter)` kích hoạt hàm `window.cartModule.applyVoucher(code)`.
+* **Bước 3 (HTTP Request & Fetch Collection):** Gửi yêu cầu `fetch('http://localhost:3000/vouchers')` bằng phương thức `GET` lên endpoint `/vouchers` trong `db.json`.
+* **Bước 4 (Controller & Business Logic Validation):**
+  - Kiểm tra mã voucher có tồn tại hay không.
+  - Kiểm tra số lượt sử dụng còn lại: `usageLeft > 0`.
+  - Kiểm tra điều kiện giá trị đơn hàng tối thiểu: `subtotal >= minOrder`.
+  - Tính toán số tiền chiết khấu: Nếu là `%` thì tính `(subtotal * discount / 100)` và chặn trần `maxDiscount`; nếu là `fixed` thì trừ số tiền cố định.
+  - Lưu voucher hợp lệ vào biến State: `voucherDangApDung`.
+* **Bước 5 (Database Update khi Checkout):** Khi bấm `[Xác Nhận Đặt Hàng]`, gửi `POST /orders` kèm `voucherCode` và `discountAmount`, đồng thời gửi song song `PATCH /vouchers/:id` để trừ 1 lượt sử dụng: `{ usageLeft: usageLeft - 1 }`.
+* **Bước 6 (UI Re-render):** Hiển thị dòng "Giảm giá Voucher" màu đỏ, trừ vào "Tổng thanh toán", hiển thị badge thông báo voucher kèm nút `[Gỡ bỏ]`, và bắn thông báo Toast chúc mừng.
 
-| STT | Tính năng đề xuất | Giá trị mang lại | Mức độ phức tạp | Khả năng tự tin bảo vệ |
-| :---: | :--- | :--- | :---: | :---: |
-| **1** | **Hệ thống Mã Giảm Giá (Vouchers / Coupon Engine)** | Tăng tính thực tế của sàn TMĐT; có validate hạn dùng, mức giảm tối đa, đơn hàng tối thiểu | Vừa phải | ⭐⭐⭐⭐⭐ (Rất dễ giải thích logic) |
-| **2** | **Sản phẩm Đã Xem Gần Đây (Recently Viewed)** | Lưu vết trên SessionStorage/LocalStorage; hiển thị carousel ở chân trang | Dễ | ⭐⭐⭐⭐⭐ (Cực kỳ trực quan) |
-| **3** | **Biểu Đồ Doanh Thu Canvas Admin (Vanilla Canvas Chart)** | Biểu đồ cột/đường trực quan doanh thu theo hãng; chứng minh năng lực đồ họa JS nâng cao không dùng thư viện ngoài | Trung bình | ⭐⭐⭐⭐⭐ (Giảng viên cực kỳ thích) |
-| **4** | **In Hóa Đơn Bán Hàng Trực Tiếp (Print Invoice Window)** | Tạo mẫu phiếu giao hàng chuẩn hóa đơn bán lẻ CellphoneS để in trực tiếp từ trình duyệt (`window.print`) | Dễ - Trung bình | ⭐⭐⭐⭐⭐ (Rất thực tế) |
-| **5** | **Tìm kiếm Debounce & Gợi ý từ khóa tự động (Autocomplete)** | Chống spam gọi API liên tục khi gõ phím; áp dụng kỹ thuật Closure/Timer trong JS nâng cao | Nâng cao | ⭐⭐⭐⭐⭐ (Chuẩn tiêu chí môn JS Nâng cao) |
+---
+
+### 🎯 Câu Hỏi 7: "Luồng hoạt động của Thanh Tiến Trình Quà Tặng Độc Quyền (Gamification Reward Bar)?"
+* **Bước 1 (Frontend Trigger):** Khách hàng thêm sản phẩm vào giỏ hoặc tăng/giảm số lượng món trong giỏ hàng.
+* **Bước 2 (Data Calculation):** Hàm `hienThiGioHang()` tính tổng tiền tạm tính: `tongTien = gioHang.reduce(...)`.
+* **Bước 3 (Controller Logic):** Hàm `renderRewardBar(tongTien)` đối chiếu tổng tiền với 2 mốc doanh thu:
+  - Dưới 10 triệu: Tính % thanh tiến trình từ 0 - 50%, thông báo số tiền còn thiếu để nhận Củ Sạc 67W trị giá 350k.
+  - Từ 10 - 20 triệu: Tính % từ 50 - 100%, thông báo số tiền còn thiếu để nhận Combo Tai Nghe Gaming & Balo ROG trị giá 790k.
+  - Từ 20 triệu trở lên: Đạt 100%, thông báo đã mở khóa trọn bộ Quà Tặng Gaming VIP.
+* **Bước 4 (UI Animation):** Cập nhật thuộc tính `style="width: ...%"` của thanh tiến trình với transition mượt mà, đổi màu các cột mốc đã đạt sang xanh lá cây (`.achieved`).
+
+---
+
+### 🎯 Câu Hỏi 8: "Luồng hoạt động của Chức năng In Hóa Đơn Bán Lẻ Trực Tiếp (`window.print`)?"
+* **Bước 1 (Trigger):** Khách hàng nhấn nút `[In Hóa Đơn Bán Lẻ]` tại trang Cảm Ơn, hoặc Admin nhấn `[In Hóa Đơn]` tại Modal Chi Tiết Đơn Hàng.
+* **Bước 2 (Event Dispatching):** Gọi `window.cartModule.printInvoice()` hoặc `window.adminCtrl.printInvoice()`.
+* **Bước 3 (Data Extraction):** Trích xuất thông tin đối tượng đơn hàng từ State (`donHangVuaDat` hoặc `donHangDangXem`).
+* **Bước 4 (Dynamic HTML Generation):** Hàm `inHoaDonDonHang(d)` biên dịch template hóa đơn bán lẻ độc lập chuẩn CellphoneS:
+  - Header: Logo SmartStore, chi nhánh FPT Poly Trịnh Văn Bô, Hotline 1800.2026.
+  - Tiêu đề: HÓA ĐƠN BÁN HÀNG KIÊM PHIẾU BẢO HÀNH ĐIỆN TỬ.
+  - Thông tin khách hàng, số điện thoại, địa chỉ, phương thức thanh toán.
+  - Bảng chi tiết sản phẩm: STT, tên máy, đơn giá, số lượng, thành tiền.
+  - Tóm tắt: Tạm tính, Chiết khấu Voucher (nếu có), Phí ship (0 đ), Tổng thanh toán.
+  - Chính sách bảo hành 12 tháng, 1 đổi 1 trong 30 ngày và 2 khu vực chữ ký.
+* **Bước 5 (Popup Execution):** Mở cửa sổ popup `window.open('', '_blank')`, ghi nội dung bằng `document.write(html)` và đóng luồng bằng `document.close()`.
+* **Bước 6 (Native Print Dialog):** Kích hoạt lệnh in native của hệ điều hành `window.print()` sau khi tài liệu nạp xong, tự động định dạng chuẩn khổ giấy A4/A5 và ẩn các nút điều khiển qua `@media print`.
+
+---
+
+## 🚀 4. DANH SÁCH TÍNH NĂNG NÂNG CAO ĐÃ TRIỂN KHAI THÀNH CÔNG (GÓI ĐIỂM 10)
+
+| STT | Tính năng nâng cao | Trạng thái | Vị trí file mã nguồn | Luồng bảo vệ đồ án ASM |
+| :---: | :--- | :---: | :--- | :---: |
+| **1** | **Hệ thống Mã Giảm Giá Đa Điều Kiện (Vouchers Engine)** | ✅ Đã hoàn thành 100% | `db.json`, `index.html`, `js/user/cart.js`, `styles/style.css` | Câu Hỏi 6 |
+| **2** | **Thanh Tiến Trình Quà Tặng Giỏ Hàng (Gamification Reward Bar)** | ✅ Đã hoàn thành 100% | `index.html`, `js/user/cart.js`, `styles/style.css` | Câu Hỏi 7 |
+| **3** | **In Hóa Đơn Bán Lẻ Chuẩn TMĐT (Print Invoice Popup)** | ✅ Đã hoàn thành 100% | `index.html`, `admin.html`, `js/user/cart.js`, `js/admin/orders.js` | Câu Hỏi 8 |
+| **4** | **Hệ Thống So Sánh 10 Tiêu Chí Kỹ Thuật (Sticky Compare Dock)** | ✅ Đã hoàn thành 100% | `index.html`, `js/user/catalog.js`, `styles/style.css` | Câu Hỏi 5 |
+| **5** | **Khóa Trạng Thái Đơn Bất Biến & Hoàn Kho Tự Động (FSM & Inventory)** | ✅ Đã hoàn thành 100% | `js/admin/orders.js` | Câu Hỏi 3 |
 
 ---
 *Tài liệu này được biên soạn độc quyền cho đồ án tốt nghiệp môn Lập trình JavaScript Nâng Cao của sinh viên Lương Văn Dũng.*
+
