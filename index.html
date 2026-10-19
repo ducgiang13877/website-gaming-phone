@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Stylesheet chính -->
-  <link rel="stylesheet" href="styles/style.css">
+  <!-- Stylesheet Phân Tầng Chuyên Biệt Theo Chuẩn Module: base.css (nền tảng) + user.css (khách hàng) -->
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/user.css">
 </head>
 <body>
 
@@ -1107,12 +1108,30 @@
   </div>
 
   <!-- ==========================================================================
-       6. HỆ THỐNG MODULE JAVASCRIPT PHÍA KHÁCH HÀNG (USER MODULES)
+       6. HỆ THỐNG MÃ NGUỒN MVC (MODEL - VIEW - CONTROLLER)
        ========================================================================== -->
-  <script src="js/user/state.js"></script>
-  <script src="js/user/catalog.js"></script>
-  <script src="js/user/cart.js"></script>
-  <script src="js/user/auth.js"></script>
-  <script src="js/user/main.js"></script>
+  <!-- 1. Models (Quản lý Dữ liệu & API) -->
+  <script src="js/models/ProductModel.js"></script>
+  <script src="js/models/CartModel.js"></script>
+  <script src="js/models/OrderModel.js"></script>
+  <script src="js/models/UserModel.js"></script>
+
+  <!-- 2. Views (Hiển thị Giao diện & DOM) -->
+  <script src="js/views/BaseView.js"></script>
+  <script src="js/views/ProductView.js"></script>
+  <script src="js/views/CartView.js"></script>
+  <script src="js/views/OrderView.js"></script>
+  <script src="js/views/UserView.js"></script>
+
+  <!-- 3. Controllers (Điều phối & Xử lý Logic) -->
+  <script src="js/controllers/AppController.js"></script>
+  <script src="js/controllers/ShopController.js"></script>
+  <script src="js/controllers/DetailController.js"></script>
+  <script src="js/controllers/CartController.js"></script>
+  <script src="js/controllers/AuthController.js"></script>
+
+  <!-- 4. Bootstrap & Giao diện toàn cục -->
+  <script src="js/mvc_app.js"></script>
 </body>
 </html>
+

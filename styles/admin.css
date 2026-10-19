@@ -1,0 +1,358 @@
+/* ==========================================================================
+   SMARTSTORE - ADMIN STYLESHEET (GIAO DIỆN BẢNG QUẢN TRỊ ADMIN DASHBOARD)
+   Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
+   ========================================================================== */
+
+/* 14. BẢNG QUẢN TRỊ ADMIN (ADMIN DASHBOARD STYLES) */
+.admin-navbar {
+  background: var(--secondary) !important;
+  border-bottom: 1px solid var(--secondary-light) !important;
+}
+
+.admin-navbar .header-inner {
+  max-width: 1440px;
+  width: 100%;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.admin-navbar .main-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.admin-navbar .nav-item {
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.admin-navbar .nav-item:hover {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.admin-navbar .nav-item.active {
+  color: #ffffff;
+  background: #0284c7;
+  border-color: #38bdf8;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.45);
+}
+
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.stat-icon.green { background: #dcfce7; color: #15803d; }
+.stat-icon.blue { background: #e0f2fe; color: #0284c7; }
+.stat-icon.orange { background: #ffedd5; color: #c2410c; }
+.stat-icon.purple { background: #f3e8ff; color: #7e22ce; }
+
+.stat-info h4 { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px; }
+.stat-info p { font-size: 20px; font-weight: 800; color: var(--text); }
+
+/* Chỉ số tăng trưởng % & cảnh báo */
+.stat-card-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  margin-top: 4px;
+}
+
+.stat-card-trend.up { background: #dcfce7; color: #15803d; }
+.stat-card-trend.warn { background: #fef3c7; color: #b45309; }
+
+/* Bảng dữ liệu Admin */
+.admin-table-box {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.admin-table th {
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.admin-table tr:hover {
+  background: #f8fafc;
+}
+
+/* Thumbnail Zoom Xem Trước Ảnh trong Admin */
+.admin-prod-thumb-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-prod-thumb-wrapper img {
+  max-width: 36px;
+  max-height: 36px;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.admin-prod-thumb-wrapper:hover .admin-thumb-zoom {
+  display: block;
+}
+
+.admin-thumb-zoom {
+  display: none;
+  position: absolute;
+  top: -45px;
+  left: 54px;
+  width: 130px;
+  height: 130px;
+  background: #ffffff;
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  padding: 8px;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease;
+}
+
+.admin-thumb-zoom img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Dropdown Đổi Trạng Thái Đơn Hàng Trực Tiếp Trên Dòng */
+.order-status-select {
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+.order-status-select.status-processing { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.order-status-select.status-shipping { background: #e0f2fe; color: #0284c7; border-color: #bae6fd; }
+.order-status-select.status-delivered { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.order-status-select.status-cancelled { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+
+/* Badge trạng thái tĩnh */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-processing { background: #fef3c7; color: #b45309; }
+.status-shipping { background: #e0f2fe; color: #0369a1; }
+.status-delivered { background: #dcfce7; color: #15803d; }
+.status-cancelled { background: #fee2e2; color: #b91c1c; }
+
+/* Filter Chips theo nhu cầu ở Cửa Hàng */
+.filter-chips-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.filter-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-chip-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.filter-chip-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+/* Modal Xem Nhanh Sản Phẩm (Quick View Modal) */
+.quick-view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.quick-view-img-box {
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  padding: 16px;
+}
+
+.quick-view-img-box img {
+  max-height: 250px;
+  object-fit: contain;
+}
+
+.quick-view-info h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.quick-view-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.quick-view-specs-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 12px;
+}
+
+.quick-view-spec-item {
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+}
+
+.quick-view-spec-item strong {
+  color: var(--text);
+  display: block;
+}
+
+/* Modal Thêm/Sửa Sản Phẩm 2 Cột trong Admin */
+.admin-modal-2col {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 24px;
+}
+
+.admin-form-col-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* Admin Responsive & Utilities */
+@media (max-width: 992px) {
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .admin-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px) {
+  .admin-kpi-grid { grid-template-columns: 1fr; }
+}

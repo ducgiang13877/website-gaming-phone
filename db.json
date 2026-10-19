@@ -882,7 +882,7 @@
       "cate_id": "7",
       "brand": "ASUS ROG Phone",
       "price": 25990000,
-      "quantity": 8,
+      "quantity": 7,
       "image": "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/thumbnail.webp",
       "detail": "Khe tản nhiệt cơ học AeroActive Portal tự mở cửa đón gió tản nhiệt, hệ thống loa kép siêu trầm cực khủng.",
       "specs": {
@@ -898,8 +898,8 @@
         "special": "Cửa hút gió cơ học AeroActive Portal tự động mở cánh đón luồng khí mát, Loa stereo kép mặt trước cực khủng"
       },
       "categoryId": "7",
-      "stock": 8,
-      "sold": 0
+      "stock": 7,
+      "sold": 1
     },
     {
       "id": "35",
@@ -1200,6 +1200,33 @@
       "status": "processing",
       "createdAt": "2026-10-19T03:04:58.454Z",
       "id": "AJv43r_8xtc"
+    },
+    {
+      "orderCode": "#DH380468271",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "34",
+          "name": "ASUS ROG Phone 7 Ultimate",
+          "price": 25990000,
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/realme-c35/thumbnail.webp",
+          "quantity": 1,
+          "stock": 8
+        }
+      ],
+      "subtotal": 25990000,
+      "voucherCode": null,
+      "discountAmount": 0,
+      "totalAmount": 25990000,
+      "status": "processing",
+      "createdAt": "2026-10-19T03:27:48.271Z",
+      "id": "0a6VE56KnpQ"
     }
   ],
   "vouchers": [
