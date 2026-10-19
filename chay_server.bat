@@ -1,29 +1,30 @@
 @echo off
 chcp 65001 >nul
-title [SmartStore] Máy Chủ API & Website Bán Điện Thoại (Cổng 3000)
+title [SmartStore] May Chu API va Website Ban Dien Thoai (Port 3000)
+
 echo =========================================================================
-echo DỰ ÁN ASSIGNMENT: WEBSITE BÁN ĐIỆN THOẠI THÔNG MINH & GAMING (SMARTSTORE)
-echo Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
+echo DU AN ASSIGNMENT: WEBSITE BAN DIEN THOAI THONG MINH VA GAMING (SMARTSTORE)
+echo Mon hoc: Lap trinh JavaScript Nang Cao - FPT Polytechnic
 echo =========================================================================
 echo.
 
-:: Tự động giải phóng cổng 3000 nếu có tiến trình cũ đang chiếm giữ
-echo [*] Đang kiểm tra và giải phóng cổng 3000...
+:: Tu dong giai phong cong 3000 neu co tien trinh cu dang chiem giu
+echo [*] Dang kiem tra va giai phong cong 3000...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
-    echo     -> Đang tắt tiến trình cũ chiếm cổng 3000 (PID: %%a)...
+    echo     - Giai phong tien trinh cu PID %%a chiem cong 3000...
     taskkill /F /PID %%a >nul 2>&1
 )
 
 echo.
-echo [1] Đang tự động mở Website trên trình duyệt...
-echo     - Giao diện Khách hàng (Client): http://localhost:3000/index.html
-echo     - Giao diện Quản trị viên (Admin): http://localhost:3000/admin.html
+echo [1] Dang tu dong mo Website tren trinh duyet...
+echo     - Giao dien Khach hang (Client): http://localhost:3000/index.html
+echo     - Giao dien Quan tri vien (Admin): http://localhost:3000/admin.html
 echo.
-echo [2] Tài khoản Đăng nhập Demo:
-echo     - Admin:      admin@smartstore.vn  /  Mật khẩu: admin
-echo     - Khách hàng: hung.nv@gmail.com    /  Mật khẩu: 123
+echo [2] Tai khoan Dang nhap Demo:
+echo     - Admin:      admin@smartstore.vn  /  Mat khau: admin
+echo     - Khach hang: hung.nv@gmail.com    /  Mat khau: 123
 echo.
-echo [3] Đang khởi động JSON Server & Static Web Server tại cổng 3000...
+echo [3] Dang khoi dong JSON Server va Static Web Server tai cong 3000...
 echo =========================================================================
 echo.
 
