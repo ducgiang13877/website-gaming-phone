@@ -162,19 +162,13 @@ Server trả HTTP Status (200, 201, 204, 404, 500) + JSON. Phía Client nhận P
 
 ---
 
-### 🎯 Câu Hỏi 8: "Luồng hoạt động của Chức năng In Hóa Đơn Bán Lẻ Trực Tiếp (`window.print`)?"
-* **Bước 1 (Trigger):** Khách hàng nhấn nút `[In Hóa Đơn Bán Lẻ]` tại trang Cảm Ơn, hoặc Admin nhấn `[In Hóa Đơn]` tại Modal Chi Tiết Đơn Hàng.
-* **Bước 2 (Event Dispatching):** Gọi `window.cartModule.printInvoice()` hoặc `window.adminCtrl.printInvoice()`.
+### 🎯 Câu Hỏi 8: "Luồng hoạt động của Chức năng Xem & In Hóa Đơn Bán Lẻ (`View & Print Invoice`)?"
+* **Bước 1 (Trigger Lớp 1 - Xem Trước Hóa Đơn On-screen):** Khách hàng nhấn nút `[Xem Hóa Đơn]` tại màn hình cảm ơn (#view-thankyou), hoặc Admin nhấn `[In Hóa Đơn]` tại Modal Chi Tiết Đơn Hàng.
+* **Bước 2 (Event Dispatching):** Hàm `window.cartModule.viewInvoice()` hoặc `window.adminCtrl.printInvoice()` được kích hoạt.
 * **Bước 3 (Data Extraction):** Trích xuất thông tin đối tượng đơn hàng từ State (`donHangVuaDat` hoặc `donHangDangXem`).
-* **Bước 4 (Dynamic HTML Generation):** Hàm `inHoaDonDonHang(d)` biên dịch template hóa đơn bán lẻ độc lập chuẩn CellphoneS:
-  - Header: Logo SmartStore, chi nhánh FPT Poly Trịnh Văn Bô, Hotline 1800.2026.
-  - Tiêu đề: HÓA ĐƠN BÁN HÀNG KIÊM PHIẾU BẢO HÀNH ĐIỆN TỬ.
-  - Thông tin khách hàng, số điện thoại, địa chỉ, phương thức thanh toán.
-  - Bảng chi tiết sản phẩm: STT, tên máy, đơn giá, số lượng, thành tiền.
-  - Tóm tắt: Tạm tính, Chiết khấu Voucher (nếu có), Phí ship (0 đ), Tổng thanh toán.
-  - Chính sách bảo hành 12 tháng, 1 đổi 1 trong 30 ngày và 2 khu vực chữ ký.
-* **Bước 5 (Popup Execution):** Mở cửa sổ popup `window.open('', '_blank')`, ghi nội dung bằng `document.write(html)` và đóng luồng bằng `document.close()`.
-* **Bước 6 (Native Print Dialog):** Kích hoạt lệnh in native của hệ điều hành `window.print()` sau khi tài liệu nạp xong, tự động định dạng chuẩn khổ giấy A4/A5 và ẩn các nút điều khiển qua `@media print`.
+* **Bước 4 (Render Modal Xem Hóa Đơn Tại Chỗ):** Hàm `xemHoaDon(d)` biên dịch cấu trúc Hóa Đơn Bán Lẻ chuẩn TMĐT và chèn vào `#customer-invoice-body`, sau đó gọi `moModal('customer-invoice-modal')` để khách hàng xem chi tiết toàn bộ món hàng, chiết khấu voucher, tổng thanh toán và chính sách bảo hành ngay trên màn hình.
+* **Bước 5 (Trigger Lớp 2 - Kích Hoạt Lệnh In):** Khách hàng nhấn nút `[In Hóa Đơn Này]` trong modal, kích hoạt hàm `inHoaDonDonHang(d)`.
+* **Bước 6 (Native Print Dialog):** Cửa sổ in độc lập được mở (`window.open`), nạp bản in sạch và tự động gọi `window.print()` mở hộp thoại in của hệ điều hành.
 
 ---
 
@@ -184,9 +178,16 @@ Server trả HTTP Status (200, 201, 204, 404, 500) + JSON. Phía Client nhận P
 | :---: | :--- | :---: | :--- | :---: |
 | **1** | **Hệ thống Mã Giảm Giá Đa Điều Kiện (Vouchers Engine)** | ✅ Đã hoàn thành 100% | `db.json`, `index.html`, `js/user/cart.js`, `styles/style.css` | Câu Hỏi 6 |
 | **2** | **Thanh Tiến Trình Quà Tặng Giỏ Hàng (Gamification Reward Bar)** | ✅ Đã hoàn thành 100% | `index.html`, `js/user/cart.js`, `styles/style.css` | Câu Hỏi 7 |
-| **3** | **In Hóa Đơn Bán Lẻ Chuẩn TMĐT (Print Invoice Popup)** | ✅ Đã hoàn thành 100% | `index.html`, `admin.html`, `js/user/cart.js`, `js/admin/orders.js` | Câu Hỏi 8 |
+| **3** | **Xem & In Hóa Đơn Bán Lẻ Chuẩn TMĐT (View & Print Invoice)** | ✅ Đã hoàn thành 100% | `index.html`, `admin.html`, `js/user/cart.js`, `js/admin/orders.js` | Câu Hỏi 8 |
 | **4** | **Hệ Thống So Sánh 10 Tiêu Chí Kỹ Thuật (Sticky Compare Dock)** | ✅ Đã hoàn thành 100% | `index.html`, `js/user/catalog.js`, `styles/style.css` | Câu Hỏi 5 |
 | **5** | **Khóa Trạng Thái Đơn Bất Biến & Hoàn Kho Tự Động (FSM & Inventory)** | ✅ Đã hoàn thành 100% | `js/admin/orders.js` | Câu Hỏi 3 |
+
+---
+
+## 🛡️ 5. NGUYÊN TẮC BẢO TOÀN TÍNH NĂNG & CHỐNG HỎNG CHÉO (QUY TẮC 8/10)
+> *Toàn bộ quy trình phát triển và chỉnh sửa mã nguồn được kiểm soát nghiêm ngặt theo tài liệu:  
+> 🔗 [`NGUYEN_TAC_BAO_TOAN_TINH_NANG_VA_CHONG_HONG_CHEO.md`](file:///d:/Code/Javascript%20n%C3%A2ng%20cao/website-gaming-phone/NGUYEN_TAC_BAO_TOAN_TINH_NANG_VA_CHONG_HONG_CHEO.md)*  
+> **Cam kết:** Khi cải tiến hoặc chỉnh sửa 2 tính năng, 8 tính năng đã chạy trước đó bắt buộc phải được giữ nguyên 100% tính toàn vẹn và ổn định.
 
 ---
 *Tài liệu này được biên soạn độc quyền cho đồ án tốt nghiệp môn Lập trình JavaScript Nâng Cao của sinh viên Lương Văn Dũng.*

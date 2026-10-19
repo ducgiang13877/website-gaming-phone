@@ -182,7 +182,7 @@
       "cate_id": "2",
       "brand": "Samsung",
       "price": 33990000,
-      "quantity": 12,
+      "quantity": 11,
       "image": "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/329149/samsung-galaxy-s24-ultra-grey-600x600.jpg",
       "detail": "Khung viền titan phẳng, bút S-Pen tích hợp, camera 200MP zoom 100x và bộ công cụ Galaxy AI đỉnh cao.",
       "specs": {
@@ -198,8 +198,8 @@
         "special": "Bút S-Pen trong thân máy, Kính chống chói Gorilla Armor, Galaxy AI toàn diện, IP68"
       },
       "categoryId": "2",
-      "stock": 12,
-      "sold": 0
+      "stock": 11,
+      "sold": 1
     },
     {
       "id": "7",
@@ -1146,6 +1146,60 @@
       "status": "delivered",
       "createdAt": "2026-10-17T04:13:19.066Z",
       "id": "z_xcjdxSBTc"
+    },
+    {
+      "orderCode": "#DH378453416",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "2",
+          "name": "iPhone 16 128GB",
+          "price": 21990000,
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-13-pro/thumbnail.webp",
+          "quantity": 1,
+          "stock": 25
+        }
+      ],
+      "subtotal": 21990000,
+      "voucherCode": null,
+      "discountAmount": 0,
+      "totalAmount": 21990000,
+      "status": "processing",
+      "createdAt": "2026-10-19T02:54:13.416Z",
+      "id": "XyeB31XULpQ"
+    },
+    {
+      "orderCode": "#DH379098454",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "6",
+          "name": "Samsung Galaxy S25 Ultra 5G",
+          "price": 33990000,
+          "image": "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/329149/samsung-galaxy-s24-ultra-grey-600x600.jpg",
+          "quantity": 1,
+          "stock": 12
+        }
+      ],
+      "subtotal": 33990000,
+      "voucherCode": null,
+      "discountAmount": 0,
+      "totalAmount": 33990000,
+      "status": "processing",
+      "createdAt": "2026-10-19T03:04:58.454Z",
+      "id": "AJv43r_8xtc"
     }
   ],
   "vouchers": [

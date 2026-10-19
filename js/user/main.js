@@ -26,6 +26,8 @@ window.cartModule = {
   clear: xoaSachGioHang,
   applyVoucher: apDungVoucher,
   cancelVoucher: huyVoucher,
+  viewInvoice: xemHoaDon,
+  viewMyOrders: xemDonHangCuaToi,
   printInvoice: () => inHoaDonDonHang(donHangVuaDat)
 };
 
@@ -146,7 +148,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Sự kiện In Hóa Đơn Bán Lẻ trang Cảm Ơn
+  // Sự kiện Xem Hóa Đơn trang Cảm Ơn
+  document.getElementById('btn-view-invoice-thankyou')?.addEventListener('click', () => {
+    xemHoaDon(donHangVuaDat);
+  });
+
+  // Sự kiện Xem Đơn Hàng Của Tôi trang Cảm Ơn
+  document.getElementById('btn-view-my-orders-thankyou')?.addEventListener('click', () => {
+    xemDonHangCuaToi();
+  });
+
+  // Fallback tương thích ngược: Nút In Hóa Đơn Bán Lẻ trực tiếp
   document.getElementById('btn-print-thankyou-order')?.addEventListener('click', () => {
     inHoaDonDonHang(donHangVuaDat);
   });

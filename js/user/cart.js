@@ -967,6 +967,167 @@ function inHoaDonDonHang(donHang) {
   popup.document.close();
 }
 
+/**
+ * 🎯 Mục đích: Mở modal xem trước toàn bộ chi tiết Hóa Đơn Bán Hàng trên giao diện trước khi in
+ * 🔄 Luồng bảo vệ đồ án ASM (6 BƯỚC CHUẨN MỰC TỪ FRONTEND ĐẾN BACKEND):
+ *   1. Trigger UI: Khách hàng nhấn nút "Xem Hóa Đơn" tại màn hình cảm ơn (#view-thankyou).
+ *   2. Bắt sự kiện: window.cartModule.viewInvoice() được gọi.
+ *   3. Trích xuất dữ liệu: Lấy đối tượng đơn hàng trong state `donHangVuaDat`.
+ *   4. Render Giao Diện Hóa Đơn On-screen: Sinh cấu trúc HTML trực quan gồm Header SmartStore, Mã đơn, Khách hàng, Bảng món, Chiết khấu Voucher, Tổng thanh toán, Chính sách bảo hành.
+ *   5. Kích hoạt Modal: moModal('customer-invoice-modal') hiển thị khung xem trước.
+ *   6. Phân luồng In Ấn: Người dùng xem kỹ toàn bộ thông tin trên màn hình, sau đó có thể nhấn nút "In Hóa Đơn Này" trong modal để gọi lệnh in.
+ */
+function xemHoaDon(donHang) {
+  const d = donHang || donHangVuaDat;
+  if (!d) {
+    hienThongBao('Không có thông tin đơn hàng vừa đặt để xem hóa đơn!', 'warning');
+    return;
+  }
+
+  const bodyEl = document.getElementById('customer-invoice-body');
+  if (!bodyEl) return;
+
+  const ngayDat = new Date(d.createdAt || Date.now()).toLocaleString('vi-VN');
+  const giamGia = Number(d.discountAmount) || 0;
+  const tamTinh = d.subtotal || ((d.items || []).reduce((s, i) => s + (i.price * i.quantity), 0)) || d.totalAmount;
+  const tongTien = d.totalAmount || tamTinh;
+
+  bodyEl.innerHTML = `
+    <div style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; font-size: 13px; line-height: 1.6; color: var(--text);">
+      <!-- Header Hóa Đơn -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--primary); padding-bottom: 16px; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <div style="font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px;">⚡ SMARTSTORE</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Hệ Thống Bán Lẻ Smartphone & Gaming Phone Chính Hãng</div>
+          <div style="font-size: 12px; color: var(--text-muted);">📍 Địa chỉ: Trịnh Văn Bô, Nam Từ Liêm, Hà Nội (FPT Polytechnic)</div>
+          <div style="font-size: 12px; color: var(--text-muted);">📞 Hotline: 1800.2026 (Miễn phí) - smartstore.vn</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-muted);">MÃ ĐƠN HÀNG:</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--primary);">${d.orderCode}</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Ngày lập: ${ngayDat}</div>
+          <span class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 700; font-size: 11px; margin-top: 4px; display: inline-block;">
+            ✓ Đã xác thực bảo hành điện tử
+          </span>
+        </div>
+      </div>
+
+      <!-- Tiêu đề chứng từ -->
+      <div style="text-align: center; margin-bottom: 18px;">
+        <h2 style="font-size: 18px; font-weight: 800; color: var(--text); text-transform: uppercase; margin-bottom: 4px;">
+          HÓA ĐƠN BÁN HÀNG KIÊM PHIẾU BẢO HÀNH ĐIỆN TỬ
+        </h2>
+        <p style="font-size: 12px; color: var(--text-muted);">(Bản lưu đối soát khách hàng & bảo hành chính hãng SmartStore)</p>
+      </div>
+
+      <!-- Khung thông tin khách hàng -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: #f8fafc; padding: 14px 16px; border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--border);">
+        <div>
+          <div><strong>Khách hàng:</strong> ${d.customerName}</div>
+          <div><strong>Số điện thoại:</strong> ${d.customerPhone}</div>
+          <div><strong>Email:</strong> ${d.customerEmail || 'Chưa cung cấp'}</div>
+        </div>
+        <div>
+          <div><strong>Địa chỉ nhận hàng:</strong> ${d.customerAddress}</div>
+          <div><strong>Phương thức thanh toán:</strong> ${d.paymentMethod === 'COD' ? 'Tiền mặt khi nhận hàng (COD)' : (d.paymentMethod === 'BANK' ? 'Chuyển khoản VietQR' : 'Ví VNPAY')}</div>
+          <div><strong>Ghi chú đơn:</strong> ${d.note || 'Giao hàng tiêu chuẩn'}</div>
+        </div>
+      </div>
+
+      <!-- Bảng chi tiết sản phẩm -->
+      <table class="cart-table" style="margin-bottom: 18px; width: 100%;">
+        <thead>
+          <tr style="background: #f1f5f9;">
+            <th style="width: 40px; text-align: center;">STT</th>
+            <th>Tên Sản Phẩm / Thiết Bị</th>
+            <th style="text-align: right; width: 120px;">Đơn Giá</th>
+            <th style="text-align: center; width: 70px;">SL</th>
+            <th style="text-align: right; width: 140px;">Thành Tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(d.items || []).map((item, idx) => `
+            <tr>
+              <td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>
+              <td>
+                <strong>${item.name}</strong>
+                <div style="font-size: 11px; color: var(--text-muted);">Bảo hành chính hãng 12 tháng tại SmartStore</div>
+              </td>
+              <td style="text-align: right;">${dinhDangTien(item.price)}</td>
+              <td style="text-align: center; font-weight: 700;">${item.quantity}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--text);">${dinhDangTien(item.price * item.quantity)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <!-- Bảng tóm tắt tài chính -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <div style="width: 320px;">
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+            <span>Tạm tính tổng sản phẩm:</span>
+            <strong>${dinhDangTien(tamTinh)}</strong>
+          </div>
+          ${d.voucherCode ? `
+            <div style="display: flex; justify-content: space-between; padding: 4px 0; color: var(--accent);">
+              <span>Giảm giá Voucher [${d.voucherCode}]:</span>
+              <strong>-${dinhDangTien(giamGia)}</strong>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+            <span>Phí vận chuyển:</span>
+            <strong style="color: var(--success);">0 đ (Miễn Phí)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0 0; border-top: 2px solid var(--primary); margin-top: 6px; font-size: 15px;">
+            <strong style="color: var(--text);">TỔNG THANH TOÁN:</strong>
+            <strong style="color: var(--accent); font-size: 17px;">${dinhDangTien(tongTien)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chính sách bảo hành -->
+      <div style="background: #eff6ff; border: 1px dashed #3b82f6; border-radius: var(--radius-md); padding: 12px 14px; font-size: 12px; color: #1e40af; margin-bottom: 24px; line-height: 1.6;">
+        <strong>CHÍNH SÁCH BẢO HÀNH & ĐỔI TRẢ SMARTSTORE VIỆT NAM:</strong><br>
+        • Đổi mới 100% trong 30 ngày đầu tiên nếu máy phát sinh lỗi phần cứng từ nhà sản xuất.<br>
+        • Bảo hành chính hãng 12 tháng toàn diện bao gồm cả Nguồn & Màn hình cảm ứng.<br>
+        • Mã đơn <strong>${d.orderCode}</strong> đã được lưu trên hệ thống điện tử. Quý khách có thể tra cứu trạng thái đơn bất cứ lúc nào.
+      </div>
+
+      <!-- Chữ ký điện tử -->
+      <div style="display: flex; justify-content: space-between; text-align: center; padding: 0 30px;">
+        <div style="width: 200px;">
+          <div style="font-weight: 700; margin-bottom: 2px;">KHÁCH HÀNG NHẬN HÀNG</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 50px;">(Ký & ghi rõ họ tên)</div>
+          <div style="font-weight: 600; border-top: 1px dotted #94a3b8; padding-top: 6px;">${d.customerName}</div>
+        </div>
+        <div style="width: 200px;">
+          <div style="font-weight: 700; margin-bottom: 2px;">ĐẠI DIỆN SMARTSTORE</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 50px;">(Ký duyệt & xuất kho)</div>
+          <div style="font-weight: 600; border-top: 1px dotted #94a3b8; padding-top: 6px;">Bộ Phận Kho Vận & Kế Toán</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  moModal('customer-invoice-modal');
+}
+
+/**
+ * 🎯 Mục đích: Điều hướng người dùng xem danh sách đơn hàng đã mua
+ * 🔄 Luồng phân luồng thông minh:
+ *   - Nếu khách ĐÃ ĐĂNG NHẬP: Chuyển sang trang Profile (#view-profile) chứa đầy đủ lịch sử đơn hàng.
+ *   - Nếu khách là VÃNG LAI (chưa đăng nhập): Tự động điền mã đơn vừa đặt vào ô tra cứu và chuyển sang trang Tra Cứu (#view-tracking).
+ */
+function xemDonHangCuaToi() {
+  if (nguoiDungHienTai) {
+    chuyenTrang('profile');
+  } else if (donHangVuaDat && donHangVuaDat.orderCode) {
+    traCuuTheoMa(donHangVuaDat.orderCode);
+  } else {
+    chuyenTrang('tracking');
+  }
+}
+
 // ============================================================================
 // 3. TRA CỨU ĐƠN HÀNG (ORDER TRACKING)
 // ============================================================================

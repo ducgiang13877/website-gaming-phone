@@ -602,13 +602,13 @@
         </div>
 
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <button class="btn-success" id="btn-print-thankyou-order" onclick="window.cartModule.printInvoice()">
-            <i class="fa-solid fa-print"></i> In Hóa Đơn Bán Lẻ
+          <button class="btn-success" id="btn-view-invoice-thankyou" onclick="window.cartModule.viewInvoice()">
+            <i class="fa-solid fa-file-invoice"></i> Xem Hóa Đơn
           </button>
           <button class="btn-primary" onclick="window.appNav.goTo('shop')">
             <i class="fa-solid fa-bag-shopping"></i> Tiếp Tục Mua Sắm
           </button>
-          <button class="btn-secondary" id="btn-view-my-orders-thankyou">
+          <button class="btn-secondary" id="btn-view-my-orders-thankyou" onclick="window.cartModule.viewMyOrders()">
             <i class="fa-solid fa-clock-rotate-left"></i> Xem Đơn Hàng Của Tôi
           </button>
         </div>
@@ -1016,6 +1016,32 @@
         <button class="btn-secondary" onclick="window.appNav.closeModal('quick-view-modal')">Đóng</button>
         <button class="btn-primary" id="btn-quick-view-add-cart">
           <i class="fa-solid fa-cart-plus"></i> Thêm Vào Giỏ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL XEM CHI TIẾT HÓA ĐƠN BÁN HÀNG & BẢO HÀNH (INVOICE PREVIEW MODAL)
+       ========================================================================== -->
+  <div class="modal-overlay" id="customer-invoice-modal">
+    <div class="modal-box" style="max-width: 820px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="customer-invoice-title">
+          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> 
+          Hóa Đơn Bán Hàng Kiêm Phiếu Bảo Hành
+        </h3>
+        <button class="btn-close-modal" onclick="window.appNav.closeModal('customer-invoice-modal')">&times;</button>
+      </div>
+      <div style="padding: 20px; overflow-y: auto; flex: 1;" id="customer-invoice-body">
+        <!-- Render động toàn bộ chi tiết hóa đơn -->
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn-secondary" onclick="window.appNav.closeModal('customer-invoice-modal')">
+          <i class="fa-solid fa-xmark"></i> Đóng
+        </button>
+        <button type="button" class="btn-success" id="btn-modal-print-invoice" onclick="window.cartModule.printInvoice()">
+          <i class="fa-solid fa-print"></i> In Hóa Đơn Này
         </button>
       </div>
     </div>
