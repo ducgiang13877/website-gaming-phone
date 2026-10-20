@@ -18,7 +18,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING
 echo.
 echo [1] Dang tu dong mo Website tren trinh duyet...
 echo     - Giao dien Khach hang (Client): http://localhost:3000/index.html
-echo     - Giao dien Quan tri vien (Admin): http://localhost:3000/admin.html
+echo     - Giao dien Quan tri vien (Admin): http://localhost:3000/views/admin.html
 echo.
 echo [2] Tai khoan Dang nhap Demo:
 echo     - Admin:      admin@smartstore.vn  /  Mat khau: admin

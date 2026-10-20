@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -344,30 +344,16 @@
 
 
   <!-- ==========================================================================
-       HỆ THỐNG MÃ NGUỒN MVC (MODEL - VIEW - CONTROLLER)
+       HỆ THỐNG MÃ NGUỒN MVC CHUẨN MỰC TINH GỌN (MODEL - VIEW - CONTROLLER)
        ========================================================================== -->
-  <!-- 1. Models (Quản lý Dữ liệu & API từ thư mục ../models/) -->
-  <script src="../models/ProductModel.js"></script>
-  <script src="../models/CartModel.js"></script>
-  <script src="../models/OrderModel.js"></script>
-  <script src="../models/UserModel.js"></script>
+  <!-- 1. Models (Quản lý Toàn Bộ Dữ liệu & RESTful API từ models/appModel.js) -->
+  <script src="../models/appModel.js"></script>
 
-  <!-- 2. Views (Hiển thị Giao diện & DOM từ thư mục js/) -->
-  <script src="js/BaseView.js"></script>
-  <script src="js/ProductView.js"></script>
-  <script src="js/CartView.js"></script>
-  <script src="js/OrderView.js"></script>
-  <script src="js/UserView.js"></script>
+  <!-- 2. Views (Hiển thị Toàn Bộ Giao diện & DOM Renderer từ views/js/appView.js) -->
+  <script src="js/appView.js"></script>
 
-  <!-- 3. Controllers (Điều phối & Xử lý Logic từ thư mục ../controllers/) -->
-  <script src="../controllers/AppController.js"></script>
-  <script src="../controllers/ShopController.js"></script>
-  <script src="../controllers/DetailController.js"></script>
-  <script src="../controllers/CartController.js"></script>
-  <script src="../controllers/AuthController.js"></script>
-
-  <!-- 4. Bootstrap & Giao diện toàn cục -->
-  <script src="../controllers/mvc_app.js"></script>
+  <!-- 3. Controllers (Điều phối & Xử lý Nghiệp vụ Tổng thể từ controllers/appController.js) -->
+  <script src="../controllers/appController.js"></script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -146,6 +146,192 @@
         </button>
       </div>
     </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 2: THANH TOÁN & ĐẶT HÀNG (CHECKOUT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-checkout" class="view-panel">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> Thanh Toán & Đặt Hàng
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted);">Vui lòng nhập đầy đủ thông tin người nhận để SmartStore giao hàng nhanh nhất</p>
+      </div>
+
+      <div class="cart-layout">
+        <!-- Form Thông Tin Giao Nhận -->
+        <div class="checkout-card">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 18px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+            1. Thông Tin Người Nhận
+          </h3>
+          <form id="checkout-form" onsubmit="return false;">
+            <div class="form-group">
+              <label class="form-label" for="checkout-name">Họ và tên người nhận <span style="color: var(--accent);">*</span></label>
+              <input type="text" id="checkout-name" class="form-input" placeholder="Ví dụ: Nguyễn Văn Hùng" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="checkout-phone">Số điện thoại liên hệ <span style="color: var(--accent);">*</span></label>
+                <input type="tel" id="checkout-phone" class="form-input" placeholder="Ví dụ: 0912345678" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="checkout-email">Email nhận hóa đơn</label>
+                <input type="email" id="checkout-email" class="form-input" placeholder="Ví dụ: hung@gmail.com">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="checkout-address">Địa chỉ nhận hàng chi tiết <span style="color: var(--accent);">*</span></label>
+              <input type="text" id="checkout-address" class="form-input" placeholder="Số nhà, ngõ/ngách, tên đường, Phường/Xã, Quận/Huyện, Tỉnh/TP" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="checkout-note">Ghi chú giao hàng (nếu có)</label>
+              <textarea id="checkout-note" class="form-input" rows="3" placeholder="Giao hàng trong giờ hành chính, gọi trước khi giao..."></textarea>
+            </div>
+
+            <h3 style="font-size: 1.15rem; font-weight: 800; margin: 24px 0 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+              2. Phương Thức Thanh Toán
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="COD" checked>
+                <div>
+                  <strong>Thanh toán tiền mặt khi nhận hàng (COD)</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Kiểm tra hàng thoải mái trước khi thanh toán cho Shipper</div>
+                </div>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="BANK">
+                <div>
+                  <strong>Chuyển khoản Ngân hàng qua mã VietQR</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Xác nhận giao dịch tự động trong 30 giây</div>
+                </div>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: #fff;">
+                <input type="radio" name="payment_method" value="VNPAY">
+                <div>
+                  <strong>Ví Điện Tử VNPAY / Momo / Thẻ Tín Dụng</strong>
+                  <div style="font-size: 12px; color: var(--text-muted);">Hỗ trợ thẻ ATM nội địa & thẻ Visa/Mastercard</div>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" id="btn-submit-order" class="btn-primary" style="width: 100%; padding: 14px; font-size: 15px;">
+              <i class="fa-solid fa-lock"></i> Xác Nhận Đặt Hàng Ngay
+            </button>
+          </form>
+        </div>
+
+        <!-- Tóm Tắt Đơn Hàng Cần Mua -->
+        <div class="cart-summary-box">
+          <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Chi Tiết Đơn Hàng
+          </h3>
+          <div id="checkout-items-list" style="max-height: 280px; overflow-y: auto; margin-bottom: 16px;">
+            <!-- Render danh sách rút gọn các món hàng -->
+          </div>
+
+          <!-- KHỐI MÃ GIẢM GIÁ (VOUCHER ENGINE) -->
+          <div class="voucher-box" style="margin-bottom: 16px; padding: 14px; background: #f8fafc; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+            <label class="form-label" style="font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; color: var(--text);">
+              <i class="fa-solid fa-ticket" style="color: var(--primary);"></i> Mã Giảm Giá / Khuyến Mãi
+            </label>
+            <div class="voucher-input-group" style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" id="input-voucher-code" class="form-input" placeholder="Nhập mã voucher..." style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; font-size: 13px;">
+              <button type="button" id="btn-apply-voucher" class="btn-primary" style="white-space: nowrap; padding: 0 16px; font-size: 13px;">
+                Áp Dụng
+              </button>
+            </div>
+            
+            <!-- Gợi ý voucher bấm nhanh -->
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Mã HOT gợi ý (chạm để chọn nhanh):</div>
+            <div id="quick-voucher-chips" class="voucher-chips-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+              <!-- Render động các chip mã -->
+            </div>
+
+            <!-- Khung báo voucher đã áp dụng -->
+            <div id="applied-voucher-alert" class="applied-voucher-alert" style="display: none;">
+              <!-- Thông tin voucher áp dụng thành công -->
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <span>Tạm tính:</span>
+            <strong id="checkout-subtotal">0 đ</strong>
+          </div>
+          <div class="summary-row" id="checkout-discount-row" style="display: none; color: var(--accent);">
+            <span>Giảm giá Voucher:</span>
+            <strong id="checkout-discount-amount">-0 đ</strong>
+          </div>
+          <div class="summary-row">
+            <span>Vận chuyển:</span>
+            <strong style="color: var(--success);">0 đ (Free)</strong>
+          </div>
+          <div class="summary-row total-row">
+            <span>Tổng thanh toán:</span>
+            <span id="checkout-grand-total">0 đ</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 3: ĐẶT HÀNG THÀNH CÔNG (THANK YOU VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-thankyou" class="view-panel">
+      <div class="thank-you-card">
+        <div class="icon-success-circle">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">
+          Đặt Hàng Thành Công!
+        </h2>
+        <p style="color: var(--text-muted); font-size: 14px;">
+          Cảm ơn bạn đã tin tưởng mua sắm tại <strong>SmartStore</strong>. Nhân viên chăm sóc sẽ liên hệ xác nhận đơn qua số điện thoại của bạn.
+        </p>
+
+        <!-- Mã đơn hàng 11 ký tự chuẩn mực -->
+        <div class="order-code-badge" id="thankyou-order-code">
+          #DH883921094
+        </div>
+
+        <!-- Thanh Tiến Trình Giao Hàng -->
+        <div class="order-stepper">
+          <div class="step-item active">
+            <div class="step-circle"><i class="fa-solid fa-receipt"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đã Đặt</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-box-open"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đang Chuẩn Bị</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-truck"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Đang Giao</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+            <div style="font-size: 12px; font-weight: 700;">Hoàn Tất</div>
+          </div>
+        </div>
+
+        <div id="thankyou-order-summary" style="text-align: left; background: var(--bg); padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px; font-size: 13px;">
+          <!-- Chi tiết tóm tắt người nhận và tiền -->
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn-success" id="btn-view-invoice-thankyou" onclick="window.cartModule.viewInvoice()">
+            <i class="fa-solid fa-file-invoice"></i> Xem Hóa Đơn
+          </button>
+          <button class="btn-primary" onclick="window.appNav.goTo('shop')">
+            <i class="fa-solid fa-bag-shopping"></i> Tiếp Tục Mua Sắm
+          </button>
+          <button class="btn-secondary" id="btn-view-my-orders-thankyou" onclick="window.cartModule.viewMyOrders()">
+            <i class="fa-solid fa-clock-rotate-left"></i> Xem Đơn Hàng Của Tôi
+          </button>
+        </div>
+      </div>
+    </section>
+    </section>
   </main>
 
   <!-- ==========================================================================
@@ -280,30 +466,16 @@
 
 
   <!-- ==========================================================================
-       HỆ THỐNG MÃ NGUỒN MVC (MODEL - VIEW - CONTROLLER)
+       HỆ THỐNG MÃ NGUỒN MVC CHUẨN MỰC TINH GỌN (MODEL - VIEW - CONTROLLER)
        ========================================================================== -->
-  <!-- 1. Models (Quản lý Dữ liệu & API từ thư mục ../models/) -->
-  <script src="../models/ProductModel.js"></script>
-  <script src="../models/CartModel.js"></script>
-  <script src="../models/OrderModel.js"></script>
-  <script src="../models/UserModel.js"></script>
+  <!-- 1. Models (Quản lý Toàn Bộ Dữ liệu & RESTful API từ models/appModel.js) -->
+  <script src="../models/appModel.js"></script>
 
-  <!-- 2. Views (Hiển thị Giao diện & DOM từ thư mục js/) -->
-  <script src="js/BaseView.js"></script>
-  <script src="js/ProductView.js"></script>
-  <script src="js/CartView.js"></script>
-  <script src="js/OrderView.js"></script>
-  <script src="js/UserView.js"></script>
+  <!-- 2. Views (Hiển thị Toàn Bộ Giao diện & DOM Renderer từ views/js/appView.js) -->
+  <script src="js/appView.js"></script>
 
-  <!-- 3. Controllers (Điều phối & Xử lý Logic từ thư mục ../controllers/) -->
-  <script src="../controllers/AppController.js"></script>
-  <script src="../controllers/ShopController.js"></script>
-  <script src="../controllers/DetailController.js"></script>
-  <script src="../controllers/CartController.js"></script>
-  <script src="../controllers/AuthController.js"></script>
-
-  <!-- 4. Bootstrap & Giao diện toàn cục -->
-  <script src="../controllers/mvc_app.js"></script>
+  <!-- 3. Controllers (Điều phối & Xử lý Nghiệp vụ Tổng thể từ controllers/appController.js) -->
+  <script src="../controllers/appController.js"></script>
 
 </body>
 </html>

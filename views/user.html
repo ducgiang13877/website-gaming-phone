@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartStore - Thế Giới Điện Thoại Thông Minh & Gaming Phone</title>
+  <title>SmartStore - Tài Khoản, Tra Cứu & Hỗ Trợ Khách Hàng</title>
   <!-- Google Fonts & FontAwesome 6 Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,9 +16,9 @@
 <body>
 
   <!-- ==========================================================================
-       THANH HEADER ĐIỀU HƯỚNG CHÍNH (NAVIGATION BAR)
+       1. THANH HEADER ĐIỀU HƯỚNG CHÍNH (NAVIGATION BAR)
        ========================================================================== -->
-<header class="site-header">
+  <header class="site-header">
     <div class="header-inner">
       <!-- Logo Thương Hiệu -->
       <div class="brand-logo" onclick="window.appNav.goTo('home')">
@@ -27,7 +27,7 @@
         <span class="logo-tag">PRO GAMING</span>
       </div>
 
-      <!-- Menu Điều Hướng SPA (Chỉ chứa các trang chính) -->
+      <!-- Menu Điều Hướng SPA -->
       <nav class="main-nav" id="main-nav-links">
         <button class="nav-item" data-view="home">
           <i class="fa-solid fa-house"></i> Trang Chủ
@@ -38,14 +38,14 @@
         <button class="nav-item" data-view="about">
           <i class="fa-solid fa-circle-info"></i> Giới Thiệu
         </button>
-        <button class="nav-item active" data-view="contact">
+        <button class="nav-item" data-view="contact">
           <i class="fa-solid fa-headset"></i> Liên Hệ
         </button>
       </nav>
 
       <!-- Khu Vực Tiện Ích Góc Phải: Giỏ Hàng & Tài Khoản -->
       <div class="header-user-actions" id="header-right-actions">
-        <!-- Nút Giỏ Hàng Chuyên Biệt Nổi Bật Chuẩn UI/UX -->
+        <!-- Nút Giỏ Hàng -->
         <button class="header-cart-btn" id="nav-cart-btn" onclick="window.appNav.goTo('cart')" title="Xem giỏ hàng của bạn">
           <div class="cart-icon-wrapper">
             <i class="fa-solid fa-cart-shopping"></i>
@@ -65,10 +65,231 @@
   </header>
 
   <!-- ==========================================================================
-       KHUNG NỘI DUNG CHUYÊN BIỆT: LIÊN HỆ & GIỚI THIỆU (MVC VIEW)
+       2. KHUNG NỘI DUNG CHUYÊN BIỆT: TÀI KHOẢN, HỒ SƠ & LIÊN HỆ (USER VIEW)
        ========================================================================== -->
   <main class="app-container">
-<section id="view-about" class="view-panel active">
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 1: ĐĂNG NHẬP / ĐĂNG KÝ (AUTH VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-auth" class="view-panel active">
+      <div class="auth-wrapper">
+        <!-- Banner Nhắc Nhở Đăng Nhập Để Thanh Toán -->
+        <div id="auth-checkout-prompt-banner" style="display: none; background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px; align-items: flex-start; gap: 12px; color: #1e40af; box-shadow: 0 4px 12px rgba(59,130,246,0.12);">
+          <i class="fa-solid fa-cart-shopping" style="font-size: 20px; color: #2563eb; margin-top: 2px;"></i>
+          <div style="font-size: 13px; line-height: 1.5;">
+            <strong style="display: block; font-size: 14px; margin-bottom: 3px; color: #1d4ed8;">🛒 BƯỚC XÁC THỰC THANH TOÁN</strong>
+            Quý khách vui lòng <strong>Đăng Nhập</strong> hoặc <strong>Đăng Ký</strong> tài khoản để hoàn tất đơn hàng trong giỏ, kích hoạt bảo hành điện tử chính hãng và theo dõi lộ trình đơn hàng.
+          </div>
+        </div>
+
+        <!-- Chuyển Đổi Tab Đăng Nhập / Đăng Ký -->
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="tab-btn-login" onclick="window.authModule.switchTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+          </button>
+          <button class="auth-tab-btn" id="tab-btn-register" onclick="window.authModule.switchTab('register')">
+            <i class="fa-solid fa-user-plus"></i> Đăng Ký
+          </button>
+        </div>
+
+        <!-- Form Đăng Nhập -->
+        <form id="form-login" onsubmit="return false;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Chào Mừng Trở Lại!
+          </h3>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email đăng nhập</label>
+            <input type="email" id="login-email" class="form-input" placeholder="admin@smartstore.vn hoặc email của bạn" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Mật khẩu</label>
+            <input type="password" id="login-password" class="form-input" placeholder="Nhập mật khẩu..." required>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px;">
+            💡 <em>Gợi ý tài khoản demo:</em><br>
+            • Admin: <code>admin@smartstore.vn</code> / pass: <code>admin</code><br>
+            • Khách hàng: <code>hung.nv@gmail.com</code> / pass: <code>123</code>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Ngay
+          </button>
+        </form>
+
+        <!-- Form Đăng Ký Tài Khoản Mới -->
+        <form id="form-register" style="display: none;" onsubmit="return false;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            Tạo Tài Khoản Mới
+          </h3>
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Họ và tên đầy đủ <span style="color: var(--accent);">*</span></label>
+            <input type="text" id="reg-name" class="form-input" placeholder="Ví dụ: Trần Văn Nam" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email đăng ký <span style="color: var(--accent);">*</span></label>
+            <input type="email" id="reg-email" class="form-input" placeholder="Ví dụ: nam.tran@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Số điện thoại <span style="color: var(--accent);">*</span></label>
+            <input type="tel" id="reg-phone" class="form-input" placeholder="Ví dụ: 0987654321" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-address">Địa chỉ</label>
+            <input type="text" id="reg-address" class="form-input" placeholder="Quận/Huyện, Tỉnh/TP">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Mật khẩu <span style="color: var(--accent);">*</span></label>
+            <input type="password" id="reg-password" class="form-input" placeholder="Tối thiểu 6 ký tự" required>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+            <i class="fa-solid fa-user-check"></i> Đăng Ký Tài Khoản
+          </button>
+        </form>
+
+        <!-- HỘP NHẬN DIỆN TÀI KHOẢN THÔNG MINH (SMART IDENTITY RESOLUTION UX) -->
+        <div id="smart-identity-box" class="smart-identity-card" style="display: none;">
+          <div class="smart-avatar">
+            <i class="fa-solid fa-circle-user"></i>
+          </div>
+          <h4 class="smart-identity-title">
+            Có phải bạn là <strong id="smart-user-name" style="color: var(--primary);">[Tên Người Dùng]</strong> không?
+          </h4>
+          <p class="smart-identity-desc">
+            Hệ thống nhận thấy tài khoản gắn với email/SĐT này đã tồn tại trên SmartStore. Vui lòng nhập mật khẩu để đăng nhập nhanh chóng!
+          </p>
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" for="smart-login-password">Mật khẩu của bạn</label>
+            <input type="password" id="smart-login-password" class="form-input" placeholder="Nhập mật khẩu..." required>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 14px;">
+            <button type="button" class="btn-primary" style="flex: 1; padding: 11px;" id="btn-smart-login-submit">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Ngay
+            </button>
+            <button type="button" class="btn-secondary" style="padding: 11px;" id="btn-smart-cancel">
+              Không Phải Tôi
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 2: HỒ SƠ TÀI KHOẢN & LỊCH SỬ ĐƠN HÀNG (PROFILE VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-profile" class="view-panel">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
+          <i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Thông Tin Tài Khoản
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted);">Quản lý thông tin liên hệ và xem lại lịch sử các đơn hàng đã đặt</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+        <!-- Cột Trái: Form Chỉnh Sửa Thông Tin Cá Nhân -->
+        <div class="checkout-card">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 72px; height: 72px; background: var(--primary-light); color: var(--primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px;">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <h3 id="profile-display-name" style="font-size: 1.2rem; font-weight: 800;">Khách Hàng</h3>
+            <span id="profile-display-role" class="badge" style="background: #e0f2fe; color: #0284c7;">Khách Hàng Thân Thiết</span>
+          </div>
+
+          <form id="profile-edit-form" onsubmit="return false;">
+            <div class="form-group">
+              <label class="form-label" for="profile-name">Họ và tên</label>
+              <input type="text" id="profile-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-email">Email (Không thể đổi)</label>
+              <input type="email" id="profile-email" class="form-input" disabled style="background: #f1f5f9; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-phone">Số điện thoại</label>
+              <input type="tel" id="profile-phone" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-address">Địa chỉ mặc định</label>
+              <textarea id="profile-address" class="form-input" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profile-password">Mật khẩu mới (Để trống nếu không đổi)</label>
+              <input type="password" id="profile-password" class="form-input" placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; padding: 12px;">
+              <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
+            </button>
+          </form>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+          <button class="btn-danger" style="width: 100%; padding: 10px;" onclick="window.authModule.logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất Tài Khoản
+          </button>
+        </div>
+
+        <!-- Cột Phải: Lịch Sử Các Đơn Hàng Của Tài Khoản -->
+        <div class="cart-table-box">
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; color: var(--text);">
+            <i class="fa-solid fa-box-archive" style="color: var(--primary);"></i> Lịch Sử Đơn Hàng Của Bạn
+          </h3>
+          <div id="user-orders-table-container">
+            <table class="cart-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Ngày đặt</th>
+                  <th>Tổng tiền</th>
+                  <th>Phương thức</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align: center;">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="user-orders-tbody">
+                <!-- Render các đơn hàng của user -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 3: TRA CỨU ĐƠN HÀNG (TRACKING VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-tracking" class="view-panel">
+      <div style="max-width: 680px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text);">
+            <i class="fa-solid fa-magnifying-glass-location" style="color: var(--primary);"></i> Tra Cứu Đơn Hàng
+          </h2>
+          <p style="font-size: 14px; color: var(--text-muted);">Nhập mã đơn hàng (Ví dụ: #DH883921094) hoặc số điện thoại để kiểm tra hành trình</p>
+        </div>
+
+        <!-- Hộp Tra Cứu -->
+        <div class="shop-toolbar" style="margin-bottom: 24px;">
+          <div style="display: flex; gap: 10px;">
+            <div class="search-box-wrapper" style="flex: 1;">
+              <i class="fa-solid fa-receipt"></i>
+              <input type="text" id="tracking-input" class="search-input" placeholder="Nhập mã đơn (#DH...) hoặc Số điện thoại đặt hàng...">
+            </div>
+            <button class="btn-primary" id="btn-tracking-search">
+              <i class="fa-solid fa-search"></i> Kiểm Tra
+            </button>
+          </div>
+        </div>
+
+        <!-- Kết Quả Hiển Thị Đơn Hàng -->
+        <div id="tracking-result-box" style="display: none;">
+          <!-- Render thông tin chi tiết và stepper -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 4: GIỚI THIỆU SMARTSTORE (ABOUT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-about" class="view-panel">
       <div class="checkout-card" style="max-width: 900px; margin: 0 auto; line-height: 1.8;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h2 style="font-size: 2rem; font-weight: 800; color: var(--text);">
@@ -104,7 +325,10 @@
       </div>
     </section>
 
-<section id="view-contact" class="view-panel active">
+    <!-- ------------------------------------------------------------------------
+         VIEW 5: LIÊN HỆ & BẢN ĐỒ (CONTACT VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-contact" class="view-panel">
       <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
         <!-- Cột Trái: Thông Tin Liên Hệ -->
         <div class="checkout-card">
@@ -176,6 +400,7 @@
         </div>
       </div>
     </section>
+
   </main>
 
   <!-- ==========================================================================
@@ -252,7 +477,7 @@
   <!-- ==========================================================================
        THANH CHÂN TRANG (FOOTER)
        ========================================================================== -->
-<footer class="site-footer">
+  <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-col">
         <div class="brand-logo" style="margin-bottom: 14px;">
@@ -308,33 +533,16 @@
     <span id="toast-message">Thông báo thành công</span>
   </div>
 
-
   <!-- ==========================================================================
-       HỆ THỐNG MÃ NGUỒN MVC (MODEL - VIEW - CONTROLLER)
+       HỆ THỐNG MÃ NGUỒN MVC CHUẨN MỰC TINH GỌN (MODEL - VIEW - CONTROLLER)
        ========================================================================== -->
-  <!-- 1. Models (Quản lý Dữ liệu & API từ thư mục ../models/) -->
-  <script src="../models/ProductModel.js"></script>
-  <script src="../models/CartModel.js"></script>
-  <script src="../models/OrderModel.js"></script>
-  <script src="../models/UserModel.js"></script>
+  <!-- 1. Models (Quản lý Toàn Bộ Dữ liệu & RESTful API từ models/appModel.js) -->
+  <script src="../models/appModel.js"></script>
 
-  <!-- 2. Views (Hiển thị Giao diện & DOM từ thư mục js/) -->
-  <script src="js/BaseView.js"></script>
-  <script src="js/ProductView.js"></script>
-  <script src="js/CartView.js"></script>
-  <script src="js/OrderView.js"></script>
-  <script src="js/UserView.js"></script>
+  <!-- 2. Views (Hiển thị Toàn Bộ Giao diện & DOM Renderer từ views/js/appView.js) -->
+  <script src="js/appView.js"></script>
 
-  <!-- 3. Controllers (Điều phối & Xử lý Logic từ thư mục ../controllers/) -->
-  <script src="../controllers/AppController.js"></script>
-  <script src="../controllers/ShopController.js"></script>
-  <script src="../controllers/DetailController.js"></script>
-  <script src="../controllers/CartController.js"></script>
-  <script src="../controllers/AuthController.js"></script>
-
-  <!-- 4. Bootstrap & Giao diện toàn cục -->
-  <script src="../controllers/mvc_app.js"></script>
-
+  <!-- 3. Controllers (Điều phối & Xử lý Nghiệp vụ Tổng thể từ controllers/appController.js) -->
+  <script src="../controllers/appController.js"></script>
 </body>
 </html>
-

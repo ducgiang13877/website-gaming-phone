@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -172,7 +172,37 @@
       </div>
     </section>
 
-<section id="view-compare" class="view-panel active">
+    <!-- ------------------------------------------------------------------------
+         VIEW 2: XEM CHI TIẾT SẢN PHẨM (DETAIL VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-detail" class="view-panel">
+      <!-- Breadcrumb Điều Hướng -->
+      <div style="margin-bottom: 20px; font-size: 13px; color: var(--text-muted);">
+        <a href="javascript:void(0)" onclick="window.appNav.goTo('home')">Trang Chủ</a> /
+        <a href="javascript:void(0)" onclick="window.appNav.goTo('shop')">Cửa Hàng</a> /
+        <span id="detail-breadcrumb-name" style="color: var(--text); font-weight: 600;">Chi tiết sản phẩm</span>
+      </div>
+
+      <!-- Khung Chi Tiết & Bảng 10 Cấu Hình Chuẩn CellphoneS -->
+      <div class="product-detail-layout" id="product-detail-container">
+        <!-- Render động từ JavaScript -->
+      </div>
+
+      <!-- Sản Phẩm Cùng Thương Hiệu -->
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 18px; color: var(--text);">
+          <i class="fa-solid fa-shapes" style="color: var(--primary);"></i> Sản Phẩm Cùng Hãng Đáng Mua
+        </h3>
+        <div class="product-grid" id="detail-related-products">
+          <!-- Render 4 sản phẩm cùng hãng -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------------
+         VIEW 3: BẢNG ĐỐI ĐẦU SO SÁNH 10 TIÊU CHÍ (COMPARE VIEW)
+         ------------------------------------------------------------------------ -->
+    <section id="view-compare" class="view-panel">
       <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
         <div>
           <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text);">
@@ -329,30 +359,16 @@
 
 
   <!-- ==========================================================================
-       HỆ THỐNG MÃ NGUỒN MVC (MODEL - VIEW - CONTROLLER)
+       HỆ THỐNG MÃ NGUỒN MVC CHUẨN MỰC TINH GỌN (MODEL - VIEW - CONTROLLER)
        ========================================================================== -->
-  <!-- 1. Models (Quản lý Dữ liệu & API từ thư mục ../models/) -->
-  <script src="../models/ProductModel.js"></script>
-  <script src="../models/CartModel.js"></script>
-  <script src="../models/OrderModel.js"></script>
-  <script src="../models/UserModel.js"></script>
+  <!-- 1. Models (Quản lý Toàn Bộ Dữ liệu & RESTful API từ models/appModel.js) -->
+  <script src="../models/appModel.js"></script>
 
-  <!-- 2. Views (Hiển thị Giao diện & DOM từ thư mục js/) -->
-  <script src="js/BaseView.js"></script>
-  <script src="js/ProductView.js"></script>
-  <script src="js/CartView.js"></script>
-  <script src="js/OrderView.js"></script>
-  <script src="js/UserView.js"></script>
+  <!-- 2. Views (Hiển thị Toàn Bộ Giao diện & DOM Renderer từ views/js/appView.js) -->
+  <script src="js/appView.js"></script>
 
-  <!-- 3. Controllers (Điều phối & Xử lý Logic từ thư mục ../controllers/) -->
-  <script src="../controllers/AppController.js"></script>
-  <script src="../controllers/ShopController.js"></script>
-  <script src="../controllers/DetailController.js"></script>
-  <script src="../controllers/CartController.js"></script>
-  <script src="../controllers/AuthController.js"></script>
-
-  <!-- 4. Bootstrap & Giao diện toàn cục -->
-  <script src="../controllers/mvc_app.js"></script>
+  <!-- 3. Controllers (Điều phối & Xử lý Nghiệp vụ Tổng thể từ controllers/appController.js) -->
+  <script src="../controllers/appController.js"></script>
 
 </body>
 </html>
