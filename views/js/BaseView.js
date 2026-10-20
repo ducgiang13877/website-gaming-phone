@@ -123,7 +123,7 @@ class BaseView {
               </li>
               ${user.role === 'admin' ? `
               <li>
-                <a href="admin.html" class="dropdown-link" style="color: var(--accent); font-weight: 700;">
+                <a href="javascript:void(0)" onclick="window.appNav.goTo('admin')" class="dropdown-link" style="color: var(--accent); font-weight: 700;">
                   <i class="fa-solid fa-screwdriver-wrench"></i> Quản trị Admin
                 </a>
               </li>` : ''}

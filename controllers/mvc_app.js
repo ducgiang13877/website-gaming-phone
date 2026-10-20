@@ -83,6 +83,14 @@
   document.addEventListener('DOMContentLoaded', async () => {
     await appCtrl.init();
 
+    // 0. Điều hướng Menu Header chính
+    document.querySelectorAll('.main-nav .nav-item').forEach(nut => {
+      nut.addEventListener('click', () => {
+        const view = nut.getAttribute('data-view');
+        if (view) appCtrl.goTo(view);
+      });
+    });
+
     // Gắn sự kiện submit cho các biểu mẫu (Forms)
     // Form tìm kiếm Shop
     const searchForm = document.getElementById('shop-search-form');

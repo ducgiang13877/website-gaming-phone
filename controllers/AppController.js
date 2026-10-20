@@ -46,7 +46,7 @@ class AppController {
   /** 
    * 🎯 DUAL-MODE ROUTER: Điều hướng thông minh hỗ trợ cả SPA & Đa Trang (MPA)
    * - Nếu view có trong trang hiện tại: hiển thị panel và cập nhật dữ liệu.
-   * - Nếu view nằm ở trang HTML riêng: chuyển trang qua window.location.href!
+   * - Nếu view nằm ở trang HTML riêng: tự động chuyển hướng theo vị trí thư mục (views/ hay root).
    */
   goTo(viewName, params = {}) {
     const targetPanel = document.getElementById(`view-${viewName}`);
@@ -63,18 +63,35 @@ class AppController {
       this.triggerViewRender(viewName, params);
     } else {
       // 2. CHẾ ĐỘ ĐA TRANG (MPA MODE): Chuyển hướng sang file HTML độc lập
+      const inViews = window.location.pathname.toLowerCase().includes('/views/');
+      const prefix = inViews ? '' : 'views/';
+
       let targetUrl = '';
-      if (viewName === 'home') targetUrl = 'index.html';
-      else if (viewName === 'shop') targetUrl = 'shop.html';
-      else if (viewName === 'detail') targetUrl = `detail.html?id=${params.id || ''}`;
-      else if (viewName === 'cart') targetUrl = 'cart.html';
-      else if (viewName === 'checkout') targetUrl = 'checkout.html';
-      else if (viewName === 'thankyou') targetUrl = `thankyou.html?orderCode=${encodeURIComponent(params.orderCode || '')}`;
-      else if (viewName === 'auth') targetUrl = 'auth.html';
-      else if (viewName === 'profile') targetUrl = 'profile.html';
-      else if (viewName === 'tracking') targetUrl = 'tracking.html';
-      else if (viewName === 'about' || viewName === 'contact') targetUrl = 'contact.html';
-      else targetUrl = `${viewName}.html`;
+      if (viewName === 'home') {
+        targetUrl = inViews ? 'home.html' : 'index.html';
+      } else if (viewName === 'shop') {
+        targetUrl = `${prefix}shop.html`;
+      } else if (viewName === 'detail') {
+        targetUrl = `${prefix}detail.html?id=${params.id || ''}`;
+      } else if (viewName === 'cart') {
+        targetUrl = `${prefix}cart.html`;
+      } else if (viewName === 'checkout') {
+        targetUrl = `${prefix}checkout.html`;
+      } else if (viewName === 'thankyou') {
+        targetUrl = `${prefix}thankyou.html?orderCode=${encodeURIComponent(params.orderCode || '')}`;
+      } else if (viewName === 'auth') {
+        targetUrl = `${prefix}auth.html`;
+      } else if (viewName === 'profile') {
+        targetUrl = `${prefix}profile.html`;
+      } else if (viewName === 'tracking') {
+        targetUrl = `${prefix}tracking.html`;
+      } else if (viewName === 'about' || viewName === 'contact') {
+        targetUrl = `${prefix}contact.html`;
+      } else if (viewName === 'admin') {
+        targetUrl = `${prefix}admin.html`;
+      } else {
+        targetUrl = `${prefix}${viewName}.html`;
+      }
 
       // Giữ lại các param bổ sung nếu có
       if (params && Object.keys(params).length > 0 && !targetUrl.includes('?')) {
@@ -146,10 +163,13 @@ class AppController {
 
   /** Lọc theo hãng và chuyển sang shop */
   filterBrand(brandId) {
-    if (window.shopCtrl) {
+    const inViews = window.location.pathname.toLowerCase().includes('/views/');
+    const shopUrl = `${inViews ? '' : 'views/'}shop.html?brand=${brandId}`;
+
+    if (window.shopCtrl && document.getElementById('view-shop')) {
       window.shopCtrl.filterBrand(brandId);
     } else {
-      window.location.href = `shop.html?brand=${brandId}`;
+      window.location.href = shopUrl;
     }
   }
 

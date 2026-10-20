@@ -42,7 +42,12 @@ class AuthController {
 
     if (user.role === 'admin') {
       setTimeout(() => {
-        window.location.href = 'admin.html';
+        if (window.appNav) {
+          window.appNav.goTo('admin');
+        } else {
+          const inViews = window.location.pathname.toLowerCase().includes('/views/');
+          window.location.href = `${inViews ? '' : 'views/'}admin.html`;
+        }
       }, 600);
     } else {
       setTimeout(() => {
