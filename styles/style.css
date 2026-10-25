@@ -4,7 +4,6 @@
    1. base.css  : Khung nền, biến màu CSS Variables, Header, Footer, Toast, Modal chung
    2. user.css  : Toàn bộ giao diện người dùng (Cửa hàng, Chi tiết, Giỏ hàng, Thanh toán, Hóa đơn)
    3. admin.css : Toàn bộ giao diện quản trị viên (Admin Navbar, Bảng KPI, Bảng CRUD, Modals)
-   Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
    ========================================================================== */
 
 @import url('base.css');

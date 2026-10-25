@@ -1,6 +1,5 @@
 /* ==========================================================================
    SMARTSTORE - USER STYLESHEET (GIAO DIỆN KHÁCH HÀNG: CỬA HÀNG, GIỎ HÀNG, CHI TIẾT...)
-   Môn học: Lập trình JavaScript Nâng Cao - FPT Polytechnic
    ========================================================================== */
 
 /* 4. BANNER HERO & KHỐI TRANG CHỦ (SPLIT 3D CYBER TECH HERO) */
@@ -834,35 +833,45 @@
   margin-top: 10px;
 }
 
-.page-btn {
-  width: 38px;
+.page-btn,
+.pagination-btn {
+  min-width: 38px;
   height: 38px;
+  padding: 0 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: #ffffff;
   color: var(--text);
   font-weight: 700;
-  display: flex;
+  font-size: 13px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   cursor: pointer;
   transition: var(--transition);
 }
 
-.page-btn:hover {
+.page-btn:hover,
+.pagination-btn:hover:not(:disabled):not(.disabled) {
   border-color: var(--primary);
   color: var(--primary);
+  background: var(--primary-light);
 }
 
-.page-btn.active {
+.page-btn.active,
+.pagination-btn.active {
   background: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
 }
 
-.page-btn:disabled {
+.page-btn:disabled,
+.pagination-btn:disabled,
+.pagination-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* 9. GIAO DIỆN XEM CHI TIẾT SẢN PHẨM (PRODUCT DETAIL & SPECS TABLE) */
@@ -911,10 +920,26 @@
   margin: 16px 0;
 }
 
-.detail-price-current {
+.detail-price-current,
+.detail-current-price {
   font-size: 2rem;
   font-weight: 800;
   color: var(--accent);
+}
+
+.detail-original-price {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.detail-specs-table-box {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Bảng 10 thông số kỹ thuật chuẩn CellphoneS */
@@ -1383,12 +1408,13 @@
 }
 
 /* 2. Hệ Thống Mã Giảm Giá (Voucher Chips & Applied Alert) */
-.voucher-chip-item {
+.voucher-chip-item,
+.voucher-chip {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  border-radius: 20px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
   background: #eff6ff;
   border: 1px dashed var(--primary);
   color: var(--primary);
@@ -1399,14 +1425,28 @@
   user-select: none;
 }
 
-.voucher-chip-item:hover {
+.voucher-chip-item:hover,
+.voucher-chip:hover:not(.disabled) {
   background: var(--primary);
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
-.voucher-chip-item i {
+.voucher-chip.active {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  color: #065f46;
+}
+
+.voucher-chip.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.voucher-chip-item i,
+.voucher-chip i {
   font-size: 11px;
 }
 
@@ -1451,12 +1491,325 @@
   }
 }
 
+/* 2. Badge trạng thái đơn hàng & Voucher elements */
+.badge-warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+.badge-info {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.badge-success {
+  background: #dcfce7;
+  color: #15803d;
+}
+.badge-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Bộ lọc nhu cầu người dùng (Demand Filter Chips) */
+.filter-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.filter-chip-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.filter-chip-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.filter-chip-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.filter-chip-btn.active i {
+  color: #ffffff !important;
+}
+
+/* Stepper, Voucher group & Countdown */
+.step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.step-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.voucher-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.voucher-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.countdown-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   HÓA ĐƠN BÁN LẺ & PHIẾU BẢO HÀNH CHÍNH HÃNG (INVOICE MODAL & PRINT STYLES)
+   ========================================================================== */
+.invoice-container {
+  background: #ffffff;
+  color: #0f172a;
+  padding: 32px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-main);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #0f172a;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.invoice-company h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.invoice-company div {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.invoice-meta {
+  text-align: right;
+}
+
+.invoice-meta .title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.invoice-meta .sub-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.invoice-meta .badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.invoice-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+}
+
+.detail-col h4 {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 6px;
+}
+
+.detail-col .info-line {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.7;
+}
+
+.detail-col .info-line strong {
+  color: #0f172a;
+  display: inline-block;
+  min-width: 105px;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.items-table th {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-weight: 700;
+  font-size: 12.5px;
+  border: 1px solid #1e293b;
+  text-transform: uppercase;
+}
+
+.items-table td {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.items-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.summary-box {
+  float: right;
+  width: 320px;
+  margin-bottom: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 4px 0;
+  color: #475569;
+}
+
+.summary-row.total {
+  border-top: 2px solid #0f172a;
+  margin-top: 8px;
+  padding-top: 8px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #dc2626;
+}
+
+.clear {
+  clear: both;
+}
+
+.policy-box {
+  background: #f1f5f9;
+  border-left: 4px solid #2563eb;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.policy-box strong {
+  color: #0f172a;
+}
+
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 40px 20px;
+  text-align: center;
+}
+
+.sig-block {
+  width: 220px;
+}
+
+.sig-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+}
+
+.sig-sub {
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.sig-name {
+  margin-top: 60px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 6px;
+}
+
 /* 3. Cấu hình Print Media (In Hóa Đơn Trực Tiếp) */
 @media print {
   body {
-    background: #fff !important;
-    color: #000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    margin: 0;
+    padding: 0;
   }
+
   .site-header,
   .site-footer,
   .cart-table-box,
@@ -1465,9 +1818,48 @@
   .btn-secondary,
   .btn-success,
   .btn-danger,
-  .modal-overlay:not(#order-detail-modal),
+  .modal-close,
+  .modal-footer,
+  .sticky-compare-bar,
   #admin-sidebar,
-  .main-nav {
+  .main-nav,
+  .view-panel:not(.active) {
     display: none !important;
+  }
+
+  /* Ẩn tất cả modal overlay ngoại trừ hộp thoại hóa đơn và chi tiết đơn */
+  .modal-overlay:not(#customer-invoice-modal):not(#order-detail-modal) {
+    display: none !important;
+  }
+
+  #customer-invoice-modal,
+  #order-detail-modal {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #customer-invoice-modal .modal-box,
+  #order-detail-modal .modal-box {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .invoice-container {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .printable-invoice {
+    page-break-inside: avoid;
   }
 }

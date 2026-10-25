@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartStore - Thế Giới Điện Thoại Thông Minh & Gaming Phone</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <!-- Google Fonts & FontAwesome 6 Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,7 +96,7 @@
               <option value="name-asc">Tên: A - Z</option>
             </select>
 
-            <button class="btn-secondary btn-sm" id="btn-reset-filters" title="Xóa bộ lọc">
+            <button class="btn-secondary btn-sm" id="btn-reset-filters" onclick="window.shopModule.resetFilters()" title="Xóa bộ lọc">
               <i class="fa-solid fa-rotate"></i> Đặt Lại
             </button>
           </div>
@@ -211,7 +212,7 @@
           <p style="font-size: 14px; color: var(--text-muted);">Đặt lên bàn cân 2 hoặc 3 mẫu điện thoại để so sánh chi tiết 10 thông số chuẩn Thế Giới Di Động</p>
         </div>
         <div style="display: flex; gap: 10px;">
-          <button class="btn-secondary btn-sm" id="btn-clear-compare">
+          <button class="btn-secondary btn-sm" id="btn-clear-compare" onclick="window.compareModule.clear()">
             <i class="fa-solid fa-trash-can"></i> Xóa So Sánh
           </button>
           <button class="btn-primary btn-sm" onclick="window.appNav.goTo('shop')">
@@ -263,11 +264,8 @@
       <div style="padding: 20px;" id="quick-view-body">
         <!-- Render động thông tin sản phẩm -->
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="justify-content: flex-end;">
         <button class="btn-secondary" onclick="window.appNav.closeModal('quick-view-modal')">Đóng</button>
-        <button class="btn-primary" id="btn-quick-view-add-cart">
-          <i class="fa-solid fa-cart-plus"></i> Thêm Vào Giỏ
-        </button>
       </div>
     </div>
   </div>
@@ -279,7 +277,7 @@
     <div class="modal-box" style="max-width: 820px; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3 class="modal-title" id="customer-invoice-title">
-          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> 
+          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i>
           Hóa Đơn Bán Hàng Kiêm Phiếu Bảo Hành
         </h3>
         <button class="btn-close-modal" onclick="window.appNav.closeModal('customer-invoice-modal')">&times;</button>
@@ -359,17 +357,9 @@
 
 
   <!-- ==========================================================================
-       HỆ THỐNG MÃ NGUỒN MVC CHUẨN MỰC TINH GỌN (MODEL - VIEW - CONTROLLER)
+       ES6 NATIVE MODULE: Điểm vào duy nhất nạp toàn bộ hệ thống Functional MVC
        ========================================================================== -->
-  <!-- 1. Models (Quản lý Toàn Bộ Dữ liệu & RESTful API từ models/appModel.js) -->
-  <script src="../models/appModel.js"></script>
-
-  <!-- 2. Views (Hiển thị Toàn Bộ Giao diện & DOM Renderer từ views/js/appView.js) -->
-  <script src="js/appView.js"></script>
-
-  <!-- 3. Controllers (Điều phối & Xử lý Nghiệp vụ Tổng thể từ controllers/appController.js) -->
-  <script src="../controllers/appController.js"></script>
-
+  <script type="module" src="../app.js"></script>
 </body>
 </html>
 

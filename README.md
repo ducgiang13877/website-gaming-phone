@@ -11,7 +11,7 @@
 **SmartStore** là giải pháp website thương mại điện tử chuyên biệt dành cho thị trường điện thoại thông minh và dòng gaming phone đỉnh cao. Hệ thống được xây dựng trên kiến trúc **Single Page Application (SPA)** mượt mà, kết hợp với bảng quản trị **Admin Dashboard** chuyên nghiệp và cơ sở dữ liệu giả lập chuẩn RESTful API qua `json-server`.
 
 ### 🚀 Điểm Nhấn Kiến Trúc & Công Nghệ
-- **100% Thuần JavaScript ES6+**: Sử dụng `fetch`, `async/await`, `Intl.NumberFormat`, `FileReader API` để tải ảnh trực tiếp từ máy tính dạng Base64.
+- **100% Thuần JavaScript ES6+**: Sử dụng `fetch`, `async/await`, `Intl.NumberFormat`, API upload ảnh vật lý lưu vào thư mục `/images/` và chuẩn hóa đường dẫn tương đối.
 - **Kiến trúc SPA 12 Phân Vùng Giao Diện**: Chuyển trang tức thì không giật lag, giữ trọn vẹn trạng thái ứng dụng.
 - **Chuẩn Hóa 10 Thông Số Kỹ Thuật (Specs)**: Xây dựng chuẩn theo thông số kỹ thuật của Thế Giới Di Động & CellphoneS phục vụ chức năng Xem Chi Tiết và So Sánh 3 Máy cùng lúc.
 - **Tự Động Trừ Tồn Kho Khi Đặt Hàng**: Áp dụng phương thức `PATCH` lên RESTful API để trừ số lượng trong kho và cộng dồn số lượng máy đã bán.
@@ -56,7 +56,7 @@ Hệ thống được nạp sẵn toàn bộ dữ liệu mẫu thực tế bao g
 13. **Trang Quản Trị Admin**:
     - **Bảo mật truy cập**: Chặn người dùng thường, chỉ tài khoản có role `admin` mới được vào.
     - **4 Thẻ Thống Kê KPI Tự Động**: Doanh thu thực tế, Tổng số máy đã bán, Tổng số máy tồn kho, Tổng số đơn hàng.
-    - **Quản lý Sản phẩm (CRUD)**: Thêm mới (+1 ID tự tăng), chọn ảnh từ máy qua `FileReader` sang Base64 hoặc dán URL, nhập đủ 10 thông số kỹ thuật, chỉnh sửa, xóa có hộp thoại xác nhận.
+    - **Quản lý Sản phẩm (CRUD)**: Thêm mới (+1 ID tự tăng), chọn ảnh từ máy lưu trực tiếp vào thư mục vật lý `images/` hoặc dán URL đường dẫn, nhập đủ 10 thông số kỹ thuật, chỉnh sửa, xóa có hộp thoại xác nhận.
     - **Quản lý Khách hàng (CRUD)**: Xem danh sách, thêm khách hàng mới, sửa thông tin, phân quyền Admin/User, xóa tài khoản.
     - **Quản lý Đơn hàng**: Xem danh sách đơn, xem chi tiết từng đơn hàng (các sản phẩm đặt mua, số lượng, địa chỉ giao), cập nhật 4 trạng thái (Chờ xử lý, Đang giao, Đã giao, Đã hủy).
 
@@ -78,7 +78,7 @@ npx json-server -s . db.json -p 3000
 ```
 Sau đó truy cập:
 - **Giao diện Cửa hàng (Client):** [http://localhost:3000/index.html](http://localhost:3000/index.html)
-- **Giao diện Quản trị viên (Admin):** [http://localhost:3000/admin.html](http://localhost:3000/admin.html)
+- **Giao diện Quản trị viên (Admin):** [http://localhost:3000/views/admin.html](http://localhost:3000/views/admin.html)
 
 ---
 
@@ -96,9 +96,20 @@ Sau đó truy cập:
 
 | Thành Viên | Nhiệm Vụ Đảm Nhận | Tỷ Lệ Hoàn Thành |
 | :--- | :--- | :---: |
-| **Thành viên 1** (Trưởng nhóm) | Thiết kế CSDL `db.json` (40 sản phẩm, 8 danh mục), viết logic Admin Dashboard (`admin.html` + `js/admin.js`), thuật toán +1 ID và FileReader Base64. | **100%** |
-| **Thành viên 2** | Xây dựng giao diện CSS toàn cục (`styles/style.css`), thiết kế bố cục Client SPA (`index.html`), phân vùng Giỏ hàng, Đặt hàng, Màn hình Cảm ơn. | **100%** |
-| **Thành viên 3** | Viết mã nguồn Client logic (`js/app.js`), tích hợp Fetch API, bộ lọc 8 hãng, tìm kiếm, phân trang, thuật toán trừ kho và bảng so sánh 10 thông số. | **100%** |
+| **Thành viên 1** (Trưởng nhóm) | Thiết kế CSDL `db.json` (40 sản phẩm, 8 danh mục), viết logic Admin Dashboard (`controllers/adminController.js`), thuật toán +1 ID và cơ chế upload ảnh vật lý tối ưu dung lượng. | **100%** |
+| **Thành viên 2** | Xây dựng giao diện CSS toàn cục (`styles/`), thiết kế bố cục Client Views (`views/`), phân vùng Giỏ hàng, Đặt hàng, Hóa đơn A4/A5. | **100%** |
+| **Thành viên 3** | Viết mã nguồn Controllers & Models (`models/`, `controllers/`), tích hợp Fetch API, bộ lọc 8 hãng, tìm kiếm, phân trang, thuật toán trừ kho và bảng so sánh 10 thông số. | **100%** |
+
+---
+
+## 📚 7. TÀI LIỆU KỸ THUẬT & HƯỚNG DẪN BẢO VỆ ĐỒ ÁN (THƯ MỤC `docs/`)
+
+Toàn bộ tài liệu chi tiết, kế hoạch thực hiện và chiến lược phản biện đồ án được quy hoạch trong thư mục [docs/](file:///d:/Code/Javascript%20nâng%20cao/website-gaming-phone/docs):
+
+1. 🏛️ **[Sơ Đồ Kiến Trúc MVC Chuẩn Mực](file:///d:/Code/Javascript%20nâng%20cao/website-gaming-phone/docs/SO_DO_KIEN_TRUC_MVC.md)** (`docs/SO_DO_KIEN_TRUC_MVC.md`): Bản vẽ chi tiết luồng hoạt động giữa Models, Views, Controllers.
+2. 🎓 **[Góp Ý Giảng Viên & Chiến Lược Vấn Đáp Điểm 10](file:///d:/Code/Javascript%20nâng%20cao/website-gaming-phone/docs/GOP_Y_GIANG_VIEN_VA_CHIEN_LUOC_BAO_VE_ASM.md)** (`docs/GOP_Y_GIANG_VIEN_VA_CHIEN_LUOC_BAO_VE_ASM.md`): Bộ câu hỏi và kịch bản trả lời vấn đáp thuyết phục hội đồng.
+3. 📋 **[Kế Hoạch Thực Hiện Assignment](file:///d:/Code/Javascript%20nâng%20cao/website-gaming-phone/docs/KE_HOACH_THUC_HIEN_ASM.md)** (`docs/KE_HOACH_THUC_HIEN_ASM.md`): Nhật ký tiến độ và các mốc bàn giao dự án.
+4. 🛡️ **[Nguyên Tắc Bảo Toàn Tính Năng & Chống Hỏng Chéo](file:///d:/Code/Javascript%20nâng%20cao/website-gaming-phone/docs/NGUYEN_TAC_BAO_TOAN_TINH_NANG_VA_CHONG_HONG_CHEO.md)** (`docs/NGUYEN_TAC_BAO_TOAN_TINH_NANG_VA_CHONG_HONG_CHEO.md`): Bộ nguyên tắc Zero-Regression bảo vệ toàn vẹn 198/198 tiêu chuẩn kỹ thuật.
 
 ---
 *Bản quyền © 2026 SmartStore. Dự án Assignment môn Lập trình JavaScript Nâng Cao - FPT Polytechnic.*

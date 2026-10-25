@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartStore - Bảng Quản Trị Quản Lý Cửa Hàng (Admin Dashboard)</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <!-- Google Fonts & FontAwesome 6 Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,7 +87,7 @@
           <a href="../index.html" class="btn-secondary btn-sm" style="background: rgba(255, 255, 255, 0.1); color: #ffffff; border-color: rgba(255, 255, 255, 0.2);">
             <i class="fa-solid fa-store"></i> Xem Cửa Hàng
           </a>
-          <button class="btn-danger btn-sm" id="btn-admin-logout" title="Đăng xuất khỏi hệ thống quản trị">
+          <button class="btn-danger btn-sm" id="btn-admin-logout" title="Đăng xuất khỏi hệ thống quản trị" onclick="window.adminCtrl.logout()">
             <i class="fa-solid fa-power-off"></i> Đăng Xuất
           </button>
         </div>
@@ -143,7 +144,7 @@
       <!-- ====================================================================
            TAB 1: QUẢN LÝ SẢN PHẨM (CRUD + 1 ID + FILEREADER ẢNH + 10 SPECS)
            ==================================================================== -->
-      <section id="admin-panel-products" class="admin-tab-content">
+      <section id="admin-panel-products" class="admin-tab-content active" style="display: block;">
         <!-- Toolbar Thao Tác Sản Phẩm -->
         <div class="shop-toolbar" style="margin-bottom: 20px;">
           <div class="toolbar-top-row">
@@ -294,7 +295,7 @@
         <button class="btn-close-modal" onclick="window.adminCtrl.closeModal('product-modal')">&times;</button>
       </div>
 
-      <form id="product-form" onsubmit="return false;">
+      <form id="product-form" novalidate onsubmit="return false;">
         <input type="hidden" id="prod-id">
         <div style="padding: 24px; max-height: 75vh; overflow-y: auto;">
 
@@ -333,11 +334,11 @@
                 <input type="number" id="prod-sold" class="form-input" placeholder="0" min="0">
               </div>
 
-              <!-- Quản lý ảnh (Hỗ trợ URL và Tải ảnh từ máy qua FileReader Base64) -->
+              <!-- Quản lý ảnh (Hỗ trợ URL và Tải ảnh từ máy qua thư mục images) -->
               <div class="form-group">
                 <label class="form-label">Hình ảnh đại diện <span style="color: var(--accent);">*</span></label>
                 <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                  <input type="url" id="prod-image-url" class="form-input" placeholder="Đường link URL ảnh...">
+                  <input type="text" id="prod-image-url" class="form-input" placeholder="Đường dẫn ảnh (ví dụ: images/ten-anh.png hoặc link URL)...">
                   <label class="btn-secondary btn-sm" style="cursor: pointer; white-space: nowrap;">
                     <i class="fa-solid fa-upload"></i> Chọn Ảnh
                     <input type="file" id="prod-image-file" accept="image/*" style="display: none;">
@@ -427,7 +428,7 @@
         <button class="btn-close-modal" onclick="window.adminCtrl.closeModal('customer-modal')">&times;</button>
       </div>
 
-      <form id="customer-form" onsubmit="return false;">
+      <form id="customer-form" novalidate onsubmit="return false;">
         <input type="hidden" id="cust-id">
         <div style="padding: 20px;">
           <div class="form-group">
@@ -537,10 +538,9 @@
   </div>
 
   <!-- ==========================================================================
-       5. BỘ ĐIỀU PHỐI QUẢN TRỊ ADMIN (ADMIN CONTROLLER)
+       ES6 NATIVE MODULE: Điểm vào duy nhất nạp toàn bộ hệ thống Quản trị Admin
        ========================================================================== -->
-  <script src="../controllers/adminController.js"></script>
+  <script type="module" src="../admin.js"></script>
 </body>
 </html>
-
 

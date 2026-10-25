@@ -72,7 +72,7 @@
         "special": "Khung Titan, Nút Camera Control, Apple Intelligence, Kháng nước IP68"
       },
       "categoryId": 1,
-      "stock": 13,
+      "stock": 20,
       "sold": 2,
       "description": ""
     },
@@ -123,8 +123,8 @@
         "special": "Khung Titan tự nhiên, Cổng Type-C chuẩn USB 3, Ray Tracing, IP68"
       },
       "categoryId": "1",
-      "stock": 15,
-      "sold": 3
+      "stock": 14,
+      "sold": 4
     },
     {
       "id": "4",
@@ -183,7 +183,7 @@
       "brand": "Samsung",
       "price": 33990000,
       "quantity": 11,
-      "image": "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/329149/samsung-galaxy-s24-ultra-grey-600x600.jpg",
+      "image": "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/thumbnail.webp",
       "detail": "Khung viền titan phẳng, bút S-Pen tích hợp, camera 200MP zoom 100x và bộ công cụ Galaxy AI đỉnh cao.",
       "specs": {
         "screen": "6.8 inch, Dynamic AMOLED 2X, 120Hz LTPO, 2600 nits, Kính Gorilla Armor",
@@ -873,8 +873,8 @@
         "special": "Logo Aura RGB phát sáng tùy biến màu sắc, Hệ thống tản nhiệt GameCool 8, Nút trigger AirTrigger cảm ứng lực"
       },
       "categoryId": "7",
-      "stock": 15,
-      "sold": 0
+      "stock": 14,
+      "sold": 1
     },
     {
       "id": "34",
@@ -948,8 +948,8 @@
         "special": "Quạt cơ học 23.000 vòng/phút phát sáng LED RGB, Kim loại lỏng composite, Phím cảm ứng vai 520Hz, Jack 3.5mm"
       },
       "categoryId": "8",
-      "stock": 9,
-      "sold": 0
+      "stock": 8,
+      "sold": 1
     },
     {
       "id": "37",
@@ -1074,6 +1074,28 @@
       "address": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
       "role": "user",
       "createdAt": "2026-10-15T08:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "name": "Trần Thị Tuyết Mai",
+      "fullName": "Trần Thị Tuyết Mai",
+      "email": "mai.tran@gmail.com",
+      "password": "123",
+      "phone": "0909123456",
+      "address": "Số 45 Lê Duẩn, Quận 1, TP. Hồ Chí Minh",
+      "role": "user",
+      "createdAt": "2026-10-16T09:00:00.000Z"
+    },
+    {
+      "name": "Lương Văn Dũng",
+      "fullName": "Lương Văn Dũng",
+      "email": "giagiong001@gmail.com",
+      "password": "1234",
+      "phone": "0987654321",
+      "address": "Thôn khuân dầu",
+      "role": "user",
+      "createdAt": "2026-10-25T22:46:33.187Z",
+      "id": "vYCdM-OJs40"
     }
   ],
   "orders": [
@@ -1188,7 +1210,7 @@
           "id": "6",
           "name": "Samsung Galaxy S25 Ultra 5G",
           "price": 33990000,
-          "image": "https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/329149/samsung-galaxy-s24-ultra-grey-600x600.jpg",
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/samsung-galaxy-s10/thumbnail.webp",
           "quantity": 1,
           "stock": 12
         }
@@ -1227,6 +1249,87 @@
       "status": "processing",
       "createdAt": "2026-10-19T03:27:48.271Z",
       "id": "0a6VE56KnpQ"
+    },
+    {
+      "orderCode": "#DH274813914",
+      "userId": null,
+      "customerName": "Lương Văn Dũng",
+      "customerPhone": "0328528757",
+      "customerEmail": "giagiong001@gmail.com",
+      "customerAddress": "Thôn khuân dầu",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "36",
+          "name": "Nubia RedMagic 10 Pro+",
+          "price": 28490000,
+          "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/d/i/dien-thoai-nubia-neo-5-gt-special-edition.jpg",
+          "quantity": 1,
+          "stock": 9
+        }
+      ],
+      "subtotal": 28490000,
+      "voucherCode": null,
+      "discountAmount": 0,
+      "totalAmount": 28490000,
+      "status": "processing",
+      "createdAt": "2026-10-25T22:34:35.244Z",
+      "id": "T8P3HErVOsc"
+    },
+    {
+      "orderCode": "#DH397447590",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "33",
+          "name": "ASUS ROG Phone 8 Tiêu Chuẩn",
+          "price": 22990000,
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/realme-x/thumbnail.webp",
+          "quantity": 1,
+          "stock": 15
+        }
+      ],
+      "subtotal": 22990000,
+      "voucherCode": "FPTSTUDENT",
+      "discountAmount": 300000,
+      "totalAmount": 22690000,
+      "status": "processing",
+      "createdAt": "2026-10-25T23:10:37.294Z",
+      "id": "ZwtAW3fOQVE"
+    },
+    {
+      "orderCode": "#DH114559601",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "3",
+          "name": "iPhone 15 Pro 128GB",
+          "price": 24990000,
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/thumbnail.webp",
+          "quantity": 1,
+          "stock": 15
+        }
+      ],
+      "subtotal": 24990000,
+      "voucherCode": "FPTSTUDENT",
+      "discountAmount": 300000,
+      "totalAmount": 24690000,
+      "status": "processing",
+      "createdAt": "2026-10-25T23:12:00.807Z",
+      "id": "45FWRsEQeqA"
     }
   ],
   "vouchers": [
