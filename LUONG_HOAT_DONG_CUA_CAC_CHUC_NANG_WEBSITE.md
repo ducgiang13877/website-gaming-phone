@@ -350,6 +350,9 @@
     * **Rào chắn RBAC:** `kiemTraDangNhapAdmin()` kiểm tra phiên làm việc. Nếu chưa đăng nhập hoặc không phải admin -> Khóa toàn bộ Dashboard, chỉ hiển thị form đăng nhập chuyên dụng của Quản trị viên.  
     * **Mặc định mở tab Sản phẩm:** Khi tải trang, hàm `taiDuLieuAdmin()` tự động kích hoạt `chuyenTabAdmin('products')` để bảng danh sách sản phẩm hiển thị ngay lập tức, không bắt Admin phải bấm thủ công vào menu.  
     * **Tính toán 4 Thẻ KPI Tài Chính:** Tổng doanh thu (tính từ các đơn `delivered`), Tổng sản phẩm đã bán, Tổng máy tồn kho và Cảnh báo sản phẩm sắp hết hàng (`stock < 5`).  
+    * **Cơ Chế Tự Tăng ID Sản Phẩm (+1 ID Số) Đa Tầng:**  
+      * Khi mở modal Thêm mới, hệ thống tự động quét danh sách sản phẩm thực tế, tính toán ID kế tiếp theo thuật toán `nextId = Math.max(...validIds) + 1` (ví dụ: máy thứ 41 có ID là `41`), đồng thời hiển thị trực tiếp mã ID tự tăng này lên ô "Mã Sản Phẩm (ID Hệ Thống)" và tiêu đề Modal để Admin quan sát rõ ràng.  
+      * Cả ở tầng Controller (`adminController.js`) và tầng Model (`productModel.js`) đều tích hợp bộ bảo vệ tự gán `payload.id = String(nextId)`, ngăn chặn tuyệt đối tình trạng JSON-Server sinh chuỗi ký tự ngẫu nhiên (nanoid).  
     * **Quản lý Ảnh Vật Lý Tiết Kiệm Băng Thông:**  
       * Hỗ trợ tải file ảnh từ máy tính thông qua endpoint upload nội bộ, lưu file trực tiếp vào thư mục vật lý `images/`.  
       * Trong `db.json`, hệ thống **chỉ lưu đường dẫn ảnh tương đối** (ví dụ: `images/rog-phone-8.png` hoặc `/images/...`), loại bỏ hoàn toàn chuỗi Base64 cồng kềnh, giúp file `db.json` luôn gọn nhẹ, tối ưu hóa tốc độ tải trang gấp 10 lần.  

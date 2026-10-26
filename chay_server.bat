@@ -29,5 +29,5 @@ echo =========================================================================
 echo.
 
 start http://localhost:3000/index.html
-npx json-server -s . db.json -p 3000
+npx json-server@0.17.4 -w db.json -s . -p 3000 || npx json-server -s . db.json -p 3000
 pause

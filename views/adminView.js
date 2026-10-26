@@ -322,8 +322,9 @@ function renderProductsTable(products, categories, currentPage, totalPages) {
  * [HÀM 9] Điền dữ liệu vào Modal Thêm / Sửa Sản Phẩm
  * Khớp 100% với form #product-modal và các thông số kỹ thuật spec- trong admin.html
  * @param {Object|null} product - Dữ liệu sản phẩm khi sửa, null khi thêm mới
+ * @param {number|string|null} nextId - Số ID kế tiếp tự động tăng (+1 ID) cho sản phẩm mới
  */
-function renderProductModal(product = null) {
+function renderProductModal(product = null, nextId = null) {
   const modalTitle = document.getElementById('product-modal-title') || document.getElementById('modal-product-title');
   const form = document.getElementById('product-form');
   if (!form) return;
@@ -344,6 +345,7 @@ function renderProductModal(product = null) {
   if (product) {
     if (modalTitle) modalTitle.textContent = `Chỉnh Sửa Điện Thoại #${product.id} - ${product.name}`;
     setVal('prod-id', product.id);
+    setVal('prod-id-display', `#${product.id} (Đang sửa)`);
     setVal('prod-name', product.name);
     setVal('prod-category', product.categoryId || product.cate_id || '1');
     setVal('prod-price', product.price);
@@ -377,8 +379,10 @@ function renderProductModal(product = null) {
       preview.src = formatImg(product.image);
     }
   } else {
-    if (modalTitle) modalTitle.textContent = 'Thêm Điện Thoại Mới Vào Hệ Thống';
+    const autoIdText = nextId ? `#${nextId} (Tự động +1)` : 'Tự động tăng (+1 ID)';
+    if (modalTitle) modalTitle.textContent = nextId ? `Thêm Điện Thoại Mới (Mã Tự Động: #${nextId})` : 'Thêm Điện Thoại Mới Vào Hệ Thống';
     setVal('prod-id', '');
+    setVal('prod-id-display', autoIdText);
     setVal('prod-stock', 25);
     setVal('prod-sold', 0);
   }

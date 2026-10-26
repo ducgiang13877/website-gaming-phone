@@ -283,8 +283,21 @@ function chuyenTrangSanPhamAdmin(p) {
   renderBangSanPham();
 }
 
-function moThemSanPham() {
-  window.AdminView?.renderProductModal(null);
+async function moThemSanPham() {
+  if (!productModel) productModel = new ProductModel(API_URL);
+  let nextId = 1;
+  try {
+    if (productModel.getNextProductId) {
+      nextId = await productModel.getNextProductId();
+    } else {
+      const cacIdSo = dsSanPham.map(sp => Number(sp.id)).filter(n => !isNaN(n) && n > 0);
+      nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+    }
+  } catch (_e) {
+    const cacIdSo = dsSanPham.map(sp => Number(sp.id)).filter(n => !isNaN(n) && n > 0);
+    nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+  }
+  window.AdminView?.renderProductModal(null, nextId);
 }
 
 function moSuaSanPham(idSP) {
@@ -292,6 +305,9 @@ function moSuaSanPham(idSP) {
   if (!sp) return;
   window.AdminView?.renderProductModal(sp);
 }
+
+// Cờ an toàn chống kích hoạt đúp (Double-Submit Protection Guard)
+let dangLuuSanPham = false;
 
 /**
  * [BƯỚC 1-6 LƯU SẢN PHẨM (THÊM HOẶC CẬP NHẬT)]
@@ -302,6 +318,22 @@ function moSuaSanPham(idSP) {
  * B6: Cập nhật lại mảng dsSanPham, tính lại KPI và render lại bảng
  */
 async function luuSanPham() {
+  if (dangLuuSanPham) return;
+  dangLuuSanPham = true;
+  const btnSave = document.getElementById('btn-save-product');
+  const btnSaveText = btnSave ? btnSave.innerHTML : '';
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+  }
+  const resetBtnSave = () => {
+    dangLuuSanPham = false;
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = btnSaveText || '<i class="fa-solid fa-floppy-disk"></i> Lưu Sản Phẩm';
+    }
+  };
+
   const getVal = (id1, id2) => {
     const el = document.getElementById(id1) || (id2 ? document.getElementById(id2) : null);
     return el ? el.value.trim() : '';
@@ -340,16 +372,19 @@ async function luuSanPham() {
 
   if (!ten || !dm || isNaN(gia) || gia <= 0) {
     hienThongBao('Vui lòng điền đủ Tên, Thương hiệu và Giá bán hợp lệ (lớn hơn 0đ)!', 'error');
+    resetBtnSave();
     return;
   }
 
   if (isNaN(kho) || kho < 0) {
     hienThongBao('Số lượng tồn kho không được là số âm!', 'warning');
+    resetBtnSave();
     return;
   }
 
   if (giaGoc && (isNaN(giaGoc) || giaGoc <= gia)) {
     hienThongBao('Giá gốc niêm yết (nếu có) phải lớn hơn giá bán khuyến mãi!', 'warning');
+    resetBtnSave();
     return;
   }
 
@@ -401,18 +436,36 @@ async function luuSanPham() {
     if (id) {
       const res = await productModel.updateProduct(id, payload);
       if (!res.success) throw new Error(res.message);
-      const viTri = dsSanPham.findIndex(item => item.id == id);
+      const viTri = dsSanPham.findIndex(item => String(item.id) === String(id));
       if (viTri > -1) dsSanPham[viTri] = res.data;
       hienThongBao('Cập nhật sản phẩm thành công!', 'success');
     } else {
-      const cacIdSo = dsSanPham.map(sp => Number(sp.id)).filter(n => !isNaN(n) && n > 0);
-      const maxId = cacIdSo.length > 0 ? Math.max(...cacIdSo) : 0;
-      payload.id = String(maxId + 1);
+      // 1. Quét ID thực tế và tự tăng +1 đảm bảo duy nhất
+      let nextId = 1;
+      try {
+        if (productModel.getNextProductId) {
+          nextId = await productModel.getNextProductId();
+        } else {
+          const cacIdSo = dsSanPham.map(sp => Number(sp.id)).filter(n => !isNaN(n) && n > 0);
+          nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+        }
+      } catch (_e) {
+        const cacIdSo = dsSanPham.map(sp => Number(sp.id)).filter(n => !isNaN(n) && n > 0);
+        nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+      }
+
+      payload.id = String(nextId);
 
       const res = await productModel.createProduct(payload);
       if (!res.success) throw new Error(res.message);
-      dsSanPham.push(res.data);
-      hienThongBao('Thêm mới điện thoại thành công!', 'success');
+      
+      const daCo = dsSanPham.findIndex(sp => String(sp.id) === String(res.data.id));
+      if (daCo > -1) {
+        dsSanPham[daCo] = res.data;
+      } else {
+        dsSanPham.unshift(res.data);
+      }
+      hienThongBao(`Thêm mới điện thoại thành công với Mã #${res.data.id}!`, 'success');
     }
 
     dongModal('product-modal');
@@ -421,6 +474,8 @@ async function luuSanPham() {
   } catch (loi) {
     console.error(loi);
     hienThongBao('Lỗi khi lưu sản phẩm vào cơ sở dữ liệu!', 'error');
+  } finally {
+    resetBtnSave();
   }
 }
 

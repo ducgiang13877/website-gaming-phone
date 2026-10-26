@@ -164,9 +164,31 @@ function createProductModel(apiUrl = 'http://localhost:3000') {
   };
 
   /**
-   * Thêm sản phẩm mới (Admin CRUD)
+   * Tính toán ID tiếp theo tự động tăng (+1 ID) dạng số
+   * @returns {Promise<number>} Số ID kế tiếp
+   */
+  const getNextProductId = async () => {
+    if (!products || products.length === 0) {
+      await fetchAllProducts();
+    }
+    const numIds = (products || []).map(p => parseInt(p.id, 10)).filter(n => !isNaN(n) && n > 0);
+    return numIds.length > 0 ? Math.max(...numIds) + 1 : 1;
+  };
+
+  /**
+   * Thêm sản phẩm mới (Admin CRUD) - Tự động tăng ID +1 nếu chưa có ID
+   * @param {Object} productData
    */
   const createProduct = async (productData) => {
+    // Đảm bảo ID luôn tự động tăng dạng chuỗi số ('41', '42'...) nếu client chưa truyền hoặc truyền rỗng
+    if (!productData.id || String(productData.id).trim() === '') {
+      const nextId = await getNextProductId();
+      productData.id = String(nextId);
+    } else {
+      // Chuẩn hóa ID về dạng chuỗi nhất quán
+      productData.id = String(productData.id).trim();
+    }
+
     const saved = await _http('/products', {
       method: 'POST',
       body: JSON.stringify(productData)
@@ -309,6 +331,7 @@ function createProductModel(apiUrl = 'http://localhost:3000') {
     clearCompareList: clearCompare,
     _http,
     fetchAllProducts,
+    getNextProductId,
     fetchCategories,
     fetchProductById,
     updateProductStock,
