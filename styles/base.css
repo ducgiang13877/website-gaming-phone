@@ -488,8 +488,70 @@ button, input, select, textarea {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.page-btn,
+.pagination-btn,
+.btn-pagination {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-top: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  outline: none;
+}
+
+.page-btn:hover:not(:disabled):not(.disabled),
+.pagination-btn:hover:not(:disabled):not(.disabled),
+.btn-pagination:hover:not(:disabled):not(.disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(2, 132, 199, 0.15);
+}
+
+.page-btn.active,
+.pagination-btn.active,
+.btn-pagination.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+  cursor: default;
+  pointer-events: none;
+}
+
+.page-btn:disabled,
+.page-btn.disabled,
+.pagination-btn:disabled,
+.pagination-btn.disabled,
+.btn-pagination:disabled,
+.btn-pagination.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+  transform: none;
 }
 
 .admin-tab-content {

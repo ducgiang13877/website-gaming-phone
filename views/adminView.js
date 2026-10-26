@@ -300,19 +300,19 @@ function renderProductsTable(products, categories, currentPage, totalPages) {
     }
 
     let phtml = `
-      <button class="btn-pagination ${currentPage <= 1 ? 'disabled' : ''}" onclick="window.adminCtrl.setProductPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="margin: 0 3px;">
+      <button class="btn-pagination pagination-btn ${currentPage <= 1 ? 'disabled' : ''}" onclick="window.adminCtrl.setProductPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} title="Trang trước">
         <i class="fa-solid fa-chevron-left"></i>
       </button>
     `;
     for (let i = 1; i <= totalPages; i++) {
       phtml += `
-        <button class="btn-pagination ${i === currentPage ? 'active' : ''}" onclick="window.adminCtrl.setProductPage(${i})" style="margin: 0 3px;">
+        <button class="btn-pagination pagination-btn ${i === currentPage ? 'active' : ''}" onclick="window.adminCtrl.setProductPage(${i})" title="Trang ${i}">
           ${i}
         </button>
       `;
     }
     phtml += `
-      <button class="btn-pagination ${currentPage >= totalPages ? 'disabled' : ''}" onclick="window.adminCtrl.setProductPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="margin: 0 3px;">
+      <button class="btn-pagination pagination-btn ${currentPage >= totalPages ? 'disabled' : ''}" onclick="window.adminCtrl.setProductPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} title="Trang sau">
         <i class="fa-solid fa-chevron-right"></i>
       </button>
     `;
