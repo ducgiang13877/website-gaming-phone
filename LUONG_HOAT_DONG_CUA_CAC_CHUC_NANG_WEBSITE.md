@@ -357,19 +357,23 @@
       * Hỗ trợ tải file ảnh từ máy tính thông qua endpoint upload nội bộ, lưu file trực tiếp vào thư mục vật lý `images/`.  
       * Trong `db.json`, hệ thống **chỉ lưu đường dẫn ảnh tương đối** (ví dụ: `images/rog-phone-8.png` hoặc `/images/...`), loại bỏ hoàn toàn chuỗi Base64 cồng kềnh, giúp file `db.json` luôn gọn nhẹ, tối ưu hóa tốc độ tải trang gấp 10 lần.  
     * **CRUD Khách Hàng Toàn Diện:** Cung cấp đầy đủ các hàm nghiệp vụ `themKhachHang`, `suaKhachHang`, `xoaKhachHang`. Chặn tuyệt đối hành vi xóa tài khoản Quản trị viên cấp cao.  
+    * **CRUD Quản Lý Mã Giảm Giá (Vouchers CRUD Engine):**  
+      * Bảng quản trị mã giảm giá trực quan, theo dõi mã code, mức giảm (% hoặc số tiền), giá trị đơn tối thiểu `minOrder`, trần giảm tối đa và số lượt còn lại.  
+      * Cho phép Admin thêm mới voucher với ID tự tăng +1 dạng số (ID #5, #6...), kiểm tra chống trùng lặp mã code, sửa điều kiện và xóa voucher hết hạn. Mọi cập nhật lập tức đồng bộ sang giao diện Checkout của khách hàng qua RESTful API `http://localhost:3000/vouchers`.  
     * **Máy trạng thái đơn hàng (FSM):**  
       * *Khóa đơn đã giao:* Nếu đơn hàng đã ở trạng thái `delivered` -> Vô hiệu hóa dropdown để bảo vệ tính toàn vẹn doanh thu tài chính.  
       * *Tự động hoàn kho khi hủy đơn:* Nếu chuyển trạng thái sang `cancelled` -> Hệ thống tự động duyệt qua các sản phẩm trong đơn và cộng hoàn trả lại số lượng tồn kho `stock = stock + buyQty` trong `db.json`.  
     * **Đăng Xuất Admin:** Khi Admin bấm đăng xuất, hệ thống xóa session `smartstore_admin_logged` và **chuyển hướng thẳng về Trang chủ ban đầu (`index.html`)**, thay vì giữ lại màn hình login admin xám xịt.
 * **4. Tương tác với cơ sở dữ liệu `db.json`:**  
-  * `taiDuLieuAdmin()`: Gửi `Promise.all` nạp đồng thời `/products`, `/categories`, `/orders`, `/users`.  
+  * `taiDuLieuAdmin()`: Gửi `Promise.all` nạp đồng thời `/products`, `/categories`, `/orders`, `/users`, `/vouchers`.  
   * Thêm/Sửa sản phẩm: Gửi `POST /products` (thêm mới) hoặc `PATCH /products/:id` (cập nhật).  
   * Thêm/Sửa/Xóa khách hàng: Gửi `POST /users`, `PATCH /users/:id`, `DELETE /users/:id`.  
+  * Thêm/Sửa/Xóa mã giảm giá: Gửi `POST /vouchers`, `PATCH /vouchers/:id`, `DELETE /vouchers/:id`.  
   * Đổi trạng thái đơn: Gửi `PATCH /orders/:id` với body `{ status: newStatus }`. Nếu hủy đơn gửi tiếp các lệnh `PATCH /products/:id` để cộng kho.  
-  * Xóa dữ liệu: Gửi `DELETE /products/:id`.
+  * Xóa dữ liệu: Gửi `DELETE /products/:id`, `DELETE /vouchers/:id`.  
 * **5. Dữ liệu trả về & Cập nhật giao diện màn hình (View Render):**  
   * Cập nhật số liệu 4 thẻ KPI tài chính đầu trang.  
-  * `renderBangSanPham()`, `renderBangDonHang()`, `renderBangKhachHang()` vẽ lại bảng dữ liệu tương ứng mà không cần tải lại trang.  
+  * `renderBangSanPham()`, `renderBangDonHang()`, `renderBangKhachHang()`, `renderBangVoucher()` vẽ lại bảng dữ liệu tương ứng mà không cần tải lại trang.  
   * Hiển thị thông báo Toast góc phải màn hình sau mỗi thao tác.
 * **💡 Ví dụ minh họa thực tế:**  
   Admin đăng nhập tài khoản `admin@smartstore.vn`, màn hình lập tức hiện danh sách 40 sản phẩm điện thoại kèm ảnh sắc nét. Admin có 1 đơn hàng khách từ chối nhận gồm 2 máy ROG Phone 8. Admin mở dropdown chuyển trạng thái từ "Đang giao" sang "Đã hủy". Ngay lập tức trong file `db.json`, trạng thái đơn đổi thành `cancelled`, và số lượng tồn kho của máy ROG Phone 8 trong file `db.json` tự động được cộng thêm 2 máy trở lại kho hàng. Khi xong việc, Admin bấm "Đăng Xuất Admin", trình duyệt chuyển thẳng về Trang chủ SmartStore.

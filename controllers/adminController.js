@@ -61,6 +61,7 @@ let dsSanPham = [];
 let dsDonHang = [];
 let dsKhachHang = [];
 let dsDanhMuc = [];
+let dsVoucher = [];
 let trangHienTaiSP = 1;
 let trangSanPham = 1;
 const SO_SP_TRANG_ADMIN = 6;
@@ -180,11 +181,12 @@ async function taiDuLieuAdmin() {
     if (!orderModel) orderModel = new OrderModel(API_URL);
     if (!userModel) userModel = new UserModel(API_URL);
 
-    const [cats, dataSP, users, orders] = await Promise.all([
+    const [cats, dataSP, users, orders, vouchers] = await Promise.all([
       productModel.fetchCategories(),
       productModel.fetchAllProducts(),
       userModel.fetchAllUsers(),
-      orderModel.fetchAllOrders()
+      orderModel.fetchAllOrders(),
+      fetch(`${API_URL}/vouchers`).then(r => r.json()).catch(() => [])
     ]);
 
     dsDanhMuc = cats || [];
@@ -199,12 +201,14 @@ async function taiDuLieuAdmin() {
     }));
     dsKhachHang = users || [];
     dsDonHang = orders || [];
+    dsVoucher = Array.isArray(vouchers) ? vouchers : [];
 
     dienDropdownDanhMuc();
     tinhToanKPI();
     chuyenTabAdmin('products');
     renderBangDonHang();
     renderBangKhachHang();
+    renderBangVoucher();
   } catch (loi) {
     console.error('Lỗi tải dữ liệu admin:', loi);
     hienThongBao('Lỗi nạp dữ liệu từ máy chủ API!', 'error');
@@ -246,6 +250,8 @@ function chuyenTabAdmin(tabId) {
     renderBangKhachHang();
   } else if (tabId === 'orders') {
     renderBangDonHang();
+  } else if (tabId === 'vouchers') {
+    renderBangVoucher();
   }
 }
 
@@ -555,6 +561,11 @@ async function thucHienXoa() {
       hienThongBao('Đã xóa đơn hàng thành công khỏi hệ thống', 'info');
       tinhToanKPI();
       renderBangDonHang();
+    } else if (loai === 'voucher') {
+      await fetch(`${API_URL}/vouchers/${id}`, { method: 'DELETE' });
+      dsVoucher = dsVoucher.filter(v => String(v.id) !== String(id));
+      hienThongBao(`Đã xóa mã giảm giá "${ten}" thành công khỏi hệ thống!`, 'info');
+      renderBangVoucher();
     }
 
     dongModal('confirm-modal');
@@ -935,6 +946,154 @@ async function luuKhachHang() {
 }
 
 // ============================================================================
+// ĐIỀU PHỐI QUẢN LÝ MÃ GIẢM GIÁ (VOUCHERS CRUD CONTROLLER)
+// ============================================================================
+
+/**
+ * Lọc và render bảng mã giảm giá
+ */
+function renderBangVoucher() {
+  const tuKhoa = (document.getElementById('admin-search-voucher')?.value || '').toLowerCase().trim();
+  let ketQua = [...dsVoucher];
+
+  if (tuKhoa !== '') {
+    ketQua = ketQua.filter(v =>
+      (v.code || '').toLowerCase().includes(tuKhoa) ||
+      (v.name || '').toLowerCase().includes(tuKhoa) ||
+      (v.description || '').toLowerCase().includes(tuKhoa)
+    );
+  }
+
+  window.AdminView?.renderVouchersTable(ketQua);
+}
+
+function moThemVoucher() {
+  const cacIdSo = dsVoucher.map(v => Number(v.id)).filter(n => !isNaN(n) && n > 0);
+  const nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+  window.AdminView?.renderVoucherModal(null, nextId);
+}
+
+function moSuaVoucher(idVoucher) {
+  const v = dsVoucher.find(item => String(item.id) === String(idVoucher));
+  if (!v) return;
+  window.AdminView?.renderVoucherModal(v);
+}
+
+// Cờ an toàn chống kích hoạt đúp khi lưu Voucher
+let dangLuuVoucher = false;
+
+async function luuVoucher() {
+  if (dangLuuVoucher) return;
+  dangLuuVoucher = true;
+  const btnSave = document.getElementById('btn-save-voucher');
+  const btnSaveText = btnSave ? btnSave.innerHTML : '';
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+  }
+
+  const resetBtn = () => {
+    dangLuuVoucher = false;
+    if (btnSave) {
+      btnSave.disabled = false;
+      btnSave.innerHTML = btnSaveText || '<i class="fa-solid fa-floppy-disk"></i> Lưu Mã Giảm Giá';
+    }
+  };
+
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  const id = getVal('vouch-id');
+  const code = getVal('vouch-code').toUpperCase();
+  const type = getVal('vouch-type') || 'fixed';
+  const name = getVal('vouch-name');
+  const discount = Number(getVal('vouch-discount'));
+  const minOrder = Number(getVal('vouch-min-order')) || 0;
+  const maxDiscount = Number(getVal('vouch-max-discount')) || null;
+  const usageLeft = Number(getVal('vouch-usage')) || 20;
+  const desc = getVal('vouch-desc');
+
+  if (!code || !name) {
+    hienThongBao('Vui lòng nhập Mã Voucher (Code) và Tên Chiến Dịch!', 'error');
+    resetBtn();
+    return;
+  }
+
+  if (isNaN(discount) || discount <= 0) {
+    hienThongBao('Mức giảm giá phải lớn hơn 0!', 'warning');
+    resetBtn();
+    return;
+  }
+
+  if (type === 'percent' && (discount <= 0 || discount > 100)) {
+    hienThongBao('Mức giảm theo phần trăm phải từ 1% đến 100%!', 'warning');
+    resetBtn();
+    return;
+  }
+
+  // Kiểm tra trùng lặp mã code với voucher khác
+  const biTrung = dsVoucher.some(v => v.code.toUpperCase() === code && String(v.id) !== String(id));
+  if (biTrung) {
+    hienThongBao(`Mã Voucher "${code}" đã tồn tại! Vui lòng chọn mã khác.`, 'error');
+    resetBtn();
+    return;
+  }
+
+  const payload = {
+    code,
+    type,
+    name,
+    discount,
+    minOrder,
+    maxDiscount: type === 'percent' ? maxDiscount : null,
+    usageLeft,
+    description: desc || (type === 'percent' ? `Giảm ${discount}% cho đơn từ ${minOrder.toLocaleString('vi-VN')} đ` : `Giảm ${discount.toLocaleString('vi-VN')} đ cho đơn từ ${minOrder.toLocaleString('vi-VN')} đ`),
+    icon: type === 'percent' ? 'fa-solid fa-crown' : 'fa-solid fa-ticket'
+  };
+
+  try {
+    if (id) {
+      // Cập nhật voucher cũ
+      const res = await fetch(`${API_URL}/vouchers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Không thể cập nhật mã giảm giá');
+      const dataMoi = await res.json();
+      const idx = dsVoucher.findIndex(v => String(v.id) === String(id));
+      if (idx > -1) dsVoucher[idx] = dataMoi;
+      hienThongBao(`Cập nhật thành công mã giảm giá "${code}"!`, 'success');
+    } else {
+      // Thêm mới voucher với ID tự tăng +1
+      const cacIdSo = dsVoucher.map(v => Number(v.id)).filter(n => !isNaN(n) && n > 0);
+      const nextId = cacIdSo.length > 0 ? Math.max(...cacIdSo) + 1 : 1;
+      payload.id = String(nextId);
+
+      const res = await fetch(`${API_URL}/vouchers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Không thể thêm mã giảm giá mới');
+      const dataMoi = await res.json();
+      dsVoucher.push(dataMoi);
+      hienThongBao(`Tạo mới thành công mã giảm giá "${code}" (#${dataMoi.id})!`, 'success');
+    }
+
+    dongModal('voucher-modal');
+    renderBangVoucher();
+  } catch (err) {
+    console.error(err);
+    hienThongBao('Lỗi khi lưu mã giảm giá vào cơ sở dữ liệu!', 'error');
+  } finally {
+    resetBtn();
+  }
+}
+
+// ============================================================================
 // EXPORT CONTROLLER RA WINDOW.ADMINCTRL ĐỂ HTML ONCLICK GỌI AN TOÀN
 // ============================================================================
 window.adminCtrl = {
@@ -948,6 +1107,10 @@ window.adminCtrl = {
   openAddCustomer: moThemKhachHang,
   openEditCustomer: moSuaKhachHang,
   saveCustomer: luuKhachHang,
+  openAddVoucher: moThemVoucher,
+  openEditVoucher: moSuaVoucher,
+  saveVoucher: luuVoucher,
+  renderVouchers: renderBangVoucher,
   askDelete: xacNhanXoa,
   executeDelete: thucHienXoa,
   openOrderDetail: moXemDonHang,
@@ -1020,6 +1183,14 @@ onReadyAdmin(() => {
   // Tìm kiếm Khách hàng
   document.getElementById('admin-search-customer')?.addEventListener('input', renderBangKhachHang);
 
+  // Tìm kiếm Mã giảm giá
+  document.getElementById('admin-search-voucher')?.addEventListener('input', renderBangVoucher);
+
+  // Nút Thêm Mới
+  document.getElementById('btn-open-add-product')?.addEventListener('click', moThemSanPham);
+  document.getElementById('btn-open-add-customer')?.addEventListener('click', moThemKhachHang);
+  document.getElementById('btn-open-add-voucher')?.addEventListener('click', moThemVoucher);
+
   // Nút Lưu trong các Modal (Bắt cả sự kiện submit form và click nút bấm)
   document.getElementById('product-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1039,12 +1210,17 @@ onReadyAdmin(() => {
     luuKhachHang();
   });
 
+  document.getElementById('voucher-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    luuVoucher();
+  });
+  document.getElementById('btn-save-voucher')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    luuVoucher();
+  });
+
   document.getElementById('btn-save-order-status')?.addEventListener('click', capNhatTrangThaiDon);
   document.getElementById('btn-confirm-delete-action')?.addEventListener('click', thucHienXoa);
-
-  // Nút Thêm Mới
-  document.getElementById('btn-open-add-product')?.addEventListener('click', moThemSanPham);
-  document.getElementById('btn-open-add-customer')?.addEventListener('click', moThemKhachHang);
 
   // Preview ảnh sản phẩm khi gõ đường dẫn hoặc chọn file
   document.getElementById('prod-image-url')?.addEventListener('input', (e) => {

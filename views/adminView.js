@@ -204,7 +204,8 @@ function switchTabUI(tabId) {
   const panelMap = {
     products: document.getElementById('admin-panel-products'),
     customers: document.getElementById('admin-panel-customers'),
-    orders: document.getElementById('admin-panel-orders')
+    orders: document.getElementById('admin-panel-orders'),
+    vouchers: document.getElementById('admin-panel-vouchers')
   };
   const targetPanel = panelMap[tabId] || document.getElementById(`admin-panel-${tabId}`) || document.getElementById(`tab-${tabId}`);
   if (targetPanel) {
@@ -216,7 +217,8 @@ function switchTabUI(tabId) {
   const titleMap = {
     products: 'Quản Lý Sản Phẩm (Kho Hàng Smartphone)',
     customers: 'Quản Lý Khách Hàng (Tài Khoản Thành Viên)',
-    orders: 'Quản Lý Đơn Hàng (Theo Dõi & Điều Phối)'
+    orders: 'Quản Lý Đơn Hàng (Theo Dõi & Điều Phối)',
+    vouchers: 'Quản Lý Mã Giảm Giá (Chiến Dịch Khuyến Mãi)'
   };
   const titleEl = document.getElementById('admin-page-title');
   if (titleEl) titleEl.textContent = titleMap[tabId] || 'Quản Trị Hệ Thống SmartStore';
@@ -700,7 +702,7 @@ function renderCustomerModal(customer = null) {
  * @param {string} ten - Tên đối tượng hiển thị
  */
 function renderDeleteModal(loai, id, ten) {
-  const loaiText = loai === 'product' ? 'điện thoại' : loai === 'customer' ? 'tài khoản người dùng' : 'đơn hàng';
+  const loaiText = loai === 'product' ? 'điện thoại' : loai === 'customer' ? 'tài khoản người dùng' : loai === 'voucher' ? 'mã giảm giá' : 'đơn hàng';
   const msgEl = document.getElementById('confirm-modal-message');
   if (msgEl) {
     msgEl.innerHTML = `Bạn có chắc chắn muốn xóa ${loaiText} <strong>"${ten}"</strong> (ID: #${id}) khỏi cơ sở dữ liệu không?<br><span style="color:#ef4444; font-size:12px;">* Thao tác này sẽ xóa vĩnh viễn và không thể hoàn tác!</span>`;
@@ -939,6 +941,118 @@ function printInvoice(order) {
   showToast('Đang mở cửa sổ in hóa đơn...', 'info');
 }
 
+/**
+ * [HÀM 16] Kết xuất Bảng Quản Lý Mã Giảm Giá (Vouchers Table)
+ * @param {Array<Object>} vouchers - Danh sách mã giảm giá
+ */
+function renderVouchersTable(vouchers) {
+  const tbody = document.getElementById('admin-vouchers-tbody');
+  if (!tbody) return;
+
+  if (!vouchers || vouchers.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center; padding: 40px; color: var(--text-muted);">
+          <i class="fa-solid fa-ticket" style="font-size: 32px; margin-bottom: 10px; display: block; color: #94a3b8;"></i>
+          Chưa có mã giảm giá nào trong hệ thống!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = vouchers.map(v => {
+    const isPercent = v.type === 'percent';
+    const discDisplay = isPercent ? `${v.discount}%` : formatCurrency(v.discount);
+    const minOrderDisplay = v.minOrder ? formatCurrency(v.minOrder) : '0 đ (Mọi đơn)';
+    const maxDiscDisplay = (isPercent && v.maxDiscount) ? ` (Tối đa ${formatCurrency(v.maxDiscount)})` : '';
+    const usageLeft = v.usageLeft !== undefined ? Number(v.usageLeft) : 20;
+    const usageClass = usageLeft <= 3 ? 'text-danger' : '';
+    const safeCode = (v.code || '').replace(/'/g, "\\'");
+
+    return `
+      <tr>
+        <td><strong>#${v.id}</strong></td>
+        <td>
+          <span class="badge" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; font-weight: 800; font-family: monospace; font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px dashed #0284c7;">
+            ${v.code}
+          </span>
+        </td>
+        <td>
+          <strong style="color: var(--text);">${v.name}</strong>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+            ${v.description || ''}
+          </div>
+        </td>
+        <td style="font-weight: 700; color: #10b981;">
+          ${discDisplay}${maxDiscDisplay}
+        </td>
+        <td style="font-size: 13px;">${minOrderDisplay}</td>
+        <td class="${usageClass}" style="font-weight: 700;">
+          ${usageLeft} lượt
+        </td>
+        <td>
+          <span class="badge" style="background: ${isPercent ? '#fef3c7; color: #d97706;' : '#dcfce7; color: #15803d;'} padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">
+            ${isPercent ? 'Phần trăm (%)' : 'Tiền mặt (VNĐ)'}
+          </span>
+        </td>
+        <td style="text-align: center;">
+          <div class="action-btn-group" style="display: inline-flex; gap: 6px; justify-content: center;">
+            <button class="btn-action edit" onclick="window.adminCtrl.openEditVoucher('${v.id}')" title="Chỉnh sửa voucher" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--primary);">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="btn-action delete" onclick="window.adminCtrl.askDelete('voucher', '${v.id}', '${safeCode}')" title="Xóa voucher" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; color: var(--accent);">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/**
+ * [HÀM 17] Điền Dữ Liệu Vào Modal Thêm / Sửa Mã Giảm Giá
+ * @param {Object|null} voucher - Dữ liệu voucher khi sửa, null khi thêm mới
+ * @param {number|string|null} nextId - Số ID kế tiếp tự động tăng (+1 ID)
+ */
+function renderVoucherModal(voucher = null, nextId = null) {
+  const modalTitle = document.getElementById('voucher-modal-title');
+  const form = document.getElementById('voucher-form');
+  if (!form) return;
+
+  form.reset();
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val ?? '';
+  };
+
+  if (voucher) {
+    if (modalTitle) modalTitle.textContent = `Chỉnh Sửa Mã Giảm Giá #${voucher.id} - ${voucher.code}`;
+    setVal('vouch-id', voucher.id);
+    setVal('vouch-id-display', `#${voucher.id} (Đang sửa)`);
+    setVal('vouch-code', voucher.code);
+    setVal('vouch-type', voucher.type || 'fixed');
+    setVal('vouch-name', voucher.name);
+    setVal('vouch-discount', voucher.discount);
+    setVal('vouch-min-order', voucher.minOrder || 0);
+    setVal('vouch-max-discount', voucher.maxDiscount || '');
+    setVal('vouch-usage', voucher.usageLeft !== undefined ? voucher.usageLeft : 20);
+    setVal('vouch-desc', voucher.description || '');
+  } else {
+    const autoIdText = nextId ? `#${nextId} (Tự động +1)` : 'Tự động tăng (+1 ID)';
+    if (modalTitle) modalTitle.textContent = nextId ? `Thêm Mã Giảm Giá Mới (Mã Tự Động: #${nextId})` : 'Thêm Mã Giảm Giá Mới';
+    setVal('vouch-id', '');
+    setVal('vouch-id-display', autoIdText);
+    setVal('vouch-type', 'fixed');
+    setVal('vouch-min-order', 0);
+    setVal('vouch-usage', 20);
+  }
+
+  openModal('voucher-modal');
+}
+
 // ============================================================================
 // XUẤT BẢN MODULE THEO PHONG CÁCH DÙNG HÀM HIỆN ĐẠI
 // ============================================================================
@@ -956,6 +1070,8 @@ const adminView = {
   renderOrderDetailModal,
   renderCustomersTable,
   renderCustomerModal,
+  renderVouchersTable,
+  renderVoucherModal,
   renderDeleteModal,
   printInvoice
 };

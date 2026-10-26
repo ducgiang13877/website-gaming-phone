@@ -347,7 +347,7 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
 
     const newOrder = {
       orderCode,
-      userId: currentUser ? String(currentUser.id) : null,
+      userId: currentUser ? String(currentUser.id) : '',
       customerName: name,
       customerPhone: phone,
       customerEmail: email || (currentUser?.email || ''),
