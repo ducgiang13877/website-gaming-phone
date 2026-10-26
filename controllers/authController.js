@@ -364,6 +364,7 @@ function createAuthController(userModel, orderModel) {
     const name = document.getElementById('profile-name')?.value.trim();
     const phone = document.getElementById('profile-phone')?.value.trim();
     const address = document.getElementById('profile-address')?.value.trim();
+    const newPassword = document.getElementById('profile-password')?.value.trim();
 
     const toast = window.baseView ? window.baseView.showToast : alert;
 
@@ -377,15 +378,36 @@ function createAuthController(userModel, orderModel) {
       return;
     }
 
-    const res = await uModel.updateProfile(user.email, { name, fullName: name, phone, address });
+    const payload = { name, fullName: name, phone, address };
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        toast('Mật khẩu mới phải có ít nhất 6 ký tự!', 'warning');
+        return;
+      }
+      payload.password = newPassword;
+    }
+
+    const res = await uModel.updateProfile(user.email, payload);
     if (!res.success) {
       toast('Cập nhật hồ sơ thất bại: ' + res.message, 'error');
       return;
     }
 
+    // Đồng bộ tức thời vào Form Checkout nếu có trong DOM
+    const checkoutAddr = document.getElementById('checkout-address');
+    if (checkoutAddr) checkoutAddr.value = address || '';
+    const checkoutName = document.getElementById('checkout-name');
+    if (checkoutName) checkoutName.value = name || '';
+    const checkoutPhone = document.getElementById('checkout-phone');
+    if (checkoutPhone) checkoutPhone.value = phone || '';
+
+    // Xóa trắng ô mật khẩu mới sau khi lưu thành công
+    const pwInput = document.getElementById('profile-password');
+    if (pwInput) pwInput.value = '';
+
     if (window.baseView) {
       window.baseView.renderNavUser(res.user);
-      window.baseView.showToast('Cập nhật hồ sơ cá nhân thành công!', 'success');
+      window.baseView.showToast('Cập nhật hồ sơ và địa chỉ mặc định thành công!', 'success');
     }
   };
 

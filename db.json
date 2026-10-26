@@ -123,8 +123,8 @@
         "special": "Khung Titan tự nhiên, Cổng Type-C chuẩn USB 3, Ray Tracing, IP68"
       },
       "categoryId": "1",
-      "stock": 14,
-      "sold": 4
+      "stock": 13,
+      "sold": 5
     },
     {
       "id": "4",
@@ -1071,7 +1071,7 @@
       "email": "hung.nv@gmail.com",
       "password": "123",
       "phone": "0912345678",
-      "address": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "address": "Số 12 Chùa Bộc, Đống Đa, Hà Nộiiiiiiiii",
       "role": "user",
       "createdAt": "2026-10-15T08:00:00.000Z"
     },
@@ -1257,6 +1257,62 @@
       "status": "processing",
       "createdAt": "2026-10-25T23:12:00.807Z",
       "id": "45FWRsEQeqA"
+    },
+    {
+      "orderCode": "#DH894862160",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nội",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "1",
+          "name": "iPhone 16 Pro Max 256GB",
+          "price": 34990000,
+          "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max.png",
+          "quantity": 1,
+          "stock": 20
+        }
+      ],
+      "subtotal": 34990000,
+      "voucherCode": "GAMING2026",
+      "discountAmount": 500000,
+      "totalAmount": 34490000,
+      "status": "cancelled",
+      "createdAt": "2026-10-26T05:36:40.150Z",
+      "id": "vhh_wgO",
+      "cancelReason": "Khách hủy đơn",
+      "updatedAt": "2026-10-26T05:44:01.238Z"
+    },
+    {
+      "orderCode": "#DH664506804",
+      "userId": "2",
+      "customerName": "Nguyễn Văn Hùng",
+      "customerPhone": "0912345678",
+      "customerEmail": "hung.nv@gmail.com",
+      "customerAddress": "Số 12 Chùa Bộc, Đống Đa, Hà Nọiooooooooo",
+      "note": "",
+      "paymentMethod": "COD",
+      "items": [
+        {
+          "id": "3",
+          "name": "iPhone 15 Pro 128GB",
+          "price": 24990000,
+          "image": "https://cdn.dummyjson.com/product-images/smartphones/iphone-x/thumbnail.webp",
+          "quantity": 1,
+          "stock": 14
+        }
+      ],
+      "subtotal": 24990000,
+      "voucherCode": "GAMING2026",
+      "discountAmount": 500000,
+      "totalAmount": 24490000,
+      "status": "processing",
+      "createdAt": "2026-10-26T05:54:10.718Z",
+      "id": "ZdGznKh"
     }
   ],
   "vouchers": [

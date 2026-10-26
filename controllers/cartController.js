@@ -153,7 +153,7 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
     }
 
     // 0. BẢO VỆ PHÂN QUYỀN ĐẶT HÀNG: BẮT BUỘC ĐĂNG NHẬP
-    const user = uModel?.getCurrentUser();
+    let user = uModel?.getCurrentUser();
     if (!user) {
       if (window.baseView) {
         window.baseView.showToast('Vui lòng đăng nhập tài khoản để tiến hành đặt hàng và kích hoạt bảo hành điện tử chính hãng!', 'warning');
@@ -162,6 +162,17 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
         window.appNav.goTo('auth', { redirect: 'checkout' });
       }
       return;
+    }
+
+    // Luôn đồng bộ dữ liệu hồ sơ mới nhất từ CSDL nếu có tài khoản
+    if (user.email && uModel?.findUserByEmail) {
+      try {
+        const freshUser = await uModel.findUserByEmail(user.email);
+        if (freshUser) {
+          user = { ...user, ...freshUser };
+          uModel.saveUser?.(user);
+        }
+      } catch (e) {}
     }
 
     // Chặn Quản trị viên (Admin) mua hàng
@@ -185,16 +196,39 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
     const vouchers = await cModel.fetchVouchers();
     cView?.renderVoucherChips(vouchers, appliedVoucher, subtotal);
 
-    // 3. Tự động điền thông tin khách hàng đã đăng nhập
+    // 3. Tự động điền/đồng bộ thông tin khách hàng mới nhất từ hồ sơ tài khoản (KHÔNG BỊ CHẶN BỞI CACHE CŨ)
     const nameInput = document.getElementById('checkout-name');
     const emailInput = document.getElementById('checkout-email');
     const phoneInput = document.getElementById('checkout-phone');
     const addrInput = document.getElementById('checkout-address');
 
-    if (nameInput && !nameInput.value) nameInput.value = user.name || user.fullName || '';
-    if (emailInput && !emailInput.value) emailInput.value = user.email || '';
-    if (phoneInput && !phoneInput.value) phoneInput.value = user.phone || '';
-    if (addrInput && !addrInput.value) addrInput.value = user.address || '';
+    if (nameInput) nameInput.value = user.name || user.fullName || '';
+    if (emailInput) emailInput.value = user.email || '';
+    if (phoneInput) phoneInput.value = user.phone || '';
+    if (addrInput) addrInput.value = user.address || '';
+  };
+
+  /**
+   * Khôi phục/nạp lại địa chỉ mặc định từ hồ sơ cá nhân vào ô nhập checkout
+   */
+  const resetAddressToDefault = async () => {
+    let user = uModel?.getCurrentUser();
+    if (user?.email && uModel?.findUserByEmail) {
+      try {
+        const freshUser = await uModel.findUserByEmail(user.email);
+        if (freshUser) {
+          user = { ...user, ...freshUser };
+          uModel.saveUser?.(user);
+        }
+      } catch (e) {}
+    }
+    const addrInput = document.getElementById('checkout-address');
+    if (addrInput && user) {
+      addrInput.value = user.address || '';
+      if (window.baseView) {
+        window.baseView.showToast(user.address ? `Đã nạp địa chỉ mặc định: ${user.address}` : 'Tài khoản chưa lưu địa chỉ mặc định trong hồ sơ!', user.address ? 'info' : 'warning');
+      }
+    }
   };
 
   /**
@@ -492,7 +526,8 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
     viewInvoice: openCustomerInvoice,
     printInvoice,
     xemDonHangCuaToi,
-    viewMyOrders: xemDonHangCuaToi
+    viewMyOrders: xemDonHangCuaToi,
+    resetAddressToDefault
   };
 }
 

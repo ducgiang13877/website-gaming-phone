@@ -437,7 +437,8 @@ if (typeof module !== 'undefined' && module.exports) {
     viewInvoice: (orderCode) => cartCtrl?.openCustomerInvoice(orderCode),
     printInvoice: () => cartCtrl?.printInvoice(),
     xemDonHangCuaToi: () => cartCtrl?.xemDonHangCuaToi(),
-    viewMyOrders: () => cartCtrl?.xemDonHangCuaToi()
+    viewMyOrders: () => cartCtrl?.xemDonHangCuaToi(),
+    resetAddressToDefault: () => cartCtrl?.resetAddressToDefault()
   };
 
   window.authModule = {
