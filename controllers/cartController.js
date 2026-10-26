@@ -197,6 +197,27 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
     cView?.renderVoucherChips(vouchers, appliedVoucher, subtotal);
 
     // 3. Tự động điền/đồng bộ thông tin khách hàng mới nhất từ hồ sơ tài khoản (KHÔNG BỊ CHẶN BỞI CACHE CŨ)
+    await syncUserToCheckoutForm(true);
+  };
+
+  /**
+   * Đồng bộ 100% thông tin khách hàng từ tài khoản vào Form Checkout
+   * @param {boolean} [forceFresh=false] - Buộc tải dữ liệu mới nhất từ CSDL
+   */
+  const syncUserToCheckoutForm = async (forceFresh = false) => {
+    let user = uModel?.getCurrentUser ? uModel.getCurrentUser() : null;
+    if (!user) return;
+
+    if (forceFresh && user.email && uModel?.findUserByEmail) {
+      try {
+        const freshUser = await uModel.findUserByEmail(user.email);
+        if (freshUser) {
+          user = { ...user, ...freshUser };
+          uModel.saveUser?.(user);
+        }
+      } catch (e) {}
+    }
+
     const nameInput = document.getElementById('checkout-name');
     const emailInput = document.getElementById('checkout-email');
     const phoneInput = document.getElementById('checkout-phone');
@@ -212,22 +233,10 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
    * Khôi phục/nạp lại địa chỉ mặc định từ hồ sơ cá nhân vào ô nhập checkout
    */
   const resetAddressToDefault = async () => {
-    let user = uModel?.getCurrentUser();
-    if (user?.email && uModel?.findUserByEmail) {
-      try {
-        const freshUser = await uModel.findUserByEmail(user.email);
-        if (freshUser) {
-          user = { ...user, ...freshUser };
-          uModel.saveUser?.(user);
-        }
-      } catch (e) {}
-    }
-    const addrInput = document.getElementById('checkout-address');
-    if (addrInput && user) {
-      addrInput.value = user.address || '';
-      if (window.baseView) {
-        window.baseView.showToast(user.address ? `Đã nạp địa chỉ mặc định: ${user.address}` : 'Tài khoản chưa lưu địa chỉ mặc định trong hồ sơ!', user.address ? 'info' : 'warning');
-      }
+    await syncUserToCheckoutForm(true);
+    const user = uModel?.getCurrentUser();
+    if (window.baseView) {
+      window.baseView.showToast(user?.address ? `Đã đồng bộ thông tin từ hồ sơ: ${user.address}` : 'Tài khoản chưa lưu địa chỉ mặc định trong hồ sơ!', user?.address ? 'info' : 'warning');
     }
   };
 
@@ -527,7 +536,8 @@ function createCartController(cartModel, productModel, orderModel, userModel) {
     printInvoice,
     xemDonHangCuaToi,
     viewMyOrders: xemDonHangCuaToi,
-    resetAddressToDefault
+    resetAddressToDefault,
+    syncUserToCheckoutForm
   };
 }
 

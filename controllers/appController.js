@@ -46,6 +46,11 @@ function createAppController() {
     // 1. Đồng bộ người dùng và số lượng giỏ hàng trên Header Navbar
     syncNavbar();
 
+    // Tự động đồng bộ ngay thông tin người dùng mới nhất vào Form Checkout nếu có
+    if (window.cartCtrl?.syncUserToCheckoutForm) {
+      window.cartCtrl.syncUserToCheckoutForm(true);
+    }
+
     // 2. Nạp dữ liệu danh mục & sản phẩm song song từ Backend
     if (pModel) {
       await Promise.all([
@@ -169,6 +174,7 @@ function createAppController() {
       cCtrl?.renderCart();
     } else if (viewName === 'checkout') {
       cCtrl?.renderCheckout();
+      cCtrl?.syncUserToCheckoutForm?.(true);
     } else if (viewName === 'thankyou') {
       const orderCode = params.orderCode || new URLSearchParams(window.location.search).get('orderCode');
       if (orderCode) cCtrl?.renderThankYou(orderCode);
@@ -334,6 +340,14 @@ function createAppController() {
         }
       });
     });
+
+    // Lắng nghe thay đổi hồ sơ người dùng từ tab khác (Đồng bộ tức thời đa tab)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'smartstore_user') {
+        syncNavbar();
+        window.cartCtrl?.syncUserToCheckoutForm?.(true);
+      }
+    });
   };
 
   return {
@@ -438,7 +452,8 @@ if (typeof module !== 'undefined' && module.exports) {
     printInvoice: () => cartCtrl?.printInvoice(),
     xemDonHangCuaToi: () => cartCtrl?.xemDonHangCuaToi(),
     viewMyOrders: () => cartCtrl?.xemDonHangCuaToi(),
-    resetAddressToDefault: () => cartCtrl?.resetAddressToDefault()
+    resetAddressToDefault: () => cartCtrl?.resetAddressToDefault(),
+    syncUserToCheckoutForm: (force) => cartCtrl?.syncUserToCheckoutForm(force)
   };
 
   window.authModule = {
